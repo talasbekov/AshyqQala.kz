@@ -1,0 +1,2102 @@
+[
+  {
+    "contract_sum_wnds": 723000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-12-05",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100000"
+  },
+  {
+    "contract_sum_wnds": 787000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-02-26",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100001"
+  },
+  {
+    "contract_sum_wnds": 393000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-01-05",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100002"
+  },
+  {
+    "contract_sum_wnds": 505000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-03-04",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100003"
+  },
+  {
+    "contract_sum_wnds": 769000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-10-13",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100004"
+  },
+  {
+    "contract_sum_wnds": 242000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-05-06",
+    "supplier_biin": "",
+    "trd_buy_number_anno": "AST-100005"
+  },
+  {
+    "contract_sum_wnds": 206000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-09-19",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100006"
+  },
+  {
+    "contract_sum_wnds": 897000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-10-06",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100007"
+  },
+  {
+    "contract_sum_wnds": 158000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-06-18",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100008"
+  },
+  {
+    "contract_sum_wnds": 347000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-09-22",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100009"
+  },
+  {
+    "contract_sum_wnds": 789000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-10-04",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100010"
+  },
+  {
+    "contract_sum_wnds": 248000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-06-27",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100011"
+  },
+  {
+    "contract_sum_wnds": 684000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-01-01",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100012"
+  },
+  {
+    "contract_sum_wnds": 260000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-01-15",
+    "supplier_biin": "",
+    "trd_buy_number_anno": "AST-100013"
+  },
+  {
+    "contract_sum_wnds": 329000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-01-14",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100014"
+  },
+  {
+    "contract_sum_wnds": 422000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-09-01",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100015"
+  },
+  {
+    "contract_sum_wnds": 529000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-02-25",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100016"
+  },
+  {
+    "contract_sum_wnds": 428000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-12-25",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100017"
+  },
+  {
+    "contract_sum_wnds": 674000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-04-12",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100018"
+  },
+  {
+    "contract_sum_wnds": 292000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-09-15",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100019"
+  },
+  {
+    "contract_sum_wnds": 920000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-02-23",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100020"
+  },
+  {
+    "contract_sum_wnds": 789000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-11-20",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100021"
+  },
+  {
+    "contract_sum_wnds": 180000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-02-22",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100022"
+  },
+  {
+    "contract_sum_wnds": 401000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-10-25",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100023"
+  },
+  {
+    "contract_sum_wnds": 127000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-06-03",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100024"
+  },
+  {
+    "contract_sum_wnds": 366000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-05-22",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100025"
+  },
+  {
+    "contract_sum_wnds": 437000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-09-26",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100026"
+  },
+  {
+    "contract_sum_wnds": 480000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-01-11",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100027"
+  },
+  {
+    "contract_sum_wnds": 232000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-06-11",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100028"
+  },
+  {
+    "contract_sum_wnds": 393000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-02-16",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100029"
+  },
+  {
+    "contract_sum_wnds": 260000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-05-01",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100030"
+  },
+  {
+    "contract_sum_wnds": 499000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-10-12",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100031"
+  },
+  {
+    "contract_sum_wnds": 416000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-08-18",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100032"
+  },
+  {
+    "contract_sum_wnds": 510000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-07-13",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100033"
+  },
+  {
+    "contract_sum_wnds": 840000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-06-16",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100034"
+  },
+  {
+    "contract_sum_wnds": 840000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-02-21",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100035"
+  },
+  {
+    "contract_sum_wnds": 602000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-06-21",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100036"
+  },
+  {
+    "contract_sum_wnds": 725000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-01-01",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100037"
+  },
+  {
+    "contract_sum_wnds": 867000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-05-26",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100038"
+  },
+  {
+    "contract_sum_wnds": 820000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-07-21",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100039"
+  },
+  {
+    "contract_sum_wnds": 669000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-04-10",
+    "supplier_biin": "",
+    "trd_buy_number_anno": "AST-100040"
+  },
+  {
+    "contract_sum_wnds": 594000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-12-03",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100041"
+  },
+  {
+    "contract_sum_wnds": 153000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-05-20",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100042"
+  },
+  {
+    "contract_sum_wnds": 539000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-03-27",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100043"
+  },
+  {
+    "contract_sum_wnds": 538000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-01-19",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100044"
+  },
+  {
+    "contract_sum_wnds": 106000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-02-25",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100045"
+  },
+  {
+    "contract_sum_wnds": 277000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-12-20",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100046"
+  },
+  {
+    "contract_sum_wnds": 839000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-02-03",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100047"
+  },
+  {
+    "contract_sum_wnds": 171000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-08-20",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100048"
+  },
+  {
+    "contract_sum_wnds": 904000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-04-05",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100049"
+  },
+  {
+    "contract_sum_wnds": 100000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-05-02",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100050"
+  },
+  {
+    "contract_sum_wnds": 278000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-04-12",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100051"
+  },
+  {
+    "contract_sum_wnds": 757000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-08-01",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100052"
+  },
+  {
+    "contract_sum_wnds": 898000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-12-06",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100053"
+  },
+  {
+    "contract_sum_wnds": 955000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-01-26",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100054"
+  },
+  {
+    "contract_sum_wnds": 215000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-12-07",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100055"
+  },
+  {
+    "contract_sum_wnds": 125000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-05-11",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100056"
+  },
+  {
+    "contract_sum_wnds": 704000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-03-08",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100057"
+  },
+  {
+    "contract_sum_wnds": 915000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-06-18",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100058"
+  },
+  {
+    "contract_sum_wnds": 325000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-09-03",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100059"
+  },
+  {
+    "contract_sum_wnds": 217000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-08-25",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100060"
+  },
+  {
+    "contract_sum_wnds": 503000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-05-13",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100061"
+  },
+  {
+    "contract_sum_wnds": 178000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-07-27",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100062"
+  },
+  {
+    "contract_sum_wnds": 638000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-10-20",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100063"
+  },
+  {
+    "contract_sum_wnds": 775000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-02-21",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100064"
+  },
+  {
+    "contract_sum_wnds": 983000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-08-17",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100065"
+  },
+  {
+    "contract_sum_wnds": 621000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-05-04",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100066"
+  },
+  {
+    "contract_sum_wnds": 790000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-05-15",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100067"
+  },
+  {
+    "contract_sum_wnds": 707000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-06-09",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100068"
+  },
+  {
+    "contract_sum_wnds": 807000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-06-14",
+    "supplier_biin": "",
+    "trd_buy_number_anno": "AST-100069"
+  },
+  {
+    "contract_sum_wnds": 628000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-01-24",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100070"
+  },
+  {
+    "contract_sum_wnds": 285000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-05-03",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100071"
+  },
+  {
+    "contract_sum_wnds": 814000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-03-27",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100072"
+  },
+  {
+    "contract_sum_wnds": 811000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-09-06",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100073"
+  },
+  {
+    "contract_sum_wnds": 623000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-11-07",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100074"
+  },
+  {
+    "contract_sum_wnds": 531000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-10-14",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100075"
+  },
+  {
+    "contract_sum_wnds": 696000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-11-21",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100076"
+  },
+  {
+    "contract_sum_wnds": 652000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-12-01",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100077"
+  },
+  {
+    "contract_sum_wnds": 288000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-10-12",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100078"
+  },
+  {
+    "contract_sum_wnds": 981000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-01-25",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100079"
+  },
+  {
+    "contract_sum_wnds": 600000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-12-06",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100080"
+  },
+  {
+    "contract_sum_wnds": 829000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-11-14",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100081"
+  },
+  {
+    "contract_sum_wnds": 326000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-06-07",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100082"
+  },
+  {
+    "contract_sum_wnds": 538000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-04-20",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100083"
+  },
+  {
+    "contract_sum_wnds": 263000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-01-21",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100084"
+  },
+  {
+    "contract_sum_wnds": 653000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-06-14",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100085"
+  },
+  {
+    "contract_sum_wnds": 993000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-08-01",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100086"
+  },
+  {
+    "contract_sum_wnds": 795000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-11-18",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100087"
+  },
+  {
+    "contract_sum_wnds": 909000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-05-07",
+    "supplier_biin": "",
+    "trd_buy_number_anno": "AST-100088"
+  },
+  {
+    "contract_sum_wnds": 797000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-04-27",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100089"
+  },
+  {
+    "contract_sum_wnds": 792000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-05-17",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100090"
+  },
+  {
+    "contract_sum_wnds": 522000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-06-05",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100091"
+  },
+  {
+    "contract_sum_wnds": 674000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-02-11",
+    "supplier_biin": "",
+    "trd_buy_number_anno": "AST-100092"
+  },
+  {
+    "contract_sum_wnds": 825000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-09-07",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100093"
+  },
+  {
+    "contract_sum_wnds": 890000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-06-02",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100094"
+  },
+  {
+    "contract_sum_wnds": 555000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-10-22",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100095"
+  },
+  {
+    "contract_sum_wnds": 483000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-10-08",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100096"
+  },
+  {
+    "contract_sum_wnds": 126000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-07-04",
+    "supplier_biin": "",
+    "trd_buy_number_anno": "AST-100097"
+  },
+  {
+    "contract_sum_wnds": 399000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-10-27",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100098"
+  },
+  {
+    "contract_sum_wnds": 167000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-10-15",
+    "supplier_biin": "",
+    "trd_buy_number_anno": "AST-100099"
+  },
+  {
+    "contract_sum_wnds": 760000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-11-01",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100100"
+  },
+  {
+    "contract_sum_wnds": 611000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-10-23",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100101"
+  },
+  {
+    "contract_sum_wnds": 961000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-02-24",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100102"
+  },
+  {
+    "contract_sum_wnds": 834000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-09-21",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100103"
+  },
+  {
+    "contract_sum_wnds": 415000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-12-07",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100104"
+  },
+  {
+    "contract_sum_wnds": 590000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-08-09",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100105"
+  },
+  {
+    "contract_sum_wnds": 497000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-03-18",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100106"
+  },
+  {
+    "contract_sum_wnds": 118000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-06-27",
+    "supplier_biin": "",
+    "trd_buy_number_anno": "AST-100107"
+  },
+  {
+    "contract_sum_wnds": 807000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-09-13",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100108"
+  },
+  {
+    "contract_sum_wnds": 212000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-09-24",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100109"
+  },
+  {
+    "contract_sum_wnds": 758000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-02-09",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100110"
+  },
+  {
+    "contract_sum_wnds": 286000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-05-18",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100111"
+  },
+  {
+    "contract_sum_wnds": 314000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-04-10",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100112"
+  },
+  {
+    "contract_sum_wnds": 401000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-12-05",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100113"
+  },
+  {
+    "contract_sum_wnds": 486000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-12-10",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100114"
+  },
+  {
+    "contract_sum_wnds": 206000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-01-17",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100115"
+  },
+  {
+    "contract_sum_wnds": 888000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-06-19",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100116"
+  },
+  {
+    "contract_sum_wnds": 870000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-01-22",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100117"
+  },
+  {
+    "contract_sum_wnds": 431000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-03-11",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100118"
+  },
+  {
+    "contract_sum_wnds": 728000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-09-23",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100119"
+  },
+  {
+    "contract_sum_wnds": 450000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-06-11",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100120"
+  },
+  {
+    "contract_sum_wnds": 975000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-09-20",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100121"
+  },
+  {
+    "contract_sum_wnds": 227000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-05-24",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100122"
+  },
+  {
+    "contract_sum_wnds": 815000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-05-03",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100123"
+  },
+  {
+    "contract_sum_wnds": 348000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-01-27",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100124"
+  },
+  {
+    "contract_sum_wnds": 440000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-07-10",
+    "supplier_biin": "",
+    "trd_buy_number_anno": "AST-100125"
+  },
+  {
+    "contract_sum_wnds": 629000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-06-10",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100126"
+  },
+  {
+    "contract_sum_wnds": 768000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-04-08",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100127"
+  },
+  {
+    "contract_sum_wnds": 677000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-03-26",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100128"
+  },
+  {
+    "contract_sum_wnds": 374000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-01-03",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100129"
+  },
+  {
+    "contract_sum_wnds": 930000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-02-19",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100130"
+  },
+  {
+    "contract_sum_wnds": 615000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-03-01",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100131"
+  },
+  {
+    "contract_sum_wnds": 701000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-07-02",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100132"
+  },
+  {
+    "contract_sum_wnds": 621000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-12-27",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100133"
+  },
+  {
+    "contract_sum_wnds": 182000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-03-09",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100134"
+  },
+  {
+    "contract_sum_wnds": 690000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-12-18",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100135"
+  },
+  {
+    "contract_sum_wnds": 585000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-03-10",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100136"
+  },
+  {
+    "contract_sum_wnds": 220000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-01-27",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100137"
+  },
+  {
+    "contract_sum_wnds": 994000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-04-22",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100138"
+  },
+  {
+    "contract_sum_wnds": 521000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-02-25",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100139"
+  },
+  {
+    "contract_sum_wnds": 172000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-12-27",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100140"
+  },
+  {
+    "contract_sum_wnds": 759000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-04-02",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100141"
+  },
+  {
+    "contract_sum_wnds": 309000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-10-12",
+    "supplier_biin": "",
+    "trd_buy_number_anno": "AST-100142"
+  },
+  {
+    "contract_sum_wnds": 168000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-04-02",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100143"
+  },
+  {
+    "contract_sum_wnds": 869000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-02-17",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100144"
+  },
+  {
+    "contract_sum_wnds": 799000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-09-16",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100145"
+  },
+  {
+    "contract_sum_wnds": 689000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-11-26",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100146"
+  },
+  {
+    "contract_sum_wnds": 403000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-07-27",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100147"
+  },
+  {
+    "contract_sum_wnds": 376000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-05-06",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100148"
+  },
+  {
+    "contract_sum_wnds": 687000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-07-17",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100149"
+  },
+  {
+    "contract_sum_wnds": 654000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-10-06",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100150"
+  },
+  {
+    "contract_sum_wnds": 915000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-07-23",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100151"
+  },
+  {
+    "contract_sum_wnds": 975000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-06-04",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100152"
+  },
+  {
+    "contract_sum_wnds": 114000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-03-02",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100153"
+  },
+  {
+    "contract_sum_wnds": 686000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-05-08",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100154"
+  },
+  {
+    "contract_sum_wnds": 212000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-12-16",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100155"
+  },
+  {
+    "contract_sum_wnds": 831000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-09-21",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100156"
+  },
+  {
+    "contract_sum_wnds": 816000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-04-27",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100157"
+  },
+  {
+    "contract_sum_wnds": 486000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-05-17",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100158"
+  },
+  {
+    "contract_sum_wnds": 902000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-12-15",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100159"
+  },
+  {
+    "contract_sum_wnds": 547000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-07-11",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100160"
+  },
+  {
+    "contract_sum_wnds": 653000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-06-09",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100161"
+  },
+  {
+    "contract_sum_wnds": 524000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-03-08",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100162"
+  },
+  {
+    "contract_sum_wnds": 808000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-11-25",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100163"
+  },
+  {
+    "contract_sum_wnds": 885000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-07-06",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100164"
+  },
+  {
+    "contract_sum_wnds": 207000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-11-11",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100165"
+  },
+  {
+    "contract_sum_wnds": 280000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-10-20",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100166"
+  },
+  {
+    "contract_sum_wnds": 178000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-11-23",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100167"
+  },
+  {
+    "contract_sum_wnds": 622000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-11-08",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100168"
+  },
+  {
+    "contract_sum_wnds": 910000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-02-24",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100169"
+  },
+  {
+    "contract_sum_wnds": 956000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-06-20",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100170"
+  },
+  {
+    "contract_sum_wnds": 556000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-06-01",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100171"
+  },
+  {
+    "contract_sum_wnds": 707000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-11-04",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100172"
+  },
+  {
+    "contract_sum_wnds": 351000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-08-22",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100173"
+  },
+  {
+    "contract_sum_wnds": 647000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-01-03",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100174"
+  },
+  {
+    "contract_sum_wnds": 782000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-01-03",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100175"
+  },
+  {
+    "contract_sum_wnds": 593000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-03-07",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100176"
+  },
+  {
+    "contract_sum_wnds": 670000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-04-12",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100177"
+  },
+  {
+    "contract_sum_wnds": 988000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-12-06",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100178"
+  },
+  {
+    "contract_sum_wnds": 522000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-08-19",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100179"
+  },
+  {
+    "contract_sum_wnds": 518000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-01-20",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100180"
+  },
+  {
+    "contract_sum_wnds": 600000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-07-20",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100181"
+  },
+  {
+    "contract_sum_wnds": 153000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-01-05",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100182"
+  },
+  {
+    "contract_sum_wnds": 922000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-06-08",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100183"
+  },
+  {
+    "contract_sum_wnds": 808000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-02-04",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100184"
+  },
+  {
+    "contract_sum_wnds": 722000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-11-01",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100185"
+  },
+  {
+    "contract_sum_wnds": 214000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-03-17",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100186"
+  },
+  {
+    "contract_sum_wnds": 843000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-04-21",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100187"
+  },
+  {
+    "contract_sum_wnds": 952000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-09-06",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100188"
+  },
+  {
+    "contract_sum_wnds": 762000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-07-03",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100189"
+  },
+  {
+    "contract_sum_wnds": 319000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-01-07",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100190"
+  },
+  {
+    "contract_sum_wnds": 198000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-07-08",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100191"
+  },
+  {
+    "contract_sum_wnds": 495000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-01-06",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100192"
+  },
+  {
+    "contract_sum_wnds": 324000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-01-27",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100193"
+  },
+  {
+    "contract_sum_wnds": 151000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-09-18",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100194"
+  },
+  {
+    "contract_sum_wnds": 955000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-01-17",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100195"
+  },
+  {
+    "contract_sum_wnds": 415000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-07-09",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100196"
+  },
+  {
+    "contract_sum_wnds": 573000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-01-01",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100197"
+  },
+  {
+    "contract_sum_wnds": 438000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-05-20",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100198"
+  },
+  {
+    "contract_sum_wnds": 132000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-01-19",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100199"
+  },
+  {
+    "contract_sum_wnds": 782000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-12-14",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100200"
+  },
+  {
+    "contract_sum_wnds": 256000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-06-11",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100201"
+  },
+  {
+    "contract_sum_wnds": 234000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-04-01",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100202"
+  },
+  {
+    "contract_sum_wnds": 843000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-10-10",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100203"
+  },
+  {
+    "contract_sum_wnds": 223000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-05-18",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100204"
+  },
+  {
+    "contract_sum_wnds": 257000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-07-17",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100205"
+  },
+  {
+    "contract_sum_wnds": 658000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-02-16",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100206"
+  },
+  {
+    "contract_sum_wnds": 163000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-11-02",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100207"
+  },
+  {
+    "contract_sum_wnds": 293000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-12-01",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100208"
+  },
+  {
+    "contract_sum_wnds": 488000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-11-11",
+    "supplier_biin": "",
+    "trd_buy_number_anno": "AST-100209"
+  },
+  {
+    "contract_sum_wnds": 318000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-09-07",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100210"
+  },
+  {
+    "contract_sum_wnds": 813000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-11-05",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100211"
+  },
+  {
+    "contract_sum_wnds": 803000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-06-20",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100212"
+  },
+  {
+    "contract_sum_wnds": 667000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-01-01",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100213"
+  },
+  {
+    "contract_sum_wnds": 892000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-08-21",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100214"
+  },
+  {
+    "contract_sum_wnds": 216000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-03-23",
+    "supplier_biin": "",
+    "trd_buy_number_anno": "AST-100215"
+  },
+  {
+    "contract_sum_wnds": 209000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-01-15",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100216"
+  },
+  {
+    "contract_sum_wnds": 432000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-08-19",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100217"
+  },
+  {
+    "contract_sum_wnds": 991000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-08-15",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100218"
+  },
+  {
+    "contract_sum_wnds": 809000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-12-05",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100219"
+  },
+  {
+    "contract_sum_wnds": 241000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-10-11",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100220"
+  },
+  {
+    "contract_sum_wnds": 771000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-10-08",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100221"
+  },
+  {
+    "contract_sum_wnds": 767000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-07-06",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100222"
+  },
+  {
+    "contract_sum_wnds": 502000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-08-08",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100223"
+  },
+  {
+    "contract_sum_wnds": 758000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-03-17",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100224"
+  },
+  {
+    "contract_sum_wnds": 164000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-06-27",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100225"
+  },
+  {
+    "contract_sum_wnds": 898000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-08-27",
+    "supplier_biin": "",
+    "trd_buy_number_anno": "AST-100226"
+  },
+  {
+    "contract_sum_wnds": 838000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-02-13",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100227"
+  },
+  {
+    "contract_sum_wnds": 123000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-05-10",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100228"
+  },
+  {
+    "contract_sum_wnds": 355000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-03-27",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100229"
+  },
+  {
+    "contract_sum_wnds": 416000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-06-21",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100230"
+  },
+  {
+    "contract_sum_wnds": 153000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-01-16",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100231"
+  },
+  {
+    "contract_sum_wnds": 316000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-08-26",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100232"
+  },
+  {
+    "contract_sum_wnds": 471000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-06-17",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100233"
+  },
+  {
+    "contract_sum_wnds": 943000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-10-08",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100234"
+  },
+  {
+    "contract_sum_wnds": 103000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-11-27",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100235"
+  },
+  {
+    "contract_sum_wnds": 672000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-12-11",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100236"
+  },
+  {
+    "contract_sum_wnds": 905000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-05-03",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100237"
+  },
+  {
+    "contract_sum_wnds": 511000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-12-27",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100238"
+  },
+  {
+    "contract_sum_wnds": 520000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-07-07",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100239"
+  },
+  {
+    "contract_sum_wnds": 672000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-02-26",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100240"
+  },
+  {
+    "contract_sum_wnds": 585000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-12-25",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100241"
+  },
+  {
+    "contract_sum_wnds": 882000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-06-05",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100242"
+  },
+  {
+    "contract_sum_wnds": 576000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-09-13",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100243"
+  },
+  {
+    "contract_sum_wnds": 569000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-02-27",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100244"
+  },
+  {
+    "contract_sum_wnds": 472000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-03-19",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100245"
+  },
+  {
+    "contract_sum_wnds": 451000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-05-04",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100246"
+  },
+  {
+    "contract_sum_wnds": 840000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-01-20",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100247"
+  },
+  {
+    "contract_sum_wnds": 932000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-03-16",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100248"
+  },
+  {
+    "contract_sum_wnds": 382000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-12-16",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100249"
+  },
+  {
+    "contract_sum_wnds": 164000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-05-27",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100250"
+  },
+  {
+    "contract_sum_wnds": 199000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-01-04",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100251"
+  },
+  {
+    "contract_sum_wnds": 714000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-12-13",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100252"
+  },
+  {
+    "contract_sum_wnds": 656000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-02-07",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100253"
+  },
+  {
+    "contract_sum_wnds": 697000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-01-19",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100254"
+  },
+  {
+    "contract_sum_wnds": 943000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-02-06",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100255"
+  },
+  {
+    "contract_sum_wnds": 828000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-12-02",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100256"
+  },
+  {
+    "contract_sum_wnds": 492000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-07-18",
+    "supplier_biin": "",
+    "trd_buy_number_anno": "AST-100257"
+  },
+  {
+    "contract_sum_wnds": 646000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-04-17",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100258"
+  },
+  {
+    "contract_sum_wnds": 366000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-05-02",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100259"
+  },
+  {
+    "contract_sum_wnds": 406000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-12-01",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100260"
+  },
+  {
+    "contract_sum_wnds": 607000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-10-23",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100261"
+  },
+  {
+    "contract_sum_wnds": 131000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-07-12",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100262"
+  },
+  {
+    "contract_sum_wnds": 932000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-04-05",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100263"
+  },
+  {
+    "contract_sum_wnds": 534000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-05-02",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100264"
+  },
+  {
+    "contract_sum_wnds": 495000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-07-08",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100265"
+  },
+  {
+    "contract_sum_wnds": 416000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-07-24",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100266"
+  },
+  {
+    "contract_sum_wnds": 893000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-03-13",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100267"
+  },
+  {
+    "contract_sum_wnds": 832000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-12-22",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100268"
+  },
+  {
+    "contract_sum_wnds": 679000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-07-04",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100269"
+  },
+  {
+    "contract_sum_wnds": 680000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-11-25",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100270"
+  },
+  {
+    "contract_sum_wnds": 802000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-03-15",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100271"
+  },
+  {
+    "contract_sum_wnds": 638000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-08-25",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100272"
+  },
+  {
+    "contract_sum_wnds": 527000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-05-18",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100273"
+  },
+  {
+    "contract_sum_wnds": 326000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-11-10",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100274"
+  },
+  {
+    "contract_sum_wnds": 709000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-11-12",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100275"
+  },
+  {
+    "contract_sum_wnds": 623000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-08-05",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100276"
+  },
+  {
+    "contract_sum_wnds": 956000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-06-01",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100277"
+  },
+  {
+    "contract_sum_wnds": 589000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-04-17",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100278"
+  },
+  {
+    "contract_sum_wnds": 870000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-03-15",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100279"
+  },
+  {
+    "contract_sum_wnds": 396000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-10-18",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100280"
+  },
+  {
+    "contract_sum_wnds": 596000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-11-19",
+    "supplier_biin": "",
+    "trd_buy_number_anno": "AST-100281"
+  },
+  {
+    "contract_sum_wnds": 587000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-02-09",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100282"
+  },
+  {
+    "contract_sum_wnds": 599000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-06-12",
+    "supplier_biin": "582321542445",
+    "trd_buy_number_anno": "AST-100283"
+  },
+  {
+    "contract_sum_wnds": 176000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-05-02",
+    "supplier_biin": "",
+    "trd_buy_number_anno": "AST-100284"
+  },
+  {
+    "contract_sum_wnds": 269000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-12-16",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100285"
+  },
+  {
+    "contract_sum_wnds": 895000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-04-16",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100286"
+  },
+  {
+    "contract_sum_wnds": 582000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-04-11",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100287"
+  },
+  {
+    "contract_sum_wnds": 659000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-09-06",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100288"
+  },
+  {
+    "contract_sum_wnds": 222000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-04-26",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100289"
+  },
+  {
+    "contract_sum_wnds": 313000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-12-24",
+    "supplier_biin": "472757406242",
+    "trd_buy_number_anno": "AST-100290"
+  },
+  {
+    "contract_sum_wnds": 532000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-01-10",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100291"
+  },
+  {
+    "contract_sum_wnds": 275000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-03-03",
+    "supplier_biin": "645638281731",
+    "trd_buy_number_anno": "AST-100292"
+  },
+  {
+    "contract_sum_wnds": 580000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-07-21",
+    "supplier_biin": "998291268167",
+    "trd_buy_number_anno": "AST-100293"
+  },
+  {
+    "contract_sum_wnds": 226000000,
+    "customer_bin": "320831543489",
+    "sign_date": "2025-08-19",
+    "supplier_biin": "070414369339",
+    "trd_buy_number_anno": "AST-100294"
+  },
+  {
+    "contract_sum_wnds": 994000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-09-01",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100295"
+  },
+  {
+    "contract_sum_wnds": 428000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-09-16",
+    "supplier_biin": "412979225098",
+    "trd_buy_number_anno": "AST-100296"
+  },
+  {
+    "contract_sum_wnds": 700000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-07-24",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100297"
+  },
+  {
+    "contract_sum_wnds": 916000000,
+    "customer_bin": "056284858827",
+    "sign_date": "2025-03-08",
+    "supplier_biin": "481655686567",
+    "trd_buy_number_anno": "AST-100298"
+  },
+  {
+    "contract_sum_wnds": 581000000,
+    "customer_bin": "078199987318",
+    "sign_date": "2025-12-04",
+    "supplier_biin": "578035768397",
+    "trd_buy_number_anno": "AST-100299"
+  }
+]
