@@ -1,0 +1,126 @@
+# generated: 2026-06-19T18:38:34+0500
+# last_updated: 2026-06-19T18:42:00+0500
+# project: AshyqQala.kz
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: {project-root}/_bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-06-19T18:38:34+0500
+last_updated: 2026-06-19T18:42:00+0500
+project: AshyqQala.kz
+project_key: NOKEY
+tracking_system: file-system
+story_location: "{project-root}/_bmad-output/implementation-artifacts"
+
+development_status:
+  # Epic 0: Гейт №0 и предполётная подготовка
+  epic-0: in-progress
+  0-1-токен-ows_v2-и-подтверждение-доступа-к-эндпоинтам: ready-for-dev
+  0-2-машиночитаемый-go-no-go-вердикт-stage0-audit: backlog
+  0-3-прогон-гейта-на-живых-данных-распределение-пропусков: backlog
+  0-4-предполётные-решения-идемпотентность-частичный-go-демо-схема: backlog
+  0-5-юридическая-предполётная-проверка-параллельно: backlog
+  epic-0-retrospective: optional
+
+  # Epic 1: Каркас, ядро-контракты и первый читаемый контракт-история
+  epic-1: backlog
+  1-1-монорепо-скелет-и-compose-db: backlog
+  1-2-миграция-contracts-и-sqlc-анти-churn-структура: backlog
+  1-3-cmd-api-контракт-эндпоинт-wire-форматы-openapi-url-схема: backlog
+  1-4-registry-двухосевой-enum-честных-состояний-render-каркас: backlog
+  1-5-дизайн-токены-и-две-темы: backlog
+  1-6-i18n-каркас-kz-дефолт-и-обёртки-инкапсуляторы: backlog
+  1-7-сквозная-карточка-контракта-walking-skeleton-dod: backlog
+  1-8-скелет-карта-с-pmtiles-подложкой-и-тремя-точками: backlog
+  1-9-вертикальный-срез-3-читаемых-контракта-истории-демо-фундамент: backlog
+  1-10-общие-контракты-ядра-чистые-сигнатуры-decode-на-дрейф-курация-stub-границы: backlog
+  epic-1-retrospective: optional
+
+  # Epic 2: Живые данные — импорт, нормализация, устойчивость
+  epic-2: backlog
+  2-1-живая-граница-декодирования-ows_v2-schema_hash: backlog
+  2-2-ежедневный-инкрементальный-импорт-через-v2-journal-идемпотентный: backlog
+  2-3-нормализация-наименований-к-каноническому-бин: backlog
+  2-4-атомарная-публикация-снапшота-постимпортный-хук-пересчёта: backlog
+  2-5-устойчивость-к-недоступности-источника: backlog
+  2-6-идемпотентность-импорта-и-выживание-курации-s-0-приёмка: backlog
+  2-7-transactional-outbox-loggingdispatcher: backlog
+  epic-2-retrospective: optional
+
+  # Epic 3: Публичная карта и геопривязка (масштабирование до ≥70%)
+  epic-3: backlog
+  3-1-автоматическая-геопривязка-batch-nominatim: backlog
+  3-2-полуручная-разметка-через-directus-fr-5: backlog
+  3-3-серверный-гейт-автопокрытия-geo_coverage-и-фолбэк-режим: backlog
+  3-4-карта-с-маркерами-кластерами-и-линиями-fr-7: backlog
+  3-5-превью-объекта-и-переход-в-карточку-fr-8: backlog
+  3-6-фолбэк-список-района: backlog
+  3-7-ранний-telegram-срез-подписаться-на-район-разбег-sm-3-sm-4: backlog
+  3-8-доступность-canvas-карты-a11y: backlog
+  epic-3-retrospective: optional
+
+  # Epic 4: Расчётное ядро — 4 флага риска и пересчитываемая методика (compute)
+  epic-4: backlog
+  4-1-methodology_params-иммутабельный-median-benchmark-движок: backlog
+  4-2-флаг-единственный-участник-fr-19: backlog
+  4-3-флаг-аномальная-цена-за-км-fr-20: backlog
+  4-4-флаг-монополия-в-регионе-fr-21: backlog
+  4-5-флаг-наличие-в-рну-fr-22: backlog
+  4-6-пересчитываемость-методика-данные-и-измеримость-sm-c1: backlog
+  epic-4-retrospective: optional
+
+  # Epic 5: Карточки, методика-экран, шаринг и канал об ошибке (presentation)
+  epic-5: backlog
+  5-1-полная-карточка-контракта-первоисточник-акт-активные-флаги: backlog
+  5-2-карточка-подрядчика-агрегаты-рну: backlog
+  5-3-экран-методики-флага: backlog
+  5-4-канал-сообщить-об-ошибке-полный-fr-28: backlog
+  5-5-og-шаринг-карточки-серверный-рендер: backlog
+  5-6-перманентная-ссылка-на-дату-экспорт-evidence-и-pilot-one-pager: backlog
+  5-7-per-surface-рендер-тест-нейтральности-web-og-cross-surface-snapshot: backlog
+  epic-5-retrospective: optional
+
+  # Epic 6: Поиск, фильтрация и страница района
+  epic-6: backlog
+  6-1-фильтрация-контрактов: backlog
+  6-2-поиск-по-бин-и-наименованию: backlog
+  6-3-агрегаты-района: backlog
+  6-4-медиана-км-района-и-сравнение-с-городом: backlog
+  epic-6-retrospective: optional
+
+  # Epic 7: Telegram-подписки и уведомления
+  epic-7: backlog
+  7-1-telegram-dispatcher-outbox-telegram-и-per-surface-нейтральность: backlog
+  7-2-полная-подписка-на-район-и-уведомления-о-контракте-флаге-fr-24: backlog
+  7-3-смена-района-и-отписка-fr-25: backlog
+  7-4-антифлуд-и-дайджест-fr-26: backlog
+  epic-7-retrospective: optional
