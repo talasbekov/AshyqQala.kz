@@ -116,11 +116,12 @@ func splitBins(s string) []string {
 	return out
 }
 
-// probeEndpoints печатает реальные поля первого объекта по ресурсам —
-// чтобы сверить fieldCandidates в models.go с источником данных.
+// probeEndpoints печатает реальные поля первого объекта по ресурсам — чтобы сверить
+// fieldCandidates в models.go с источником данных. Включает journal (подтверждение
+// доступа, Story 0.1 AC2) и отдельный резолв источника числа участников (FR-19).
 func probeEndpoints(src Source) {
 	fmt.Println("== Схема (probe): поля первого объекта по ресурсам ==")
-	for _, res := range []string{"contract", "lots", "trd-buy", "subject", "rnu", "acts"} {
+	for _, res := range []string{"journal", "contract", "lots", "trd-buy", "subject", "rnu", "acts"} {
 		var keys []string
 		found := false
 		err := src.Fetch(res, nil, 1, func(items []map[string]any) error {
@@ -137,6 +138,35 @@ func probeEndpoints(src Source) {
 			fmt.Printf("  %-10s поля: %s\n", res, strings.Join(keys, ", "))
 		default:
 			fmt.Printf("  %-10s (пусто или нет данных)\n", res)
+		}
+	}
+	fmt.Println()
+	resolveParticipantField(src)
+}
+
+// resolveParticipantField подтверждает ИСТОЧНИК числа участников для флага FR-19
+// «единственный участник». Это ПОЛЕ на trd-buy (резерв — lots), НЕ отдельный эндпоинт;
+// /subject — реестр юрлиц, к участникам конкретной закупки отношения не имеет. Печатает
+// имя сматченного кандидата (или сигнал, что источник не подтверждён).
+func resolveParticipantField(src Source) {
+	fmt.Println("== Резолв поля «число участников» (FR-19, флаг «единственный участник») ==")
+	for _, res := range []string{"trd-buy", "lots"} {
+		var matched, sample string
+		err := src.Fetch(res, nil, 1, func(items []map[string]any) error {
+			if len(items) > 0 {
+				if v, k, ok := getField(items[0], "participants"); ok {
+					matched, sample = k, toString(v)
+				}
+			}
+			return nil
+		})
+		switch {
+		case err != nil:
+			fmt.Printf("  %-8s ОШИБКА: %v\n", res, err)
+		case matched != "":
+			fmt.Printf("  %-8s поле числа участников: %q (пример значения: %s)\n", res, matched, sample)
+		default:
+			fmt.Printf("  %-8s кандидат не найден → источник НЕ подтверждён; добавьте имя поля в fieldCandidates[\"participants\"]\n", res)
 		}
 	}
 	fmt.Println()

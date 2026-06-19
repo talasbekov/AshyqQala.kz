@@ -10,7 +10,7 @@ import (
 
 // Source — абстракция источника данных. Реализации: ows (API по токену),
 // file (локальные дампы), scrape (публичный портал — добавляется отдельно).
-// Ресурсы: contract | lots | trd-buy | rnu | subject | acts.
+// Ресурсы: journal | contract | lots | trd-buy | rnu | subject | acts.
 type Source interface {
 	Name() string
 	Fetch(resource string, scopeBINs []string, max int, handle func(items []map[string]any) error) error
@@ -36,6 +36,12 @@ func (s owsSource) Fetch(resource string, bins []string, max int, handle func([]
 	q := url.Values{}
 	q.Set("limit", "50")
 	switch resource {
+	case "journal":
+		// /v2/journal — курсор инкрементального импорта (Epic 2, FR-1). В аудите Stage-0
+		// не нужен; здесь только для подтверждения доступа (Story 0.1, AC2). Точный
+		// контракт курсора/гранулярности/ретеншна — задача B-2 (Story 0.4), не этой истории.
+		_, err := s.c.FetchAll("/journal", q, max, wrap)
+		return err
 	case "contract":
 		if len(bins) > 0 {
 			return s.byBins("/contract/customer/", bins, max, wrap)
@@ -55,6 +61,8 @@ func (s owsSource) Fetch(resource string, bins []string, max int, handle func([]
 		_, err := s.c.FetchAll("/rnu", q, max, wrap)
 		return err
 	case "subject":
+		// /subject — РЕЕСТР субъектов (юрлиц). Это НЕ участники конкретной закупки.
+		// Число участников для флага FR-19 берётся ПОЛЕМ из trd-buy (см. models.go).
 		_, err := s.c.FetchAll("/subject", q, max, wrap)
 		return err
 	case "acts":

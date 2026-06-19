@@ -35,7 +35,10 @@ var fieldCandidates = map[string][]string{
 	"rnu_bin":       {"supplier_biin", "biin", "bin", "pid_biin"},
 	"rnu_start":     {"start_date", "date_start", "rnu_start"},
 	"rnu_end":       {"end_date", "date_end", "rnu_end"},
-	"participants":  {"count", "cnt_supplier", "offers_count", "participant_count"},
+	// participants — ЧИСЛО участников закупки (FR-19) берётся ПОЛЕМ из trd-buy, а не из
+	// отдельного эндпоинта; /subject — реестр юрлиц, к участникам закупки отношения не имеет.
+	// VERIFY: подтвердить реальное имя поля через -probe (резолв печатается отдельно).
+	"participants": {"count", "cnt_supplier", "offers_count", "participant_count"},
 }
 
 func getField(rec map[string]any, logical string) (any, string, bool) {
