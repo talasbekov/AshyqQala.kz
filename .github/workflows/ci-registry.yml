@@ -1,0 +1,22 @@
+name: ci-registry
+
+# Каркас S-0. registry/ в S-0 СПИТ (значения/флаги — Story 1.4). Наполняется перекрёстным
+# тестом (~7 осей + сторожа), doc-нейтральностью (taboo-лексикон RU/KZ), generated==regenerated.
+on:
+  # S-0: только registry/**. Перекрёстный тест (~7 осей: + server/**, web/**) включается в Story 1.4.
+  pull_request:
+    paths: ['registry/**', '.github/workflows/ci-registry.yml']
+  push:
+    branches: [main]
+    paths: ['registry/**', '.github/workflows/ci-registry.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  registry-guards:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: placeholder (наполняется в Story 1.4)
+        run: echo "registry guards scaffold — Story 1.4 (honest_states, taboo_lexicon, generated==regenerated)"

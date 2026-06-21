@@ -10,7 +10,7 @@
 
 | # | Решение | Значение | Последствие |
 |---|---|---|---|
-| Язык MVP | Язык гражданского интерфейса | **RU-интерфейс + i18n-каркас и поля `name_kz`/`name_ru` в схеме с первого дня** | KZ включается позже дёшево; правильная оптика для грантов/государства; без дорогой переделки |
+| Язык MVP | Язык гражданского интерфейса | **`[ПЕРЕОПРЕДЕЛЕНО → KZ-дефолт, EXPERIENCE.md/architecture.md]` i18n-каркас + поля `name_kk`/`name_ru` в схеме с первого дня** | Язык по умолчанию — казахский, переключатель на русский (исходно был RU-интерфейс с KZ «на потом»); поля `_kk`/`_ru` заложены без дорогой переделки |
 | Флаги | Способ фиксации порогов | **Конфигурируемые параметры (`methodology_params`) со стартовыми дефолтами** | UC-11 можно кодить сразу; значения уточняются на этапе 0 |
 | Рейтинги | Веса рейтинга (§4.2) | **Не фиксируются на MVP** — это этап 5 | Не блокер MVP; фиксируется в PRD этапа 5 |
 
@@ -18,29 +18,29 @@
 
 ## 1. Логическая модель данных MVP
 
-Центральный объект карточки проекта = **договор (`contracts`)**. Аккаунтов и ПД-контура нет (соответствует §1.9 конкурсного документа). Двуязычные поля имён — `*_ru` / `*_kz`. PostGIS — для геометрии (`geom`) и геопроверки.
+Центральный объект карточки проекта = **договор (`contracts`)**. Аккаунтов и ПД-контура нет (соответствует §1.9 конкурсного документа). Двуязычные поля имён — `*_ru` / `*_kk`. PostGIS — для геометрии (`geom`) и геопроверки.
 
 > Допущение: конкретные типы полей, индексы и точные имена полей goszakup ows_v2 уточняются на этапе проектирования БД. Ниже — логическая модель.
 
 ### A. Справочники
 | Таблица | Ключевые поля | Назначение |
 |---|---|---|
-| **districts** | `id`, `kato_code`, `name_ru`, `name_kz`, `geom`(polygon) | Районы Астаны (Алматы, Сарыарка, Есиль, Байконыр, Нура). Привязка и агрегаты |
+| **districts** | `id`, `kato_code`, `name_ru`, `name_kk`, `geom`(polygon) | Районы Астаны (Алматы, Сарыарка, Есиль, Байконыр, Нура). Привязка и агрегаты |
 | **methodology_params** | `key`, `value`, `description`, `version`, `effective_from` | Конфиг порогов флагов/медиан (раздел 2) |
 
 ### B. Организации (юрлица)
 | Таблица | Ключевые поля | Назначение |
 |---|---|---|
-| **organizations** | `id`, `bin`(uniq), `name_ru`, `name_kz`, `reg_kato`, `is_customer`, `is_supplier`, `first_seen_at`, `source_url` | Заказчики и подрядчики в одной таблице (БИН — ключ) |
+| **organizations** | `id`, `bin`(uniq), `name_ru`, `name_kk`, `reg_kato`, `is_customer`, `is_supplier`, `first_seen_at`, `source_url` | Заказчики и подрядчики в одной таблице (БИН — ключ) |
 | **org_name_aliases** | `id`, `organization_id`(FK), `raw_name`, `source`, `resolve_status`(auto/manual/conflict) | Нормализация наименований (UC-09): варианты → канонический БИН |
 
 ### C. Закупки и договоры
 | Таблица | Ключевые поля | Назначение |
 |---|---|---|
-| **announcements** (`trd_buy`) | `id`, `goszakup_id`, `title_ru`, `title_kz`, `customer_org_id`(FK), `method`, `publish_date`, `status`, `source_url` | Объявления — нужны для флага «единственный участник» |
+| **announcements** (`trd_buy`) | `id`, `goszakup_id`, `title_ru`, `title_kk`, `customer_org_id`(FK), `method`, `publish_date`, `status`, `source_url` | Объявления — нужны для флага «единственный участник» |
 | **participants** | `id`, `announcement_id`(FK), `organization_id`(FK), `is_winner` | M:N объявление↔участник; счётчик участников |
-| **lots** | `id`, `announcement_id`(FK,null), `goszakup_lot_id`, `title_ru`, `title_kz`, `amount`, `quantity`, `unit`, `kato_code` | Лоты |
-| **contracts** ⭐ | `id`, `goszakup_contract_id`, `lot_id`(FK,null), `customer_org_id`(FK), `supplier_org_id`(FK), `subject_ru`, `subject_kz`, `amount`, `sign_date`, `plan_start`, `plan_end`, `status`, `direction`(road/water/other), `kato_code`, `source_url`, `is_deleted`, `imported_at`, `updated_at` | Центральный объект карточки проекта |
+| **lots** | `id`, `announcement_id`(FK,null), `goszakup_lot_id`, `title_ru`, `title_kk`, `amount`, `quantity`, `unit`, `kato_code` | Лоты |
+| **contracts** ⭐ | `id`, `goszakup_contract_id`, `lot_id`(FK,null), `customer_org_id`(FK), `supplier_org_id`(FK), `subject_ru`, `subject_kk`, `amount`, `sign_date`, `plan_start`, `plan_end`, `status`, `direction`(road/water/other), `kato_code`, `source_url`, `is_deleted`, `imported_at`, `updated_at` | Центральный объект карточки проекта |
 | **acts** | `id`, `contract_id`(FK), `goszakup_act_id`, `act_date`, `signer_info`, `source_url` | Акты приёмки (UC-02 A1) |
 
 ### D. Геопривязка (UC-10)

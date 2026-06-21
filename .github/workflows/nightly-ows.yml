@@ -1,0 +1,20 @@
+name: nightly-ows
+
+# Дрейф схемы против ЖИВОГО ows_v2 (-probe) — алерт, НЕ блок merge. Каркас S-0:
+# требует GOSZAKUP_TOKEN (Блокер №0, Story 0.1) и реальный клиент (B-1). Пока — заглушка.
+on:
+  schedule:
+    - cron: '0 2 * * *' # 02:00 UTC ежедневно
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  schema-drift:
+    runs-on: ubuntu-latest
+    if: false # активируется после получения GOSZAKUP_TOKEN и B-1 (снапшот контракта ows_v2)
+    steps:
+      - uses: actions/checkout@v4
+      - name: probe ows_v2 (drift)
+        run: echo "nightly ows_v2 schema-drift probe — активируется в B-1"

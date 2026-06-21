@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AshyqQala.kz — Telegram-бот (путь Ержана)</title>
+<style>
+/* ============================================================================
+   key-telegram-bot.html — TELEGRAM-БОТ (отдельная поверхность, путь Ержана).
+   Личность: Направление B; палитра Тема 4, применённая к интерфейсу чата бота.
+   Слева — светлая, справа — тёмная тема одного и того же диалога.
+   Это НЕ веб-SPA: своя поверхность (Foundation), но визуальная идентичность —
+   те же токены DESIGN.md (флаг-бейдж нейтральный амбер, source-link, ✓).
+
+   КАКИЕ СЕКЦИИ СПАЙНОВ УПРАВЛЯЮТ ЭТИМ ЭКРАНОМ:
+   • EXPERIENCE.md → Foundation / IA: Telegram-бот — самостоятельная поверхность
+        (подписка на район, пуш о новом контракте/флаге, смена/отписка, дайджест)
+   • EXPERIENCE.md → Responsive & Platform → «Telegram-бот как поверхность»:
+        ПУШ/ДАЙДЖЕСТ С ФЛАГОМ ОБЯЗАН НЕСТИ (FR-23, §7.1): нейтральную формулировку
+        с суффиксом «сигнал, требующий проверки», ссылку «Как это посчитано»
+        (методика/пересчёт), ссылку на первоисточник goszakup и deep-link на форму
+        «Сообщить об ошибке». Голое утверждение о лице запрещено.
+   • EXPERIENCE.md → «Правило достижимости защитных связей» (флаг доходит до третьих
+        лиц → рядом методика + канал «Сообщить об ошибке»)
+   • EXPERIENCE.md → Key Flows → Flow 2 (Ержан): открыть бот → выбрать район (Есіл) →
+        подтверждение подписки → пуш «Жаңа келісімшарт» → антифлуд-дайджест → смена
+        района/отписка одной командой
+   • EXPERIENCE.md → Voice and Tone: микрокопия бота KZ дефолт + RU; «Қалай есептелді ↗
+        · Бастапқы дереккөз ↗ · Қате туралы хабарлау» подпись под флагом
+   • DESIGN.md → Colors/Components: {flag-badge} амбер + глиф «!», {source-link}
+        link-on-sunken, {lang-switch}, {theme-switch}
+
+   ГАРДРЕЙЛ: бейдж флага в пуше несёт суффикс «сигнал, требующий проверки» + путь к
+   методике (FR-23) + первоисточник + «Сообщить об ошибке». Нейтральный амбер, не алый.
+   Запрещены «нарушение/коррупция/виновен/монополия».
+   ============================================================================ */
+
+:root {
+  --primary:#1496C0; --primary-strong:#0F7DA3; --primary-soft:#DCEFF6; --on-primary:#FFFFFF;
+  --accent:#F0B429; --accent-soft:#FBEFC9; --on-accent:#16242C;
+  --signal:#E09915; --signal-bg:#FFF6E0; --signal-fg:#7A560D; --signal-border:#F2D58C;
+  --confirmed:#2C8C7A; --confirmed-text:#1F7A6B; --confirmed-soft:#D7EEE8;
+  --muted:#8893A0; --muted-text:#5A6672; --muted-soft:#EBEFF2;
+  --surface:#FFFFFF; --sunken:#EEF6F9; --border:#D2E4EC;
+  --ink:#16242C; --ink2:#4E5E69;
+  --link:#0F7DA3; --link-sunken:#0C6585; --focus:#0C6585;
+  --chat-bg:#EEF6F9;            /* фон чата (sunken «воздух степи») */
+  --bot-bubble:#FFFFFF;         /* пузырь бота — surface */
+  --user-bubble:#DCEFF6;        /* пузырь пользователя — primary-soft */
+  --user-ink:#16242C;
+}
+[data-theme="dark"] {
+  --primary:#3BB3D6; --primary-strong:#5FC6E3; --primary-soft:#173A47; --on-primary:#06222B;
+  --accent:#F5C14E; --accent-soft:#3A2E12; --on-accent:#16242C;
+  --signal:#E8A93A; --signal-bg:#33280F; --signal-fg:#F0CE82; --signal-border:#5C4A1E;
+  --confirmed:#3FB39C; --confirmed-text:#3FB39C; --confirmed-soft:#16352F;
+  --muted:#6B7785; --muted-text:#9AA6B2; --muted-soft:#1E2C34;
+  --surface:#16242C; --sunken:#0E1A21; --border:#2A3D47;
+  --ink:#EAF1F4; --ink2:#AAB8C0;
+  --link:#56C0E0; --link-sunken:#5BC4E4; --focus:#5FC6E3;
+  --chat-bg:#0E1A21; --bot-bubble:#16242C; --user-bubble:#173A47; --user-ink:#EAF1F4;
+}
+* { box-sizing:border-box; }
+html,body { margin:0; }
+body { font-family:"Inter","Segoe UI",Roboto,"Helvetica Neue",Arial,system-ui,sans-serif;
+  background:#cbd6dd; color:var(--ink); line-height:1.45; padding:24px 14px 56px; -webkit-font-smoothing:antialiased; }
+@media (prefers-reduced-motion: reduce){ *{ transition:none!important; animation:none!important; } }
+
+.wrap { max-width:840px; margin:0 auto; }
+.doc-h1 { font-size:22px; margin:0 0 4px; letter-spacing:-.01em; color:#0e2630; }
+.doc-p  { font-size:13px; margin:0 0 18px; color:#3c4a53; max-width:710px; }
+.cols { display:grid; gap:28px; grid-template-columns:repeat(2,minmax(330px,1fr)); }
+@media (max-width:780px){ .cols{ grid-template-columns:1fr; max-width:400px; margin:0 auto; } }
+.col-cap { font-size:11px; letter-spacing:.12em; text-transform:uppercase; font-weight:700; color:#0e2630; margin:0 0 8px; }
+.col-sub { font-size:12px; color:#3c4a53; margin:0 0 12px; }
+
+.phone { width:100%; max-width:372px; margin:0 auto; background:#0c1a22;
+  border-radius:38px; padding:10px; box-shadow:0 18px 40px rgba(12,26,34,.30); }
+.screen { position:relative; overflow:hidden; border-radius:30px; background:var(--chat-bg);
+  height:860px; display:flex; flex-direction:column; }
+.notch { position:absolute; top:0; left:50%; transform:translateX(-50%);
+  width:128px; height:22px; background:#0c1a22; border-radius:0 0 16px 16px; z-index:60; }
+.statusbar { height:30px; display:flex; align-items:center; justify-content:space-between;
+  padding:0 22px 0 20px; font-size:12px; font-weight:600; color:var(--ink); background:var(--surface); z-index:30; }
+
+/* шапка чата бота (телеграм-стиль, но в палитре Темы 4) */
+.botbar { background:var(--surface); border-bottom:1px solid var(--border); padding:7px 12px;
+  display:flex; align-items:center; gap:10px; }
+.iconbtn { width:34px; height:34px; min-width:34px; border-radius:9px; border:1px solid transparent;
+  background:transparent; color:var(--ink); display:grid; place-items:center; cursor:default; }
+.iconbtn:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+.avatar { width:36px; height:36px; border-radius:50%; background:var(--primary); color:var(--on-primary);
+  display:grid; place-items:center; font-weight:800; font-size:15px; flex:none; }
+.botname { font-weight:700; font-size:14px; line-height:1.1; }
+.botname small { display:block; font-size:10.5px; color:var(--confirmed-text); font-weight:600; margin-top:1px; }
+.head-ctrls { margin-left:auto; display:flex; align-items:center; gap:6px; }
+.lang { display:inline-flex; background:var(--sunken); border:1px solid var(--border); border-radius:999px; overflow:hidden; }
+.lang button { min-width:32px; min-height:30px; border:none; background:transparent; font-size:9.5px; font-weight:700; letter-spacing:.1em; color:var(--ink2); cursor:default; padding:0 7px; }
+.lang button.on { background:var(--primary); color:var(--on-primary); }
+.lang button:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+.theme { min-width:34px; min-height:30px; border-radius:999px; border:1px solid var(--border); background:var(--sunken); color:var(--ink2); display:grid; place-items:center; cursor:default; }
+.theme:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+
+/* лента сообщений */
+.thread { flex:1; overflow-y:auto; padding:14px 12px 8px; display:flex; flex-direction:column; gap:10px; }
+.daysep { align-self:center; font-size:10.5px; color:var(--muted-text); background:var(--muted-soft);
+  border:1px solid var(--border); border-radius:999px; padding:3px 11px; margin:2px 0; }
+
+/* пузыри */
+.msg { max-width:86%; }
+.msg.bot { align-self:flex-start; }
+.msg.user { align-self:flex-end; }
+.bubble { border-radius:14px; padding:10px 12px; font-size:13px; line-height:1.4; }
+.msg.bot .bubble { background:var(--bot-bubble); border:1px solid var(--border); border-top-left-radius:5px;
+  color:var(--ink); box-shadow:0 2px 8px rgba(22,36,44,.06); }
+[data-theme="dark"] .msg.bot .bubble { box-shadow:none; }
+.msg.user .bubble { background:var(--user-bubble); color:var(--user-ink); border-top-right-radius:5px; }
+.bubble .ru { display:block; color:var(--muted-text); font-size:11.5px; margin-top:2px; }
+.bubble .time { display:block; font-size:9.5px; color:var(--muted-text); text-align:right; margin-top:4px; }
+
+/* выбор района — inline-кнопки бота */
+.kb { display:flex; flex-wrap:wrap; gap:6px; margin-top:9px; }
+.kb button { min-height:34px; padding:7px 12px; border-radius:999px; border:1px solid var(--border);
+  background:var(--sunken); color:var(--ink); font-size:12px; font-weight:600; cursor:default; }
+.kb button.on { background:var(--chip-sel,#0C6585); border-color:var(--chip-sel,#0C6585); color:#fff; }
+[data-theme="dark"] .kb button.on { background:var(--primary); border-color:var(--primary); color:var(--on-primary); }
+.kb button.on::before { content:"✓ "; font-weight:800; }
+.kb button:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+
+/* подтверждение подписки */
+.confirm-line { display:inline-flex; align-items:center; gap:6px; font-size:11px; color:var(--confirmed-text);
+  background:var(--confirmed-soft); border-radius:999px; padding:3px 10px; margin-top:6px; }
+.confirm-line .ck { color:var(--confirmed); font-weight:800; }
+
+/* карточка пуш-уведомления внутри пузыря */
+.push { margin-top:2px; }
+.push .ptag { display:inline-block; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--primary); font-weight:700; }
+.push .ptitle { font-size:13px; font-weight:700; line-height:1.3; margin:3px 0 4px; }
+.push .pmeta { font-size:12px; }
+.push .pmeta b { color:var(--primary-strong); font-weight:800; }
+.push .pmeta .row { margin-top:2px; }
+
+/* бейдж флага в пуше ({flag-badge}) — нейтральный амбер + «!» + суффикс */
+.pflag { display:flex; align-items:flex-start; gap:8px; background:var(--signal-bg);
+  border:1px solid var(--signal-border); border-radius:10px; padding:9px 10px; margin:9px 0 0; }
+.pflag .d { width:18px; height:18px; flex:none; border-radius:50%; background:var(--signal);
+  color:var(--on-accent); display:grid; place-items:center; font-size:12px; font-weight:800; margin-top:1px; }
+.pflag .t { font-size:12px; font-weight:600; color:var(--signal-fg); line-height:1.3; }
+.pflag .t .sfx { font-weight:400; }
+.pflag .t .ru { display:block; font-weight:400; color:var(--muted-text); font-size:10.5px; margin-top:2px; }
+
+/* защитная подпись под флагом (FR-23): методика + первоисточник + об ошибке */
+.guard { display:flex; flex-wrap:wrap; gap:5px 12px; margin:9px 0 0; padding-top:8px; border-top:1px solid var(--border); }
+.guard a { font-size:11px; font-weight:600; color:var(--link-sunken); text-decoration:underline; text-underline-offset:2px; }
+.guard a:focus-visible { outline:2px solid var(--focus); outline-offset:2px; border-radius:3px; }
+
+/* deep-link «открыть карточку» */
+.openlink { display:inline-flex; align-items:center; gap:6px; margin-top:9px; font-size:12px; font-weight:700;
+  color:var(--link-sunken); text-decoration:underline; text-underline-offset:2px; }
+.openlink:focus-visible { outline:2px solid var(--focus); outline-offset:2px; border-radius:3px; }
+
+/* дайджест — несколько событий одним сообщением (антифлуд) */
+.digest .dh { font-size:12.5px; font-weight:700; margin-bottom:2px; }
+.digest .ditem { display:flex; gap:8px; padding:8px 0; border-top:1px solid var(--border); }
+.digest .ditem:first-of-type { border-top:none; }
+.digest .dn { color:var(--ink2); font-size:11px; font-weight:700; flex:none; width:16px; text-align:right; }
+.digest .dc { flex:1; min-width:0; }
+.digest .dc .dt { font-size:12px; font-weight:600; line-height:1.3; }
+.digest .dc .dm { font-size:11px; color:var(--ink2); margin-top:1px; }
+.digest .dc .dm b { color:var(--primary-strong); }
+.digest .dc .dm .fdot { color:var(--signal); font-weight:800; }
+.digest .dc .dlinks { margin-top:4px; display:flex; flex-wrap:wrap; gap:4px 12px; }
+.digest .dc .dlinks a { font-size:10.5px; font-weight:600; color:var(--link-sunken); text-decoration:underline; text-underline-offset:2px; }
+.digest .dfoot { margin-top:8px; padding-top:8px; border-top:1px solid var(--border); font-size:10.5px; color:var(--muted-text); }
+
+/* нижняя командная строка (smene/otpiska) */
+.cmdbar { background:var(--surface); border-top:1px solid var(--border); padding:9px 12px; }
+.cmds { display:flex; gap:7px; }
+.cmd { flex:1; min-height:40px; display:flex; align-items:center; justify-content:center; gap:5px;
+  border-radius:10px; border:1px solid var(--border); background:var(--sunken); color:var(--ink);
+  font-size:11.5px; font-weight:600; cursor:default; text-align:center; line-height:1.2; }
+.cmd:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+.cmd .sl { font-family:ui-monospace,"SF Mono","Roboto Mono",Menlo,Consolas,monospace; font-size:10px; color:var(--ink2); }
+.cmd-hint { font-size:10px; color:var(--muted-text); text-align:center; margin:7px 0 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 class="doc-h1">key-telegram-bot.html — Telegram-бот (путь Ержана)</h1>
+  <p class="doc-p">Чат бота: выбор района (Есіл) → подтверждение подписки → пуш «Жаңа келісімшарт / Новый контракт» (су құбыры, 240 млн ₸, мердігер) со ссылкой на карточку И «Как это посчитано» при флаге →
+  антифлуд-дайджест (несколько событий одним сообщением). Команды смены района/отписки внизу. Бейдж флага в пуше несёт суффикс «сигнал, требующий проверки» + путь к методике (FR-23) + первоисточник + «Сообщить об ошибке».
+  Слева — светлая, справа — тёмная тема того же диалога.</p>
+
+  <div class="cols">
+    <!-- ===================== СВЕТЛАЯ ТЕМА ===================== -->
+    <div>
+      <p class="col-cap">A · Светлая тема</p>
+      <p class="col-sub">Выбор района → подтверждение → одиночный пуш с флагом (защитная подпись FR-23) + deep-link на карточку.</p>
+      <div class="phone">
+        <div class="screen" data-theme="light">
+          <div class="notch"></div>
+          <div class="statusbar"><span>9:41</span><span>5G &nbsp;84%</span></div>
+
+          <div class="botbar">
+            <button class="iconbtn" aria-label="Артқа / Назад">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <div class="avatar" aria-hidden="true">AQ</div>
+            <div class="botname">AshyqQala bot<small>хабарлама / уведомления қосулы</small></div>
+            <div class="head-ctrls">
+              <div class="lang" role="group" aria-label="Тіл / Язык">
+                <button class="on" aria-pressed="true" lang="kk">KZ</button>
+                <button aria-pressed="false" lang="ru">RU</button>
+              </div>
+              <button class="theme" aria-label="Тема: жарық / тёмная">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="thread">
+            <div class="daysep">Бүгін / Сегодня</div>
+
+            <!-- бот: выбор района -->
+            <div class="msg bot">
+              <div class="bubble">
+                Сәлем! Қай ауданға жазылғыңыз келеді? Сол ауданда жаңа келісімшарт пайда болғанда хабарлаймын.
+                <span class="ru" lang="ru">Привет! На какой район подписать? Сообщу, когда там появится новый контракт.</span>
+                <div class="kb" role="group" aria-label="Аудан таңдау / Выбор района">
+                  <button>Алматы а.</button>
+                  <button>Сарыарқа а.</button>
+                  <button class="on" aria-pressed="true">Есіл а.</button>
+                  <button>Байқоңыр а.</button>
+                  <button>Нұра а.</button>
+                </div>
+                <span class="time">9:32</span>
+              </div>
+            </div>
+
+            <!-- пользователь выбрал -->
+            <div class="msg user">
+              <div class="bubble">Есіл ауданы<span class="time">9:32</span></div>
+            </div>
+
+            <!-- бот: подтверждение подписки -->
+            <div class="msg bot">
+              <div class="bubble">
+                Дайын! Сіз <b>Есіл ауданына</b> жазылдыңыз.
+                <span class="ru" lang="ru">Готово! Вы подписаны на Есильский район.</span>
+                <span class="confirm-line"><span class="ck" aria-hidden="true">✓</span> Жазылым белсенді / Подписка активна</span>
+                <span class="time">9:32</span>
+              </div>
+            </div>
+
+            <!-- бот: пуш о новом контракте с флагом -->
+            <div class="msg bot">
+              <div class="bubble">
+                <div class="push">
+                  <span class="ptag">🔔 Жаңа келісімшарт <span lang="ru" style="text-transform:none;letter-spacing:0;color:var(--ink2)">/ Новый контракт</span></span>
+                  <div class="ptitle" lang="ru">Водопровод по ул. Жұбанов, Есильский р-н</div>
+                  <div class="pmeta">
+                    <div class="row">Бағыты: <b>су құбыры</b> <span lang="ru" style="color:var(--ink2)">/ водоснабжение</span></div>
+                    <div class="row">Сома: <b>240 млн ₸</b> <span lang="ru" style="color:var(--ink2)">/ сумма</span></div>
+                    <div class="row" lang="ru">Мердігер: ТОО «Сарыарка Су Курылыс»</div>
+                  </div>
+
+                  <!-- бейдж флага: суффикс «сигнал, требующий проверки» + «!» -->
+                  <div class="pflag">
+                    <span class="d" aria-hidden="true">!</span>
+                    <span class="t">Хабарландыруда бір қатысушы тіркелген — <span class="sfx">тексеруді талап ететін сигнал</span>
+                      <span class="ru" lang="ru">В объявлении зафиксирован один участник — сигнал, требующий проверки</span>
+                    </span>
+                  </div>
+
+                  <!-- защитная подпись FR-23: методика + первоисточник + об ошибке -->
+                  <div class="guard">
+                    <a href="#">Қалай есептелді ↗ <span lang="ru" style="opacity:.85">/ Как посчитано</span></a>
+                    <a href="#" rel="noopener">Бастапқы дереккөз ↗ <span lang="ru" style="opacity:.85">/ Первоисточник</span></a>
+                    <a href="#" lang="ru">Қате туралы хабарлау / Сообщить об ошибке</a>
+                  </div>
+
+                  <a class="openlink" href="#">Карточканы ашу / Открыть карточку →</a>
+                </div>
+                <span class="time">11:08</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- командная строка: смена района / отписка -->
+          <div class="cmdbar">
+            <div class="cmds">
+              <button class="cmd">Ауданды ауыстыру<br><span class="sl" lang="ru">/смена · /district</span></button>
+              <button class="cmd">Жазылымнан бас тарту<br><span class="sl" lang="ru">/отписка · /unsubscribe</span></button>
+            </div>
+            <p class="cmd-hint">Команда арқылы ауданды қалаған кезде өзгертуге болады. <span lang="ru">Район можно сменить командой в любой момент.</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== ТЁМНАЯ ТЕМА: антифлуд-дайджест ===================== -->
+    <div>
+      <p class="col-cap">B · Тёмная тема — антифлуд-дайджест</p>
+      <p class="col-sub">При всплеске событий бот шлёт не поток, а одну сводку: 4 события одним сообщением. Флаговое событие несёт суффикс + путь к методике; смена района/отписка — внизу.</p>
+      <div class="phone">
+        <div class="screen" data-theme="dark">
+          <div class="notch"></div>
+          <div class="statusbar"><span>9:41</span><span>5G &nbsp;84%</span></div>
+
+          <div class="botbar">
+            <button class="iconbtn" aria-label="Артқа / Назад">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <div class="avatar" aria-hidden="true">AQ</div>
+            <div class="botname">AshyqQala bot<small>Есіл а. · хабарлама қосулы</small></div>
+            <div class="head-ctrls">
+              <div class="lang" role="group" aria-label="Тіл / Язык">
+                <button class="on" aria-pressed="true" lang="kk">KZ</button>
+                <button aria-pressed="false" lang="ru">RU</button>
+              </div>
+              <button class="theme" aria-label="Тема: тёмная / жарық">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="thread">
+            <div class="daysep">Бүгін / Сегодня</div>
+
+            <!-- бот: антифлуд-дайджест одним сообщением -->
+            <div class="msg bot" style="max-width:94%">
+              <div class="bubble">
+                <div class="digest">
+                  <div class="dh">📋 Есіл ауданы бойынша күндік дайджест <span class="ru" lang="ru" style="display:block;color:var(--muted-text);font-size:11px;font-weight:400;margin-top:1px">Дайджест за день по Есильскому р-ну — 4 события</span></div>
+
+                  <div class="ditem">
+                    <span class="dn">1.</span>
+                    <span class="dc">
+                      <span class="dt" lang="ru">Водопровод по ул. Жұбанов</span>
+                      <span class="dm">су / вода · <b>240 млн ₸</b> · <span class="fdot" aria-hidden="true">!</span> бір қатысушы / один участник — тексеруді талап ететін сигнал</span>
+                      <span class="dlinks">
+                        <a href="#">Қалай есептелді ↗</a>
+                        <a href="#" rel="noopener">Дереккөз ↗</a>
+                        <a href="#" lang="ru">Қате туралы хабарлау</a>
+                        <a href="#">Карточка →</a>
+                      </span>
+                    </span>
+                  </div>
+
+                  <div class="ditem">
+                    <span class="dn">2.</span>
+                    <span class="dc">
+                      <span class="dt" lang="ru">Ремонт дороги пр. Сарыарка</span>
+                      <span class="dm">жол / дорога · <b>175 млн ₸</b> · сигналсыз / без флага</span>
+                      <span class="dlinks">
+                        <a href="#" rel="noopener">Дереккөз ↗</a>
+                        <a href="#">Карточка →</a>
+                      </span>
+                    </span>
+                  </div>
+
+                  <div class="ditem">
+                    <span class="dn">3.</span>
+                    <span class="dc">
+                      <span class="dt" lang="ru">Реконструкция сетей водоснабжения</span>
+                      <span class="dm">су / вода · <b>312 млн ₸</b> · <span class="fdot" aria-hidden="true">!</span> шақырым құны жоғары / цена за км — тексеруді талап ететін сигнал</span>
+                      <span class="dlinks">
+                        <a href="#">Қалай есептелді ↗</a>
+                        <a href="#" rel="noopener">Дереккөз ↗</a>
+                        <a href="#" lang="ru">Қате туралы хабарлау</a>
+                        <a href="#">Карточка →</a>
+                      </span>
+                    </span>
+                  </div>
+
+                  <div class="ditem">
+                    <span class="dn">4.</span>
+                    <span class="dc">
+                      <span class="dt" lang="ru">Содержание автодорог Есильского р-на</span>
+                      <span class="dm">жол / дорога · <b>98 млн ₸</b> · сигналсыз / без флага</span>
+                      <span class="dlinks">
+                        <a href="#" rel="noopener">Дереккөз ↗</a>
+                        <a href="#">Карточка →</a>
+                      </span>
+                    </span>
+                  </div>
+
+                  <div class="dfoot">Ағынның орнына бір жинақы хабарлама. <span lang="ru">Вместо потока — одна сводка (антифлуд). Каждый сигнал — «требующий проверки», не обвинение.</span></div>
+                </div>
+                <span class="time" style="display:block;font-size:9.5px;color:var(--muted-text);text-align:right;margin-top:4px">19:00</span>
+              </div>
+            </div>
+
+            <!-- пользователь меняет район командой -->
+            <div class="msg user">
+              <div class="bubble">/смена<span class="time">19:14</span></div>
+            </div>
+            <div class="msg bot">
+              <div class="bubble">
+                Жаңа ауданды таңдаңыз: <span class="ru" lang="ru">Выберите новый район:</span>
+                <div class="kb" role="group" aria-label="Жаңа аудан / Новый район">
+                  <button>Алматы а.</button>
+                  <button>Сарыарқа а.</button>
+                  <button class="on" aria-pressed="true">Есіл а.</button>
+                  <button>Байқоңыр а.</button>
+                  <button>Нұра а.</button>
+                </div>
+                <span class="time">19:14</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="cmdbar">
+            <div class="cmds">
+              <button class="cmd">Ауданды ауыстыру<br><span class="sl" lang="ru">/смена · /district</span></button>
+              <button class="cmd">Жазылымнан бас тарту<br><span class="sl" lang="ru">/отписка · /unsubscribe</span></button>
+            </div>
+            <p class="cmd-hint">Бір команда — бір қадам: ауысу немесе бас тарту. <span lang="ru">Одна команда — смена или отписка.</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

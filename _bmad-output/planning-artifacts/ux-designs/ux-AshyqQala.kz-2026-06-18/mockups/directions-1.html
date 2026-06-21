@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AshyqQala.kz — Дизайн-направления (вариант 1)</title>
+<style>
+/* ============================================================================
+   AshyqQala.kz — 3 визуальных НАПРАВЛЕНИЯ (side-by-side для сравнения).
+   ОДИН главный экран (карта Астаны + превью объекта + нижний лист контракта),
+   три РАЗНЫЕ визуальные личности. Палитра у всех ОДНА (Тема 4 «Открытый город»).
+   Различие = плотность, типографика, радиус/форма, орнамент, движение, регистр.
+
+   ГАРДРЕЙЛ: флаг = НЕЙТРАЛЬНЫЙ амбер «сигнал, требующий проверки».
+   Тревожно-алый запрещён. Светофор к флагам не применяется.
+   Состояния данных честные: «нет данных», «недостаточно сопоставимых данных».
+   ----------------------------------------------------------------------------
+   ЕДИНАЯ ПАЛИТРА (Тема 4 «Открытый город / Баланс»):
+     primary  (голубой)        #1496C0    on-primary  #FFFFFF
+     accent   (золото)         #F0B429
+     signal-attention (флаг)   #E09915    ← нейтральный амбер
+     confirmed / verified      #2C8C7A    (спокойный сине-зелёный)
+     muted / no-data           #8893A0
+     link                      #0F7DA3
+     surface                   #FFFFFF
+     background                #EEF6F9
+     border                    #D2E4EC
+     text-primary              #16242C
+     text-secondary            #4E5E69
+   ============================================================================ */
+
+:root {
+  /* единые токены палитры (HEX продублированы в комментариях выше) */
+  --primary:        #1496C0;
+  --primary-dk:     #0F7DA3;   /* затемнённый голубой для градиентов карты */
+  --primary-soft:   #DCEFF6;   /* светлая заливка из голубого */
+  --on-primary:     #FFFFFF;
+  --accent:         #F0B429;   /* золото */
+  --accent-soft:    #FBEFC9;
+  --flag:           #E09915;   /* signal-attention, нейтральный амбер */
+  --flag-soft:      #FBEBCF;
+  --flag-ink:       #6B4A07;
+  --confirmed:      #2C8C7A;   /* verified */
+  --confirmed-soft: #D7EEE8;
+  --muted:          #8893A0;   /* no-data */
+  --muted-soft:     #EBEFF2;
+  --surface:        #FFFFFF;
+  --bg:             #EEF6F9;
+  --border:         #D2E4EC;
+  --ink:            #16242C;   /* text-primary */
+  --ink2:           #4E5E69;   /* text-secondary */
+  --link:           #0F7DA3;
+
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+               Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.45;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #e4ebf0;
+  color: var(--ink);
+  padding: 26px 16px 64px;
+}
+
+/* ---------- страница ---------- */
+.page-head { max-width: 1320px; margin: 0 auto 18px; }
+.page-head h1 { font-size: 23px; margin: 0 0 6px; letter-spacing: -.01em; }
+.page-head p { margin: 0; color: #46535d; font-size: 14px; max-width: 940px; }
+.guardrail {
+  margin: 14px auto 0; max-width: 1320px;
+  background: #fff8e6; border: 1px solid #f1d27a; border-left: 4px solid #e09915;
+  border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #5a4a12;
+}
+.palette-strip {
+  max-width: 1320px; margin: 12px auto 0; display: flex; flex-wrap: wrap;
+  gap: 6px; align-items: center; font-size: 11px; color: #46535d;
+}
+.palette-strip .chip {
+  display: inline-flex; align-items: center; gap: 6px; background: #fff;
+  border: 1px solid var(--border); border-radius: 20px; padding: 3px 9px 3px 4px;
+}
+.palette-strip .dot { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,.08); }
+
+.dirs {
+  max-width: 1320px; margin: 22px auto 0;
+  display: grid; gap: 26px;
+  grid-template-columns: repeat(3, minmax(330px, 1fr));
+}
+@media (max-width: 1180px) { .dirs { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 800px)  { .dirs { grid-template-columns: 1fr; max-width: 420px; } }
+
+/* ---------- колонка направления ---------- */
+.dir { display: flex; flex-direction: column; }
+.dir-head { margin-bottom: 14px; }
+.dir-head .tag {
+  font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--primary); font-weight: 700;
+}
+.dir-head h2 { font-size: 19px; margin: 3px 0 6px; }
+.dir-head .rationale { font-size: 13px; color: var(--ink2); line-height: 1.5; margin: 0; }
+.dir-head .traits {
+  margin: 9px 0 0; font-size: 11px; color: var(--muted);
+  display: flex; flex-wrap: wrap; gap: 5px;
+}
+.dir-head .traits span {
+  background: var(--muted-soft); border-radius: 5px; padding: 2px 7px;
+}
+
+/* ---------- мобильная рамка ---------- */
+.phone {
+  width: 100%; max-width: 372px; margin: 0 auto;
+  background: #0c1a22;            /* «корпус» телефона */
+  border-radius: 38px; padding: 10px;
+  box-shadow: 0 18px 40px rgba(12,26,34,.30), 0 2px 6px rgba(12,26,34,.20);
+}
+.screen {
+  position: relative; overflow: hidden;
+  border-radius: 30px; background: var(--bg);
+  height: 760px; display: flex; flex-direction: column;
+}
+.notch {
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 130px; height: 24px; background: #0c1a22;
+  border-radius: 0 0 16px 16px; z-index: 40;
+}
+.statusbar {
+  height: 30px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px; font-size: 12px; font-weight: 600; color: var(--ink);
+  background: var(--surface); z-index: 30;
+}
+.statusbar .net { letter-spacing: .04em; }
+
+/* =========================================================================
+   ОБЩИЕ строительные блоки экрана (карта, маркеры, превью, лист).
+   Все три направления переопределяют их характер через классы .A / .B / .C.
+   ========================================================================= */
+
+/* --- topbar / поиск --- */
+.topbar {
+  position: relative; z-index: 25;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand .mark {
+  width: 26px; height: 26px; border-radius: 7px;
+  background: var(--primary); color: #fff; display: grid; place-items: center;
+  font-weight: 800; font-size: 13px;
+}
+.brand .name { font-weight: 700; font-size: 14px; letter-spacing: -.01em; }
+.brand .name small { color: var(--ink2); font-weight: 500; font-size: 11px; display: block; line-height: 1; margin-top: 1px; }
+.search {
+  flex: 1; display: flex; align-items: center; gap: 7px;
+  background: var(--bg); border: 1px solid var(--border);
+  padding: 7px 10px; color: var(--ink2); font-size: 12.5px;
+}
+.search svg { flex: none; }
+
+/* --- карта --- */
+.map { position: relative; flex: 1; overflow: hidden; background:
+  linear-gradient(135deg, #dcecf2 0%, #e7f2f6 40%, #e2eef4 100%); }
+.map .grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(20,150,192,.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20,150,192,.07) 1px, transparent 1px);
+  background-size: 46px 46px;
+}
+/* река Ишим — мягкая диагональ */
+.map .river {
+  position: absolute; left: -10%; top: 38%; width: 130%; height: 90px;
+  background: linear-gradient(180deg, rgba(20,150,192,.20), rgba(20,150,192,.10));
+  transform: rotate(-13deg); filter: blur(1px);
+}
+/* дорога-полилиния (объект) */
+.map .road {
+  position: absolute; left: 16%; top: 26%; width: 64%; height: 230px;
+}
+.map .road svg { width: 100%; height: 100%; overflow: visible; }
+/* маркеры */
+.mk {
+  position: absolute; transform: translate(-50%, -100%);
+  display: flex; flex-direction: column; align-items: center; z-index: 6;
+}
+.mk .pin {
+  width: 26px; height: 26px; border-radius: 50% 50% 50% 2px;
+  transform: rotate(45deg);
+  background: var(--primary); border: 2px solid #fff;
+  box-shadow: 0 3px 6px rgba(12,26,34,.30);
+}
+.mk .pin.flagged { background: var(--flag); }
+.mk.sel .pin { background: var(--accent); width: 30px; height: 30px; }
+.mk .dotlabel {
+  margin-top: 6px; background: #fff; border: 1px solid var(--border);
+  font-size: 10px; padding: 1px 6px; border-radius: 10px; white-space: nowrap;
+  color: var(--ink); box-shadow: 0 1px 3px rgba(12,26,34,.12);
+}
+
+/* всплывающее превью при тапе */
+.tip {
+  position: absolute; z-index: 12; background: var(--surface);
+  border: 1px solid var(--border); box-shadow: 0 10px 24px rgba(12,26,34,.22);
+  padding: 10px 11px; width: 210px;
+}
+.tip .t-sub { font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--primary); font-weight: 700; }
+.tip .t-title { font-size: 13px; font-weight: 700; margin: 2px 0 5px; line-height: 1.25; }
+.tip .t-row { font-size: 11.5px; color: var(--ink2); display: flex; justify-content: space-between; gap: 8px; }
+.tip .t-sum { color: var(--ink); font-weight: 700; }
+.tip .t-btn {
+  margin-top: 9px; display: block; text-align: center; background: var(--primary);
+  color: #fff; font-size: 11.5px; font-weight: 600; padding: 7px; text-decoration: none;
+}
+.tip .t-arrow {
+  position: absolute; bottom: -7px; left: 26px; width: 14px; height: 14px;
+  background: var(--surface); border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border); transform: rotate(45deg);
+}
+
+/* зум-контролы карты */
+.zoom {
+  position: absolute; right: 12px; bottom: 16px; z-index: 8;
+  display: flex; flex-direction: column; background: var(--surface);
+  border: 1px solid var(--border); box-shadow: 0 3px 8px rgba(12,26,34,.18);
+}
+.zoom button {
+  width: 34px; height: 34px; border: none; background: transparent;
+  font-size: 17px; color: var(--ink); cursor: default;
+}
+.zoom button + button { border-top: 1px solid var(--border); }
+.fab-loc {
+  position: absolute; right: 12px; bottom: 92px; z-index: 8;
+  width: 34px; height: 34px; background: var(--surface); border: 1px solid var(--border);
+  display: grid; place-items: center; box-shadow: 0 3px 8px rgba(12,26,34,.18);
+}
+
+/* --- нижний лист контракта --- */
+.sheet {
+  position: relative; z-index: 20; background: var(--surface);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -8px 22px rgba(12,26,34,.12);
+  padding: 10px 14px 14px;
+}
+.sheet .handle {
+  width: 38px; height: 4px; border-radius: 3px; background: var(--border);
+  margin: 0 auto 10px;
+}
+.c-sub { font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--primary); font-weight: 700; }
+.c-title { margin: 3px 0 4px; line-height: 1.2; }
+.c-sum-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.c-sum { font-weight: 800; color: var(--ink); }
+.c-sum-cap { font-size: 11px; color: var(--ink2); }
+
+.c-meta { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; font-size: 12px; }
+.c-meta dt { color: var(--ink2); }
+.c-meta dd { margin: 0; color: var(--ink); font-weight: 500; }
+.c-meta .nodata { color: var(--muted); font-style: italic; font-weight: 400; }
+
+/* бейдж флага — нейтральный амбер, НЕ красный */
+.flagbadge {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--flag-soft); border: 1px solid #ecca8a;
+  color: var(--flag-ink); font-size: 11.5px; font-weight: 600;
+  padding: 7px 10px;
+}
+.flagbadge .ic {
+  width: 16px; height: 16px; flex: none; border-radius: 50%;
+  background: var(--flag); color: #fff; display: grid; place-items: center;
+  font-size: 11px; font-weight: 800;
+}
+
+/* блок «недостаточно данных» */
+.insuff {
+  background: var(--muted-soft); border: 1px dashed #b8c1cb; color: var(--ink2);
+  font-size: 11.5px; padding: 8px 10px;
+}
+.insuff b { color: var(--ink); }
+
+.src-link { font-size: 11.5px; color: var(--link); text-decoration: none; }
+.src-link u { text-underline-offset: 2px; }
+
+/* мини-карточка района / строка поиска (вторичный фрагмент) */
+.mini {
+  display: flex; align-items: center; gap: 9px; background: var(--bg);
+  border: 1px solid var(--border); padding: 7px 9px; font-size: 11.5px;
+}
+.mini .mini-ic { width: 24px; height: 24px; flex: none; border-radius: 6px; background: var(--primary-soft); color: var(--primary-dk); display: grid; place-items: center; font-weight: 800; font-size: 11px; }
+.mini .mini-t { font-weight: 600; color: var(--ink); }
+.mini .mini-s { color: var(--ink2); }
+
+/* нижняя таб-навигация */
+.tabbar {
+  display: flex; background: var(--surface); border-top: 1px solid var(--border);
+}
+.tabbar a {
+  flex: 1; text-align: center; padding: 8px 0 9px; font-size: 10px;
+  color: var(--ink2); text-decoration: none; display: flex; flex-direction: column;
+  align-items: center; gap: 3px;
+}
+.tabbar a.on { color: var(--primary); font-weight: 700; }
+.tabbar a .ti { width: 20px; height: 20px; }
+
+/* орнамент қошқар мүйіз как inline svg — переиспользуем во всех направлениях */
+.ornament { color: var(--accent); }
+
+/* =========================================================================
+   НАПРАВЛЕНИЕ A — «Деловая плотность» (2GIS-lean)
+   высокая плотность, компактные строки, нейтральная типографика,
+   малый радиус / прямые углы, орнамент почти отсутствует.
+   ========================================================================= */
+.A { --radius: 4px; }
+.A .screen { font-size: 13px; }
+.A .topbar { padding: 6px 10px; }
+.A .brand .name { font-size: 13px; }
+.A .brand .mark { border-radius: 4px; }
+.A .search { border-radius: 4px; padding: 6px 9px; font-size: 12px; }
+.A .tip, .A .zoom, .A .fab-loc, .A .tip .t-btn { border-radius: 0; }
+.A .mk .pin { border-radius: 3px; }              /* квадратные маркеры — утилитарно */
+.A .mk .dotlabel { border-radius: 3px; }
+.A .sheet { padding: 8px 12px 10px; }
+.A .c-title { font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
+.A .c-sum { font-size: 18px; }
+.A .c-meta { font-size: 11.5px; gap: 2px 10px; }
+.A .flagbadge, .A .insuff, .A .mini { border-radius: 3px; }
+.A .flagbadge { padding: 5px 8px; font-size: 11px; }
+/* тонкая линия-разделитель вместо орнамента */
+.A .hr { height: 1px; background: var(--border); margin: 9px 0; }
+.A .dense-tabs {
+  display: flex; gap: 0; border: 1px solid var(--border); margin-bottom: 8px;
+}
+.A .dense-tabs span { flex: 1; text-align: center; font-size: 11px; padding: 5px 0; color: var(--ink2); border-right: 1px solid var(--border); }
+.A .dense-tabs span:last-child { border-right: none; }
+.A .dense-tabs span.on { background: var(--primary-soft); color: var(--primary-dk); font-weight: 700; }
+
+/* =========================================================================
+   НАПРАВЛЕНИЕ B — «Открытый город» (баланс)
+   средняя плотность, чуть крупнее заголовки, умеренный радиус,
+   орнамент қошқар мүйіз тонким мотивом-разделителем, золото в акцентах.
+   ========================================================================= */
+.B { --radius: 12px; }
+.B .screen { font-size: 13.5px; }
+.B .topbar { padding: 9px 13px; }
+.B .brand .mark { border-radius: 9px; }
+.B .search { border-radius: 10px; }
+.B .tip { border-radius: 12px; }
+.B .tip .t-btn { border-radius: 9px; }
+.B .zoom, .B .fab-loc { border-radius: 10px; overflow: hidden; }
+.B .mk .pin { border-radius: 50% 50% 50% 2px; }
+.B .mk .dotlabel { border-radius: 11px; }
+.B .sheet { border-radius: 18px 18px 0 0; margin-top: -14px; padding: 12px 15px 14px; }
+.B .c-title { font-size: 17px; font-weight: 700; }
+.B .c-sum { font-size: 21px; }
+.B .c-sum-row .c-sum { color: var(--primary-dk); }
+.B .flagbadge, .B .insuff, .B .mini { border-radius: 10px; }
+.B .accent-rule { color: var(--accent); }
+/* орнамент-разделитель қошқар мүйіз */
+.B .orn-divider {
+  display: flex; align-items: center; gap: 8px; margin: 11px 0 9px;
+  color: var(--accent);
+}
+.B .orn-divider .ln { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--border)); }
+.B .orn-divider .ln.r { background: linear-gradient(90deg, var(--border), transparent); }
+
+/* =========================================================================
+   НАПРАВЛЕНИЕ C — «Гражданская теплота»
+   воздушнее, крупнее типографика, заметнее орнамент (фоновый паттерн в шапке),
+   мягче карточки, больше человечности — но всё ещё серьёзно.
+   ========================================================================= */
+.C { --radius: 18px; }
+.C .screen { font-size: 14px; }
+.C .topbar {
+  padding: 12px 15px 13px;
+  background:
+    radial-gradient(circle at 12% 120%, rgba(240,180,41,.10), transparent 42%),
+    var(--surface);
+  border-bottom: none;
+}
+/* мягкий фоновый орнаментный паттерн қошқар мүйіз в шапке */
+.C .topbar-wrap { position: relative; }
+.C .topbar-wrap .orn-bg {
+  position: absolute; inset: 0; z-index: 0; opacity: .12; color: var(--accent);
+  pointer-events: none; overflow: hidden;
+}
+.C .topbar { position: relative; z-index: 1; }
+.C .brand .name { font-size: 15px; }
+.C .brand .mark { border-radius: 12px; width: 30px; height: 30px; }
+.C .search { border-radius: 22px; padding: 9px 13px; font-size: 13px; }
+.C .tip { border-radius: 18px; }
+.C .tip .t-btn { border-radius: 14px; padding: 9px; }
+.C .zoom, .C .fab-loc { border-radius: 16px; overflow: hidden; }
+.C .mk .pin { width: 28px; height: 28px; }
+.C .mk .dotlabel { border-radius: 14px; padding: 2px 9px; }
+.C .sheet {
+  border-radius: 26px 26px 0 0; margin-top: -22px; padding: 14px 18px 16px;
+}
+.C .c-title { font-size: 19px; font-weight: 700; line-height: 1.25; }
+.C .c-sum { font-size: 24px; }
+.C .c-meta { font-size: 13px; gap: 8px 10px; }
+.C .flagbadge { border-radius: 16px; padding: 9px 13px; font-size: 12.5px; }
+.C .insuff, .C .mini { border-radius: 16px; padding: 11px 13px; }
+.C .warm-strip {
+  display: flex; align-items: center; gap: 9px; margin: 12px 0 10px;
+  color: var(--accent);
+}
+.C .warm-strip .ln { flex: 1; height: 2px; border-radius: 2px; background: var(--accent-soft); }
+.C .care-note {
+  font-size: 12px; color: var(--ink2); background: var(--confirmed-soft);
+  border: 1px solid #b9ddd4; border-radius: 14px; padding: 9px 12px; line-height: 1.4;
+}
+.C .care-note b { color: var(--confirmed); }
+
+/* footer заметка */
+.foot { max-width: 1320px; margin: 30px auto 0; font-size: 12px; color: #5a646d; }
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <h1>AshyqQala.kz — три визуальных направления</h1>
+  <p>Сравнение «бок о бок». Один и тот же главный экран — <b>карта Астаны</b> с маркерами объектов,
+  всплывающее превью при тапе и нижний лист карточки контракта — показан в трёх разных визуальных
+  личностях. Палитра у всех одна (Тема 4 «Открытый город / Баланс»); меняется характер: плотность,
+  вес типографики, форма карточек, трактовка орнамента қошқар мүйіз, ощущение движения и регистр.</p>
+</div>
+
+<div class="guardrail">
+  <b>Гардрейл сохранён во всех трёх:</b> флаг — нейтральный амбер «сигнал, требующий проверки»
+  (#E09915), тревожно-алый не используется, светофор к флагам не применяется. Состояния данных
+  честные: «нет данных», «недостаточно сопоставимых данных», «объект не геопривязан».
+</div>
+
+<div class="palette-strip">
+  <span style="margin-right:4px;font-weight:600">Единая палитра:</span>
+  <span class="chip"><span class="dot" style="background:#1496C0"></span>primary #1496C0</span>
+  <span class="chip"><span class="dot" style="background:#F0B429"></span>accent #F0B429</span>
+  <span class="chip"><span class="dot" style="background:#E09915"></span>флаг #E09915</span>
+  <span class="chip"><span class="dot" style="background:#2C8C7A"></span>verified #2C8C7A</span>
+  <span class="chip"><span class="dot" style="background:#8893A0"></span>no-data #8893A0</span>
+  <span class="chip"><span class="dot" style="background:#EEF6F9"></span>bg #EEF6F9</span>
+</div>
+
+<div class="dirs">
+
+  <!-- ================= НАПРАВЛЕНИЕ A ================= -->
+  <div class="dir A">
+    <div class="dir-head">
+      <div class="tag">Направление A</div>
+      <h2>Деловая плотность</h2>
+      <p class="rationale">2GIS-lean: максимум информации на экран, компактные строки и прямые углы.
+      Нейтральная системная типографика, орнамент сведён к тонкой линии-разделителю. Ощущение —
+      строгий рабочий инструмент гражданина, без украшательств, как карта городской логистики.</p>
+      <div class="traits"><span>высокая плотность</span><span>прямые углы</span><span>тонкий вес</span><span>орнамент ≈ линия</span></div>
+    </div>
+
+    <div class="phone">
+      <div class="screen">
+        <div class="notch"></div>
+        <div class="statusbar"><span class="net">9:41</span><span>5G ▦▦▦ 84%</span></div>
+
+        <!-- topbar -->
+        <div class="topbar">
+          <div class="brand">
+            <div class="mark">AQ</div>
+            <div class="name">AshyqQala<small>Астана · госзакупки</small></div>
+          </div>
+          <div class="search">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+            Поиск объекта или подрядчика
+          </div>
+        </div>
+
+        <!-- карта -->
+        <div class="map">
+          <div class="grid"></div>
+          <div class="river"></div>
+          <div class="road">
+            <svg viewBox="0 0 300 230">
+              <polyline points="20,210 90,150 150,120 210,60 280,30" fill="none" stroke="#1496C0" stroke-width="6" stroke-linecap="round" opacity="0.9"/>
+              <polyline points="20,210 90,150 150,120 210,60 280,30" fill="none" stroke="#fff" stroke-width="1.4" stroke-dasharray="5 6"/>
+            </svg>
+          </div>
+          <!-- маркеры (квадратные = утилитарно) -->
+          <div class="mk sel" style="left:50%; top:46%;"><div class="pin"></div></div>
+          <div class="mk" style="left:31%; top:62%;"><div class="pin flagged"></div></div>
+          <div class="mk" style="left:70%; top:34%;"><div class="pin"></div></div>
+          <div class="mk" style="left:24%; top:40%;"><div class="pin"></div></div>
+
+          <!-- всплывающее превью -->
+          <div class="tip" style="left:40%; top:14%;">
+            <div class="t-sub">Дорога · в работе</div>
+            <div class="t-title">Реконструкция ул. Кабанбай батыра</div>
+            <div class="t-row"><span>Сумма</span><span class="t-sum">240 млн ₸</span></div>
+            <div class="t-row"><span>Подрядчик</span><span>ТОО «Астана…»</span></div>
+            <a class="t-btn" href="#">Открыть карточку</a>
+            <div class="t-arrow"></div>
+          </div>
+
+          <div class="fab-loc">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1496C0" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+          </div>
+          <div class="zoom"><button>+</button><button>−</button></div>
+        </div>
+
+        <!-- нижний лист контракта -->
+        <div class="sheet">
+          <div class="handle"></div>
+          <div class="dense-tabs">
+            <span class="on">Обзор</span><span>Флаги (1)</span><span>Цены</span><span>Источник</span>
+          </div>
+          <div class="c-sub">Контракт · дорога</div>
+          <h3 class="c-title">Реконструкция ул. Кабанбай батыра</h3>
+          <div class="c-sum-row"><span class="c-sum">240 млн ₸</span><span class="c-sum-cap">цена договора</span></div>
+          <dl class="c-meta">
+            <dt>Заказчик</dt><dd>Акимат г. Астана</dd>
+            <dt>Подрядчик</dt><dd>ТОО «Астана Жол Курылыс»</dd>
+            <dt>Способ</dt><dd>Из одного источника</dd>
+            <dt>Срок завершения</dt><dd class="nodata">нет данных</dd>
+          </dl>
+          <div class="hr"></div>
+          <div class="flagbadge"><span class="ic">!</span>Единственный участник — сигнал, требующий проверки</div>
+          <div class="hr"></div>
+          <a class="src-link" href="#">Первоисточник: <u>goszakup.gov.kz</u> ↗</a>
+        </div>
+
+        <!-- таб-навигация -->
+        <div class="tabbar">
+          <a class="on" href="#"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Карта</a>
+          <a href="#"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>Поиск</a>
+          <a href="#"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M4 12h16M4 19h10"/></svg>Районы</a>
+          <a href="#"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Бот</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= НАПРАВЛЕНИЕ B ================= -->
+  <div class="dir B">
+    <div class="dir-head">
+      <div class="tag">Направление B</div>
+      <h2>Открытый город · баланс</h2>
+      <p class="rationale">Центр иголки: средняя плотность, чуть крупнее заголовки, умеренно скруглённые
+      карточки. Орнамент қошқар мүйіз появляется тонким мотивом-разделителем, золото — в акцентах кнопок
+      и линий. Деловито и доверительно одновременно — узнаваемый казахстанский характер со вкусом.</p>
+      <div class="traits"><span>средняя плотность</span><span>радиус 12</span><span>орнамент-разделитель</span><span>золото в акцентах</span></div>
+    </div>
+
+    <div class="phone">
+      <div class="screen">
+        <div class="notch"></div>
+        <div class="statusbar"><span class="net">9:41</span><span>5G ▦▦▦ 84%</span></div>
+
+        <div class="topbar">
+          <div class="brand">
+            <div class="mark">AQ</div>
+            <div class="name">Открытый город<small>Астана · прозрачность</small></div>
+          </div>
+          <div class="search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+            Найти объект
+          </div>
+        </div>
+
+        <div class="map">
+          <div class="grid"></div>
+          <div class="river"></div>
+          <div class="road">
+            <svg viewBox="0 0 300 230">
+              <polyline points="20,210 90,150 150,120 210,60 280,30" fill="none" stroke="#1496C0" stroke-width="7" stroke-linecap="round" opacity="0.92"/>
+              <polyline points="20,210 90,150 150,120 210,60 280,30" fill="none" stroke="#fff" stroke-width="1.6" stroke-dasharray="6 7"/>
+            </svg>
+          </div>
+          <div class="mk sel" style="left:50%; top:46%;"><div class="pin"></div><div class="dotlabel">Кабанбай б.</div></div>
+          <div class="mk" style="left:31%; top:62%;"><div class="pin flagged"></div></div>
+          <div class="mk" style="left:71%; top:33%;"><div class="pin"></div></div>
+          <div class="mk" style="left:24%; top:40%;"><div class="pin"></div></div>
+
+          <div class="tip" style="left:38%; top:12%;">
+            <div class="t-sub">◆ Дорога · в работе</div>
+            <div class="t-title">Реконструкция ул. Кабанбай батыра</div>
+            <div class="t-row"><span>Сумма</span><span class="t-sum">240 млн ₸</span></div>
+            <div class="t-row"><span>Подрядчик</span><span>ТОО «Астана…»</span></div>
+            <a class="t-btn" href="#">Открыть карточку</a>
+            <div class="t-arrow"></div>
+          </div>
+
+          <div class="fab-loc">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1496C0" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+          </div>
+          <div class="zoom"><button>+</button><button>−</button></div>
+        </div>
+
+        <div class="sheet">
+          <div class="handle"></div>
+          <div class="c-sub">◆ Контракт · дорога</div>
+          <h3 class="c-title">Реконструкция ул. Кабанбай батыра</h3>
+          <div class="c-sum-row"><span class="c-sum">240 млн ₸</span><span class="c-sum-cap">цена договора</span></div>
+          <dl class="c-meta">
+            <dt>Заказчик</dt><dd>Акимат г. Астана</dd>
+            <dt>Подрядчик</dt><dd>ТОО «Астана Жол Курылыс»</dd>
+          </dl>
+
+          <!-- орнамент қошқар мүйіз как тонкий разделитель -->
+          <div class="orn-divider">
+            <span class="ln"></span>
+            <svg width="64" height="14" viewBox="0 0 64 14" fill="none" stroke="currentColor" stroke-width="1.6">
+              <!-- стилизованные парные завитки бараньих рогов -->
+              <path d="M32 12c-3-5-9-5-9-1 0 3 4 3 4 0 0-4-6-6-11-3"/>
+              <path d="M32 12c3-5 9-5 9-1 0 3-4 3-4 0 0-4 6-6 11-3"/>
+              <circle cx="32" cy="3" r="1.4" fill="currentColor" stroke="none"/>
+            </svg>
+            <span class="ln r"></span>
+          </div>
+
+          <div class="flagbadge"><span class="ic">!</span>Единственный участник — сигнал, требующий проверки</div>
+
+          <!-- честное состояние: недостаточно сопоставимых данных -->
+          <div class="insuff" style="margin-top:9px">
+            <b>Медиана ₸/км</b> — недостаточно сопоставимых данных по этому участку.
+          </div>
+
+          <a class="src-link" style="display:inline-block;margin-top:9px" href="#">Первоисточник: <u>goszakup.gov.kz</u> ↗</a>
+        </div>
+
+        <div class="tabbar">
+          <a class="on" href="#"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Карта</a>
+          <a href="#"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>Поиск</a>
+          <a href="#"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M4 12h16M4 19h10"/></svg>Районы</a>
+          <a href="#"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Бот</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= НАПРАВЛЕНИЕ C ================= -->
+  <div class="dir C">
+    <div class="dir-head">
+      <div class="tag">Направление C</div>
+      <h2>Гражданская теплота</h2>
+      <p class="rationale">Воздушнее и человечнее: крупнее типографика, мягкие большие радиусы, в шапке —
+      деликатный фоновый паттерн қошқар мүйіз и степной мотив. Тон сопровождающий, заботливый, но всё ещё
+      серьёзный — платформа на стороне горожанина, а не сухой реестр. Больше пространства между фактами.</p>
+      <div class="traits"><span>воздушнее</span><span>крупная типографика</span><span>фоновый орнамент</span><span>мягкие карточки</span></div>
+    </div>
+
+    <div class="phone">
+      <div class="screen">
+        <div class="notch"></div>
+        <div class="statusbar"><span class="net">9:41</span><span>5G ▦▦▦ 84%</span></div>
+
+        <div class="topbar-wrap">
+          <!-- мягкий фоновый орнаментный паттерн қошқар мүйіз -->
+          <div class="orn-bg">
+            <svg width="100%" height="100%" viewBox="0 0 372 64" preserveAspectRatio="xMidYMid slice" fill="none" stroke="currentColor" stroke-width="1.4">
+              <g>
+                <path d="M30 50c-6-10-18-10-18-2 0 6 8 6 8 0 0-8-12-12-22-6"/>
+                <path d="M30 50c6-10 18-10 18-2 0 6-8 6-8 0 0-8 12-12 22-6"/>
+              </g>
+              <g transform="translate(96,0)">
+                <path d="M30 50c-6-10-18-10-18-2 0 6 8 6 8 0 0-8-12-12-22-6"/>
+                <path d="M30 50c6-10 18-10 18-2 0 6-8 6-8 0 0-8 12-12 22-6"/>
+              </g>
+              <g transform="translate(192,0)">
+                <path d="M30 50c-6-10-18-10-18-2 0 6 8 6 8 0 0-8-12-12-22-6"/>
+                <path d="M30 50c6-10 18-10 18-2 0 6-8 6-8 0 0-8 12-12 22-6"/>
+              </g>
+              <g transform="translate(288,0)">
+                <path d="M30 50c-6-10-18-10-18-2 0 6 8 6 8 0 0-8-12-12-22-6"/>
+                <path d="M30 50c6-10 18-10 18-2 0 6-8 6-8 0 0-8 12-12 22-6"/>
+              </g>
+            </svg>
+          </div>
+          <div class="topbar">
+            <div class="brand">
+              <div class="mark">AQ</div>
+              <div class="name">Открытый город<small>Астана · вместе следим</small></div>
+            </div>
+            <div class="search">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+              Что строят рядом?
+            </div>
+          </div>
+        </div>
+
+        <div class="map">
+          <div class="grid"></div>
+          <div class="river"></div>
+          <div class="road">
+            <svg viewBox="0 0 300 230">
+              <polyline points="20,210 90,150 150,120 210,60 280,30" fill="none" stroke="#1496C0" stroke-width="8" stroke-linecap="round" opacity="0.9"/>
+              <polyline points="20,210 90,150 150,120 210,60 280,30" fill="none" stroke="#fff" stroke-width="1.8" stroke-dasharray="7 8"/>
+            </svg>
+          </div>
+          <div class="mk sel" style="left:50%; top:46%;"><div class="pin"></div><div class="dotlabel">Кабанбай батыра</div></div>
+          <div class="mk" style="left:30%; top:63%;"><div class="pin flagged"></div></div>
+          <div class="mk" style="left:72%; top:32%;"><div class="pin"></div></div>
+
+          <div class="tip" style="left:36%; top:10%;">
+            <div class="t-sub">Дорога · идёт работа</div>
+            <div class="t-title">Реконструкция ул. Кабанбай батыра</div>
+            <div class="t-row"><span>Сумма</span><span class="t-sum">240 млн ₸</span></div>
+            <div class="t-row"><span>Подрядчик</span><span>ТОО «Астана…»</span></div>
+            <a class="t-btn" href="#">Открыть карточку →</a>
+            <div class="t-arrow"></div>
+          </div>
+
+          <div class="fab-loc">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1496C0" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+          </div>
+          <div class="zoom"><button>+</button><button>−</button></div>
+        </div>
+
+        <div class="sheet">
+          <div class="handle"></div>
+          <div class="c-sub">Контракт · дорога</div>
+          <h3 class="c-title">Реконструкция ул. Кабанбай батыра</h3>
+          <div class="c-sum-row"><span class="c-sum">240 млн ₸</span><span class="c-sum-cap">цена договора</span></div>
+
+          <div class="warm-strip">
+            <span class="ln"></span>
+            <svg width="26" height="14" viewBox="0 0 64 14" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M32 12c-3-5-9-5-9-1 0 3 4 3 4 0 0-4-6-6-11-3"/>
+              <path d="M32 12c3-5 9-5 9-1 0 3-4 3-4 0 0-4 6-6 11-3"/>
+            </svg>
+            <span class="ln"></span>
+          </div>
+
+          <dl class="c-meta">
+            <dt>Заказчик</dt><dd>Акимат г. Астана</dd>
+            <dt>Подрядчик</dt><dd>ТОО «Астана Жол Курылыс»</dd>
+            <dt>Срок завершения</dt><dd class="nodata">нет данных</dd>
+          </dl>
+
+          <div class="flagbadge" style="margin-top:11px"><span class="ic">!</span>Единственный участник — сигнал, требующий проверки</div>
+
+          <div class="care-note" style="margin-top:10px">
+            <b>Это не обвинение.</b> Это сигнал, который стоит проверить. Формулу можно пересчитать самостоятельно.
+          </div>
+
+          <a class="src-link" style="display:inline-block;margin-top:11px" href="#">Первоисточник: <u>goszakup.gov.kz</u> ↗</a>
+        </div>
+
+        <div class="tabbar">
+          <a class="on" href="#"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Карта</a>
+          <a href="#"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>Поиск</a>
+          <a href="#"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M4 12h16M4 19h10"/></svg>Районы</a>
+          <a href="#"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Бот</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="foot">
+  Вторичные фрагменты на экранах: метка маркера на карте (мини-подпись объекта), а у B/C —
+  состояния честности данных («нет данных», «недостаточно сопоставимых данных»).
+  Все три направления используют единую палитру Темы 4; отличается только характер исполнения.
+</div>
+
+</body>
+</html>

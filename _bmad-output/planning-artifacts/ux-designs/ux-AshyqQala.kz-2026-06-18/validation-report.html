@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<!--
+  UX Design Validation Report — AshyqQala.kz.
+  Consolidated from review-rubric.md + review-neutrality.md +
+  review-accessibility.md + review-map-ux.md.
+-->
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>UX Design Validation: AshyqQala.kz</title>
+<style>
+  :root {
+    --bg: #fafaf9;
+    --surface: #ffffff;
+    --border: #e7e5e4;
+    --text: #1c1917;
+    --muted: #78716c;
+
+    --verdict-strong: #16a34a;
+    --verdict-adequate: #65a30d;
+    --verdict-thin: #d97706;
+    --verdict-broken: #dc2626;
+
+    --sev-low: #64748b;
+    --sev-medium: #ca8a04;
+    --sev-high: #ea580c;
+    --sev-critical: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 15px;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 24px 64px; }
+
+  header.report-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .title h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+  .title .subtitle { color: var(--muted); font-size: 13px; margin-top: 4px; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+  .sev-counters { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-start; }
+  .sev-counter {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    padding: 8px 12px;
+    text-align: center;
+    min-width: 72px;
+  }
+  .sev-counter .n { font-size: 20px; font-weight: 700; line-height: 1; }
+  .sev-counter .l { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-top: 4px; }
+  .sev-counter.critical .n { color: var(--sev-critical); }
+  .sev-counter.high .n { color: var(--sev-high); }
+  .sev-counter.medium .n { color: var(--sev-medium); }
+  .sev-counter.low .n { color: var(--sev-low); }
+
+  .synthesis {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--muted);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin-bottom: 24px;
+    font-size: 15.5px;
+  }
+  .synthesis p { margin: 0 0 10px; }
+  .synthesis p:last-child { margin-bottom: 0; }
+
+  .dimension-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .dim-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .dim-card .dim-name { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .dim-card .dim-verdict { font-size: 14px; font-weight: 600; }
+
+  section.dimension, section.reviewer-section { margin-bottom: 14px; }
+  section.dimension details, section.reviewer-section details {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  section summary {
+    padding: 14px 20px;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  section summary::-webkit-details-marker { display: none; }
+  section summary::before {
+    content: "▸";
+    display: inline-block;
+    color: var(--muted);
+    transition: transform 0.15s ease;
+  }
+  section details[open] summary::before { transform: rotate(90deg); }
+  section summary h2 {
+    display: inline;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    flex: 1;
+  }
+  .verdict-pill {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: white;
+  }
+  .verdict-strong { background: var(--verdict-strong); }
+  .verdict-adequate { background: var(--verdict-adequate); }
+  .verdict-thin { background: var(--verdict-thin); }
+  .verdict-broken { background: var(--verdict-broken); }
+
+  .dim-body { padding: 4px 20px 18px; }
+  .dim-judgment { color: var(--text); font-size: 14.5px; }
+  .dim-judgment p { margin: 0 0 10px; }
+
+  .findings-list { padding: 0 20px 4px; }
+  article.finding {
+    padding: 14px 0;
+    border-top: 1px solid var(--border);
+  }
+  article.finding:first-child { border-top: none; }
+  article.finding header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .badge {
+    font-size: 10.5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+  }
+  .badge-sev-low { background: rgba(100, 116, 139, 0.12); color: var(--sev-low); }
+  .badge-sev-medium { background: rgba(202, 138, 4, 0.14); color: var(--sev-medium); }
+  .badge-sev-high { background: rgba(234, 88, 12, 0.14); color: var(--sev-high); }
+  .badge-sev-critical { background: rgba(220, 38, 38, 0.14); color: var(--sev-critical); }
+  .finding-title { margin: 0; font-size: 15px; font-weight: 500; flex: 1; min-width: 200px; }
+  .finding-location { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; color: var(--muted); }
+  .finding-note, .finding-fix { margin-top: 6px; font-size: 14px; }
+  .finding-fix strong { color: var(--muted); font-weight: 500; }
+
+  .reviewer-source {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  .mechanical {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-top: 24px;
+    font-size: 14px;
+  }
+  .mechanical h3 { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .mechanical ul { margin: 0; padding-left: 20px; }
+  .mechanical li { margin-bottom: 4px; color: var(--text); }
+
+  footer.report-footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  footer .meta { display: flex; gap: 24px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+  <div class="container">
+
+    <header class="report-header">
+      <div class="title">
+        <h1>AshyqQala.kz — UX Design Validation Report</h1>
+        <div class="subtitle">project: AshyqQala.kz · spine pair: DESIGN.md + EXPERIENCE.md</div>
+        <div class="subtitle">DESIGN.md: _bmad-output/planning-artifacts/ux-designs/ux-AshyqQala.kz-2026-06-18/DESIGN.md</div>
+        <div class="subtitle">EXPERIENCE.md: _bmad-output/planning-artifacts/ux-designs/ux-AshyqQala.kz-2026-06-18/EXPERIENCE.md</div>
+      </div>
+      <div class="sev-counters">
+        <div class="sev-counter critical"><div class="n">4</div><div class="l">Critical</div></div>
+        <div class="sev-counter high"><div class="n">9</div><div class="l">High</div></div>
+        <div class="sev-counter medium"><div class="n">18</div><div class="l">Medium</div></div>
+        <div class="sev-counter low"><div class="n">14</div><div class="l">Low</div></div>
+      </div>
+    </header>
+
+    <div class="synthesis">
+      <p>Сильная, добротно собранная пара спайнов: токены полностью резолвятся (0 битых ссылок, светлая+тёмная пары везде, контраст указан для всех несущих сочетаний), компоненты покрыты с двух сторон, гардрейлы нейтральности/честности проведены последовательно через оба файла, три именованных Key Flow с кульминациями и путями отказа. Потребитель может извлечь данные чисто. Что мешает «strong» по всем осям рубрики — несколько незакрытых несущих решений по методике флагов (порог монополии и carve-out единственного участника схлопнуты в один <code>&lt;5</code>; окно медианы вообще не зафиксировано) и формальные дыры наследования (нет <code>sources:</code> во фронтматтере EXPERIENCE.md; форма ошибки и страница района без собственных состояний). Внутри самой рубрики все находки — medium и ниже; критичных и high нет.</p>
+      <p>Но три дополнительных адверсариальных ревьюера (нейтральность, доступность, карта-UX) меняют картину и поднимают четыре critical. <strong>Нейтральность</strong> вскрывает 2 critical: названия флагов «Монополия в регионе» и «Числится в РНУ» несут готовый обвинительный смысл в самом субъекте, который суффикс «сигнал, требующий проверки» не нейтрализует — это рабочие заходы для иска о деловой репутации (ст. 143 ГК РК). <strong>Карта-UX</strong> вскрывает 2 critical: поведение кластеризации задано одной нечислимой строкой, а триггер фолбэка «гео &lt;70%» не операционализирован — карта объявлена «как 2GIS», но это лозунг, не спецификация. <strong>Доступность</strong> добавляет 3 high (контраст ссылки/чипа на не-белых фонах ниже AA, статусы маркеров кодируются только цветом, доступность canvas-карты для скринридера заявлена без механизма). Итог: несущие гардрейлы соблюдены по букве, но юридический риск и реализуемость карты требуют правок до спринта реализации — не «переписать всё», а закрыть конкретные дыры.</p>
+    </div>
+
+    <div class="dimension-summary">
+      <div class="dim-card"><div class="dim-name">1. Flow coverage</div><div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div></div>
+      <div class="dim-card"><div class="dim-name">2. Token completeness</div><div class="dim-verdict" style="color: var(--verdict-strong)">strong</div></div>
+      <div class="dim-card"><div class="dim-name">3. Component coverage</div><div class="dim-verdict" style="color: var(--verdict-strong)">strong</div></div>
+      <div class="dim-card"><div class="dim-name">4. State coverage</div><div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div></div>
+      <div class="dim-card"><div class="dim-name">5. Visual reference coverage</div><div class="dim-verdict" style="color: var(--verdict-strong)">strong</div></div>
+      <div class="dim-card"><div class="dim-name">6. Bloat &amp; overspecification</div><div class="dim-verdict" style="color: var(--verdict-strong)">strong</div></div>
+      <div class="dim-card"><div class="dim-name">7. Inheritance discipline</div><div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div></div>
+      <div class="dim-card"><div class="dim-name">8. Shape fit</div><div class="dim-verdict" style="color: var(--verdict-strong)">strong</div></div>
+    </div>
+
+    <!-- ===== 1. Flow coverage ===== -->
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>1. Flow coverage</h2>
+          <span class="verdict-pill verdict-adequate">adequate</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Извлечены роли из журнала (Гражданин/Айгуль, Подписчик/Ержан, Журналист/Данияр, внутренние операторы) и требования (UC-01…UC-11, FR-флаги). Три Key Flow покрывают первых трёх протагонистов: каждый с именованным героем, нумерованными шагами, явной кульминацией и путём отказа (Айгуль: негеокод+медленная сеть; Ержан: всплеск→дайджест; Данияр: выборка &lt;5). UC-01…07 прослеживаются во Flow 1/3, UC-06 во Flow 2.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Четвёртая роль (внутренние операторы Directus) без Key Flow</h3>
+              <span class="finding-location">.decision-log.md:31; EXPERIENCE.md Key Flows 347–395</span>
+            </header>
+            <div class="finding-note">«Внутренние операторы» (Directus: геопривязка UC-09/UC-10, нормализация) не имеют Key Flow. Омиссия защитима: Directus явно описан как непубличная админка («гражданин её не видит»), а спайн — про гражданский опыт.</div>
+            <div class="finding-fix"><strong>Fix:</strong> одна строка в начале Key Flows, что операторский поток сознательно вне спайна (Directus = внутренний инструмент), чтобы омиссия читалась как решение, а не пропуск.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <!-- ===== 2. Token completeness ===== -->
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>2. Token completeness</h2>
+          <span class="verdict-pill verdict-strong">strong</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Извлечены все токены фронтматтера (colors 46, typography 9, rounded 8, spacing 14, components 14) и все <code>{…}</code>-ссылки в прозе обоих файлов. Все ссылки резолвятся (проверено скриптом: 0 ссылок на неопределённый токен). Каждый цветовой токен имеет HEX; светлая/тёмная пары присутствуют для всех ролей. Контраст указан для всех несущих текстовых/UI-сочетаний в обеих темах. Короткая форма ссылок EXPERIENCE.md (<code>{flag-badge}</code>, <code>{muted-text}</code>, <code>{tap-target}</code>) однозначно резолвится.</p>
+          </div>
+        </div>
+        <div class="findings-list"></div>
+      </details>
+    </section>
+
+    <!-- ===== 3. Component coverage ===== -->
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>3. Component coverage</h2>
+          <span class="verdict-pill verdict-strong">strong</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>14 компонентов определены в <code>DESIGN.md.components</code>. Все 14 имеют визуальную строку в DESIGN.md.Components и поведенческое покрытие реальными правилами. 11 из 14 имеют строку в EXPERIENCE.md.Component Patterns; три <code>data-state-*</code> покрыты поведенчески в State Patterns (таблица «Четыре состояния данных») — их естественный дом. Имена компонентов идентичны во всех секциях.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Три data-state-* не имеют строки именно в Component Patterns</h3>
+              <span class="finding-location">EXPERIENCE.md:191–196</span>
+            </header>
+            <div class="finding-note"><code>data-state-nodata</code>, <code>-insufficient</code>, <code>-ungeocoded</code> покрыты поведенчески в State Patterns. По букве рубрики (строка в Component Patterns) — формальный пропуск; по сути покрыто и в правильном месте.</div>
+            <div class="finding-fix"><strong>Fix:</strong> при желании — одна строка-указатель в Component Patterns «состояния данных → см. State Patterns», иначе оставить как есть.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <!-- ===== 4. State coverage ===== -->
+    <section class="dimension">
+      <details open>
+        <summary>
+          <h2>4. State coverage</h2>
+          <span class="verdict-pill verdict-adequate">adequate</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Пройдены все 12 IA-поверхностей. Несущая «дисциплина честности» покрыта образцово: четыре состояния данных + cold-load/скелетоны, пустой фильтр, тайлы недоступны, гео &lt;70%, источник недоступен, РНУ с авто-снятием, «профиль уточняется», фокус-ринг. Карта-режимы и поведение флагов вынесены в отдельные секции.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Форма «сообщить об ошибке» не имеет состояний нигде</h3>
+              <span class="finding-location">IA: EXPERIENCE.md:70</span>
+            </header>
+            <div class="finding-note">Нет empty/в процессе отправки/успех/ошибка/валидация. Downstream story-dev не сможет извлечь поведение формы.</div>
+            <div class="finding-fix"><strong>Fix:</strong> добавить строку в State Patterns или мини-блок поведения формы (поля, успех/ошибка отправки, попадание в Directus-очередь).</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">«Страница района» без собственных cold-load/empty состояний</h3>
+              <span class="finding-location">IA:66; состояния EXPERIENCE.md:205</span>
+            </header>
+            <div class="finding-note">Фигурирует в состояниях только через гео &lt;70% фолбэк и упоминается во Flow 3; собственных cold-load/empty (район без объектов) состояний нет.</div>
+            <div class="finding-fix"><strong>Fix:</strong> строка состояния для пустого/загружающегося района.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">«Объяснение методики флага» без состояния «выборки недостаточно»</h3>
+              <span class="finding-location">IA:68</span>
+            </header>
+            <div class="finding-note">Нет состояния «evidence/выборки недостаточно для показа формулы» как поверхности (есть общий &lt;5, но не привязан к этой поверхности).</div>
+            <div class="finding-fix"><strong>Fix:</strong> при необходимости — уточнить, что методика показывает формулу даже когда сигнал не выставлен.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <!-- ===== 5. Visual reference coverage ===== -->
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>5. Visual reference coverage</h2>
+          <span class="verdict-pill verdict-strong">strong</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Файлы в <code>.working/</code>: <code>color-themes-1.html</code>, <code>directions-1.html</code> — оба существуют. <code>imports/</code> пуст (сирот нет). Обе ссылки конкретны и говорят, что иллюстрируют. «Спайны побеждают на конфликте» указано в обоих файлах и в журнале — присутствует, не размыто.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Принцип «спайн побеждает на конфликте» встречается дважды</h3>
+              <span class="finding-location">EXPERIENCE.md:115; EXPERIENCE.md:399–401</span>
+            </header>
+            <div class="finding-note">Рубрика просит «указано один раз». Это не вред (один раз у референсов, один — глобальный приоритет источника), но технически дублирование принципа.</div>
+            <div class="finding-fix"><strong>Fix:</strong> оставить — оба места осмысленны; при строгом чтении можно свести к одному.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <!-- ===== 6. Bloat & overspecification ===== -->
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>6. Bloat &amp; overspecification</h2>
+          <span class="verdict-pill verdict-strong">strong</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Пиксели появляются только там, где токенов не хватает (тени, <code>stroke-dasharray</code>, форма капли маркера) — законная визуальная спецификация, не переспек. Пересказа источника нет: персоны/FR/scope не дублируются, а ссылаются. Проза EXPERIENCE.md — поведенческая, без редакторского голоса. Таблицы используются там, где проза была бы хуже.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Семейство токенов confirmed* определено, но не используется</h3>
+              <span class="finding-location">DESIGN.md:37–39, 67–69, 316–320</span>
+            </header>
+            <div class="finding-note">6 токенов (<code>confirmed</code>, <code>confirmed-text</code>, <code>confirmed-soft</code> ×2 темы) не потребляются ни одним компонентом и ни одним состоянием EXPERIENCE.md — нет поверхности «подтверждено / из первоисточника». Либо мёртвый токен (bloat), либо отсутствующее состояние «подтверждённости» (coverage).</div>
+            <div class="finding-fix"><strong>Fix:</strong> либо привязать <code>confirmed</code> к конкретному UI (метка «данные из первоисточника» рядом с {source-link}) и дать строку в обоих спайнах, либо убрать токены до появления потребителя.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <!-- ===== 7. Inheritance discipline ===== -->
+    <section class="dimension">
+      <details open>
+        <summary>
+          <h2>7. Inheritance discipline</h2>
+          <span class="verdict-pill verdict-adequate">adequate</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>UJ/имена ролей дословны из журнала; глоссарий гардрейлов идентичен между спайнами и источниками; имена компонентов идентичны во всех секциях; ссылки-токены EXPERIENCE.md резолвятся по имени. Конфликт с NFR-6 (KZ-дефолт vs RU-интерфейс) честно зафиксирован как осознанное переопределение с проброшенной зависимостью — образцовая дисциплина. Снижают оценку четыре незакрытых несущих решения по методике флагов и отсутствие <code>sources:</code>.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Фронтматтер EXPERIENCE.md не содержит поля sources:</h3>
+              <span class="finding-location">EXPERIENCE.md:1–9</span>
+            </header>
+            <div class="finding-note">Есть только <code>references: DESIGN.md</code> и <code>project:</code>. Пример-шейп и проверка наследования рубрики требуют <code>sources:</code> со списком артефактов. Список живёт в <code>.decision-log.md</code>, но downstream-потребитель читает спайн, а не журнал.</div>
+            <div class="finding-fix"><strong>Fix:</strong> добавить <code>sources:</code> во фронтматтер (PRD, addendum, use cases v4, data-model-and-flags, конкурсный документ, runbook — пути из <code>.decision-log.md:16–23</code>).</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Методика флагов схлопывает три разных порога в один &lt;5</h3>
+              <span class="finding-location">EXPERIENCE.md:195, 288, 392</span>
+            </header>
+            <div class="finding-note">Data-model различает <code>median.min_sample = 5</code> (цена) и <code>flag.monopoly.min_group_contracts = 5</code> (монополия) — это разные группы сопоставимости (<code>kato × direction</code> vs <code>direction × kato × период</code>). Совпадение значений сегодня скрывает, что это две настройки.</div>
+            <div class="finding-fix"><strong>Fix:</strong> в «Поведение риск-флагов» развести пороги по флагам (медиана/цена и монополия — отдельные <code>min_sample</code>/<code>min_group_contracts</code>).</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Не унаследован carve-out single_participant.exclude_methods</h3>
+              <span class="finding-location">data-model:75; EXPERIENCE.md:135, 283, Flow 1 шаг 5</span>
+            </header>
+            <div class="finding-note">Единственный участник не должен сигналиться для способов закупки, где он законен. Спайн флагует безусловно. Downstream выставит ложные флаги на легитимных способах.</div>
+            <div class="finding-fix"><strong>Fix:</strong> добавить в «Поведение риск-флагов» строку про исключаемые способы закупки.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Окно медианы не зафиксировано в спайне</h3>
+              <span class="finding-location">data-model:76, 84; EXPERIENCE.md:283, Flow 3:380</span>
+            </header>
+            <div class="finding-note">Data-model задаёт <code>median.comparability_key = direction × kato × период(24 мес, скользящее)</code>. EXPERIENCE.md говорит лишь «медиана района ×1.5» и не называет ни окно, ни ключ сопоставимости. Фильтр «период = 12 месяцев» во Flow 3 — UI-фасет, не окно медианы, но соседство может ввести в заблуждение.</div>
+            <div class="finding-fix"><strong>Fix:</strong> зафиксировать окно 24 мес (скользящее) и ключ сопоставимости медианы; явно отделить от UI-фильтра периода.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <!-- ===== 8. Shape fit ===== -->
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>8. Shape fit</h2>
+          <span class="verdict-pill verdict-strong">strong</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>DESIGN.md секции в каноническом порядке (все 8 присутствуют). EXPERIENCE.md обязательные разделы на месте. Разделы-по-триггеру присутствуют корректно (Inspiration &amp; Anti-patterns; Responsive &amp; Platform). Изобретённые секции («Карта: режимы и поведение», «Поведение риск-флагов») оправданы: карта — центральный примитив, флаги — несущая юридически-чувствительная механика.</p>
+          </div>
+        </div>
+        <div class="findings-list"></div>
+      </details>
+    </section>
+
+    <!-- ===== Reviewer: Neutrality & Legal ===== -->
+    <section class="reviewer-section">
+      <details open>
+        <summary>
+          <h2>Ревьюер: Нейтральность и юридический риск</h2>
+          <span class="reviewer-source">review-neutrality.md</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Спайны соблюдают несущий гардрейл нейтральности лучше, чем большинство гражданских продуктов: «сигнал, требующий проверки» проведён сквозь UI, бот, OG, скринридер; алый под флаги запрещён; четыре честных состояния пустоты зафиксированы; путь «бейдж → методика → пересчёт вручную» закрыт. Но защита держится на одной формулировке-суффиксе, и под ней есть юридически опасные дыры. Вердикт: гардрейл соблюдён по букве, но юрист истца имеет минимум три рабочих захода — правки нужны до реализации, не блокер уровня «переписать всё».</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-critical">critical</span>
+              <h3 class="finding-title">Название флага «Монополия в регионе» само по себе обвинительно</h3>
+              <span class="finding-location">EXPERIENCE.md:137, 174, 388</span>
+            </header>
+            <div class="finding-note">«Монополия» — термин с прямым антимонопольным значением (доминирующее положение по закону РК «О защите конкуренции»). Платформа считает «долю поставщика ≥50%» по своей выборке — это НЕ юридическая монополия. Суффикс «сигнал…» это не лечит. Публично называть юрлицо «монополией» без юр-признания — повод для иска о деловой репутации (ст. 143 ГК РК).</div>
+            <div class="finding-fix"><strong>Fix:</strong> переименовать субъект в описание факта: «Высокая концентрация контрактов у одного поставщика — сигнал, требующий проверки». В методике оговорить: «доля по выборке платформы, не вывод о доминирующем положении».</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-critical">critical</span>
+              <h3 class="finding-title">Флаг «Числится в РНУ» вшивает слово «недобросовестный» в UI</h3>
+              <span class="finding-location">EXPERIENCE.md:138, 206; State Patterns «Метка РНУ»</span>
+            </header>
+            <div class="finding-note">РНУ — реестр НЕДОБРОСОВЕСТНЫХ участников; расшифровка вшивает обвинительную оценку, запрещённую §7.1. Конфликт прослеживаемость↔нейтральность решён в пользу прослеживаемости, и обвинительное слово протащено в UI. Юрист оспаривающего включение подрядчика укажет: платформа транслирует ярлык по лицу, чей статус оспаривается.</div>
+            <div class="finding-fix"><strong>Fix:</strong> в UI показывать «Есть запись в государственном реестре (РНУ) — сигнал, требующий проверки» со ссылкой на первоисточник; расшифровку «недобросовестных» давать ТОЛЬКО как цитату названия госреестра в методике, с атрибуцией государству.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">Нейтральность KZ-перевода не валидируется; одна формулировка уже хромает</h3>
+              <span class="finding-location">EXPERIENCE.md:134–138, 141, 153</span>
+            </header>
+            <div class="finding-note">KZ — язык по умолчанию (юридически первичная витрина), но список запрещённых слов задан только по-русски — нет «бұзушылық», «сыбайлас жемқорлық», «кінәлі». KZ «картада нүкте жоқ» («на карте точки нет») читается ближе к «отсутствует/дефект объекта», а не honest gap данных.</div>
+            <div class="finding-fix"><strong>Fix:</strong> добавить KZ-колонку в таблицу запретов; провести нейтральность-ревью KZ носителем-юристом; пересмотреть «картада нүкте жоқ» на «картадағы нүкте әзірге жоқ».</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">Форма «сообщить об ошибке» спрятана в подвал, недостижима с поверхностей распространения</h3>
+              <span class="finding-location">EXPERIENCE.md:70, 99; PRD:315</span>
+            </header>
+            <div class="finding-note">Несущий досудебный инструмент (§7.1, FR-28) размещён только в подвале карточки и недостижим с Telegram-пуша, OG-превью, превью-листа карты — где обвинительный смысл доходит до третьих лиц. Право ответа подрядчика на MVP отсутствует, то есть это единственный канал — и он спрятан.</div>
+            <div class="finding-fix"><strong>Fix:</strong> ссылка рядом с КАЖДЫМ бейджем флага и в методике; deep-link на форму из Telegram-пуша; упомянуть канал в OG-описании/целевой странице шаринга.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">Бейдж флага на OG/пуше — голое утверждение без методики и пересчёта</h3>
+              <span class="finding-location">EXPERIENCE.md:174, 71/314, 310</span>
+            </header>
+            <div class="finding-note">OG-картинка и текст пуша несут формулировку флага БЕЗ интерактива «тап → методика», ломая FR-23. Именно эти артефакты расходятся вирусно и именно их предъявит истец как «распространение».</div>
+            <div class="finding-fix"><strong>Fix:</strong> OG-превью и текст пуша обязаны нести нейтральную формулировку с суффиксом + рабочую ссылку на первоисточник goszakup и на методику/пересчёт; зафиксировать как требование к серверному OG-рендеру и шаблону пуша.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Амбер-маркер кодирует «есть флаг» цветом в отрыве от слова</h3>
+              <span class="finding-location">DESIGN.md:197–198, 433; EXPERIENCE.md:175, 254</span>
+            </header>
+            <div class="finding-note">В массе голубых пинов амбер-пин = визуальное «подозрительный объект» ещё до прочтения текста — семантический дрейф, запрещённый §7.1. Текстовая альтернатива есть только в alt/screenreader.</div>
+            <div class="finding-fix"><strong>Fix:</strong> амбер-пин не должен доминировать как «тревога»; рассмотреть нейтральную форму-метку (кружок «i»/«?»); зафиксировать в Do/Don'ts, что амбер-пин ≠ «горячая точка».</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">«Единственный участник» как ярлык склоняет к выводу о сговоре</h3>
+              <span class="finding-location">EXPERIENCE.md:135, Flow Айгуль:354</span>
+            </header>
+            <div class="finding-note">При буквальном чтении это факт из данных (нейтрально), но в гражданском контексте прочитывается как «сговор/неконкурентность». Само участие единственного поставщика законно. Суффикс спасает, но субъект склоняет.</div>
+            <div class="finding-fix"><strong>Fix:</strong> держать «В закупке был один участник — сигнал, требующий проверки» (избегать «единственный» как ярлык); в методике: «возможен по законным основаниям; флаг не означает нарушения».</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">data-state-insufficient через штриховой бордюр читается как «дефект»</h3>
+              <span class="finding-location">DESIGN.md:231–234; EXPERIENCE.md:195</span>
+            </header>
+            <div class="finding-note">Dashed-бордюр конвенционально «черновик/проблема/missing», что окрашивает законную нехватку выборки как дефект — против §7.4 (честная пустота без негативной окраски).</div>
+            <div class="finding-fix"><strong>Fix:</strong> пересмотреть штриховой бордюр на нейтральный сплошной светлый или без рамки; убедиться, что плашка не выглядит как ошибка/варнинг.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Карточка подрядчика: нет требования первоисточника на КАЖДУЮ репутационную метку</h3>
+              <span class="finding-location">EXPERIENCE.md:65, 180, 206–207; PRD FR-13</span>
+            </header>
+            <div class="finding-note">Поверхность с наибольшей репутационной нагрузкой (агрегирует РНУ + монополию по БИН). source-link описан как общий «на каждой поверхности», но для подрядчика критично, чтобы метка РНУ и флаг монополии КАЖДАЯ вела на свой первоисточник, а не на одну общую ссылку; нет видимой формы «сообщить об ошибке» в зоне флагов.</div>
+            <div class="finding-fix"><strong>Fix:</strong> каждая репутационная метка — собственная ссылка-первоисточник + локальная «сообщить об ошибке»; зафиксировать как требование, не наследовать общим правилом.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Слова «нарушители/разоблачаем» в проектном лексиконе тона</h3>
+              <span class="finding-location">.decision-log:37; EXPERIENCE.md:128, 163</span>
+            </header>
+            <div class="finding-note">Пока только во внутренних формулировках и Don't-колонке, не в UI, но риск утечки в маркетинг/лендинг/пресс-релиз высок.</div>
+            <div class="finding-fix"><strong>Fix:</strong> вычистить «нарушители/разоблачаем» даже из внутренней рамки тона; заменить на «и тех, у кого есть сигналы к проверке, и добросовестных».</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">«Профиль уточняется» рядом с активным флагом создаёт асимметрию</h3>
+              <span class="finding-location">EXPERIENCE.md:151, 207</span>
+            </header>
+            <div class="finding-note">Обвинительный по смыслу флаг уже показан, а полнота контекста ещё «уточняется». Истец укажет на показ сигнала на заведомо неполных данных.</div>
+            <div class="finding-fix"><strong>Fix:</strong> при статусе «профиль уточняется» показывать рядом с флагом оговорку «профиль подрядчика ещё дополняется» в зоне самого флага.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Срок давности/устаревание сигнала не покрыт для трёх флагов из четырёх</h3>
+              <span class="finding-location">EXPERIENCE.md:206, 281–294</span>
+            </header>
+            <div class="finding-note">Для РНУ есть авто-снятие по <code>end_date</code>, но «монополия», «единственный участник», «аномальная цена» могут висеть на старом контракте бессрочно. Показ давнего сигнала без «по состоянию на дату» усиливает репутационный риск.</div>
+            <div class="finding-fix"><strong>Fix:</strong> у каждого флага показывать дату/период расчёта («сигнал по контракту от {дата}») и <code>methodology_version</code>.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <!-- ===== Reviewer: Accessibility ===== -->
+    <section class="reviewer-section">
+      <details open>
+        <summary>
+          <h2>Ревьюер: Доступность</h2>
+          <span class="reviewer-source">review-accessibility.md</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Базовая дисциплина сильная: заявленные числа контраста для текста на сплошных фонах честны (±0.05, проверено расчётом), а поведенческий этаж (Tab/Enter/Esc, фокус-ринг, alt у маркеров, <code>aria-hidden</code>, состояния-данных-как-текст, <code>prefers-reduced-motion</code>) описан явно. Но вскрыты три класса рисков, которые ручной smoke по NFR-7 не поймает: контраст текста на не-белых фонах, различение состояний только цветом на карте, и доступность canvas-карты MapLibre для скринридера/клавиатуры — заявлена, но не специфицирована.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">Ссылка-первоисточник на фоне sunken даёт 4.28:1 — ниже AA 4.5:1</h3>
+              <span class="finding-location">DESIGN.md Colors/link; components.source-link</span>
+            </header>
+            <div class="finding-note">{link} #0F7DA3 на {surface-sunken} #EEF6F9 = 4.28:1 (на белом — корректные 4.68:1). {source-link} объявлен как «якорь на каждой поверхности», а фон приложения — именно sunken. DESIGN.md заявляет link «(4.7:1)» без оговорки фона.</div>
+            <div class="finding-fix"><strong>Fix:</strong> затемнить {link} (~#0E6E90, ≥4.5:1 на sunken) ИЛИ зафиксировать «ссылка только на белом {surface}» ИЛИ всегда подчёркивать.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">Статусы маркеров кодируются только цветом, цвета неразличимы (WCAG 1.4.1)</h3>
+              <span class="finding-location">DESIGN.md components.map-marker-point; EXPERIENCE.md «Маркер-точка»</span>
+            </header>
+            <div class="finding-note">Обычный синий {primary}, флаг-амбер {signal-attention}, выбранный-золото {accent} имеют попарный контраст ~1.3–1.4:1. Для протанопа/дейтеранопа амбер и золото совпадают, а «есть флаг» (ключевая семантика) от «обычного» неотличимо. Белая обводка спасает видимость, но не различение статусов.</div>
+            <div class="finding-fix"><strong>Fix:</strong> добавить не-цветовой признак — иконка «!» в пине, отличная форма/обводка для выбранного, текст в alt (заявлен) и в кластерах. То же для будущего «светофора регионов».</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">Доступность canvas-карты MapLibre для SR/клавиатуры заявлена без механизма</h3>
+              <span class="finding-location">EXPERIENCE.md Interaction Primitives, Accessibility Floor</span>
+            </header>
+            <div class="finding-note">MapLibre GL рисует на <code>&lt;canvas&gt;</code> — маркеры по умолчанию НЕ в дереве доступности, focusable-узлов нет, alt сам не появится. Фолбэк-список включается только при сбое тайлов/гео &lt;70%, а не как постоянная альтернатива.</div>
+            <div class="finding-fix"><strong>Fix:</strong> DOM-маркеры (<code>maplibregl.Marker</code> с <code>&lt;button aria-label&gt;</code>) вместо canvas-символов, ИЛИ сделать текстовый список объектов ПОСТОЯННОЙ параллельной заменой карты, с фокус-таргетами ≥44px.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Выбранный чип фильтра: текст 3.95:1 и фон выбран/не-выбран 1.08:1</h3>
+              <span class="finding-location">DESIGN.md components.filter-chip; EXPERIENCE.md «Чип фильтра»</span>
+            </header>
+            <div class="finding-note">{primary-strong} #0F7DA3 на {primary-soft} #DCEFF6 = 3.95:1 (ниже AA для {meta} 12px). Фон выбранного vs невыбранного {surface-sunken} = 1.08:1 — «выбран/не выбран» почти не виден. Фильтр применяется немедленно без кнопки, так что пользователь теряет единственную обратную связь.</div>
+            <div class="finding-fix"><strong>Fix:</strong> поднять контраст текста выбранного чипа и/или добавить не-цветовой маркер выбора (галочка, рамка-обводка, жирность).</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Не-цветовое различие «флаг» vs «нет данных/недостаточно» неполно</h3>
+              <span class="finding-location">DESIGN.md data-state-*; EXPERIENCE.md State Patterns</span>
+            </header>
+            <div class="finding-note">Бейдж имеет амбер-точку/«!» (хорошо), но {data-state-nodata} (курсив + muted) и {data-state-insufficient} (штриховой бордюр + muted-soft) опираются на тон. Дашед-бордюр на её фоне = 2.70:1 — слабый сигнал. Для дальтоника «амбер сигнал» и «серое нет данных» рискуют слиться по светлоте.</div>
+            <div class="finding-fix"><strong>Fix:</strong> у каждого состояния — своя иконка (флаг «!», nodata «–», insufficient «≈»/«&lt;5»), не только цвет/курсив; усилить контраст штрихового бордюра.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Фокус-ринг обещан, но не специфицирован как токен</h3>
+              <span class="finding-location">DESIGN.md (токен отсутствует); EXPERIENCE.md State Patterns «Фокус»</span>
+            </header>
+            <div class="finding-note">DESIGN.md не задаёт цвет/толщину/контраст focus-ring; EXPERIENCE.md полагается на «нативный фокус-ринг». Нативный слабо виден на кастомных пилюлях и на карте; на {surface-sunken} браузерный синий ринг теряет контраст. Критично для пожилых/клавиатурных пользователей.</div>
+            <div class="finding-fix"><strong>Fix:</strong> добавить токен focus-ring (например 2px {primary-strong} с офсетом, ≥3:1 к смежным фонам в обеих темах), обязательный для всех интерактивных целей, включая маркеры.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Ловушка/возврат фокуса для модальных слоёв не описаны</h3>
+              <span class="finding-location">EXPERIENCE.md «Нижний лист превью», Interaction Primitives</span>
+            </header>
+            <div class="finding-note">Покрыты Esc-закрытие и «один уровень глубины», но не focus-trap внутри {preview-sheet}/модалки методики, перенос фокуса в открытый слой и возврат на триггер при закрытии. Без этого клавиатурный/SR-пользователь «проваливается» под лист.</div>
+            <div class="finding-fix"><strong>Fix:</strong> специфицировать focus-trap + initial focus + return-focus для обоих слоёв; <code>role=dialog</code>/<code>aria-modal</code>, заголовок слоя как accessible name.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Tap-target 44px задан токеном, но карта/пины и переключатели противоречат</h3>
+              <span class="finding-location">DESIGN.md spacing.tap-target, lang/theme-switch label-caps 9.5px</span>
+            </header>
+            <div class="finding-note">Каплевидные пины визуально мелкие, кластеры плотные, на десктопе нет клавиатурного выбора пина в кластере. Переключатели язык/тема — пилюли 9.5px: текст крошечный, интерактивная высота ≥44px не гарантирована (визуальный размер ≠ цель).</div>
+            <div class="finding-fix"><strong>Fix:</strong> явно зафиксировать min-height/min-width 44px для lang/theme-переключателей независимо от кегля; задать гарантированную hit-area для пинов и клавиатурный доступ к элементам кластера.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">lang-атрибуты для двуязычия не упомянуты</h3>
+              <span class="finding-location">EXPERIENCE.md Foundation, Voice and Tone</span>
+            </header>
+            <div class="finding-note">KZ — дефолт, есть RU-микрокопия, доменные поля goszakup часто на RU при KZ-интерфейсе, но нет указания проставлять <code>lang="kk"</code>/<code>lang="ru"</code>. Без <code>lang</code> SR неверно произнесёт казахскую кириллицу (ә ғ қ ң ө ұ ү і).</div>
+            <div class="finding-fix"><strong>Fix:</strong> зафиксировать правило <code>lang</code> на корне + на разноязычных inline-фрагментах; переключатель языка обновляет <code>lang</code>.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Графический контраст (1.4.11) не проверялся; тонкие границы как носитель смысла</h3>
+              <span class="finding-location">DESIGN.md Colors, Elevation</span>
+            </header>
+            <div class="finding-note">«Все пары проверены AA в обеих темах» относится к текст-на-фоне; графический контраст маркеров/границ местами &lt;3:1 (border #D2E4EC на white = 1.31).</div>
+            <div class="finding-fix"><strong>Fix:</strong> добавить в DESIGN.md явную область проверки («проверены текстовые пары; графические — см. review-accessibility») и не использовать тонкие границы как единственный носитель смысла.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Честность «только ручной smoke» создаёт остаточный риск</h3>
+              <span class="finding-location">EXPERIENCE.md Accessibility Floor «Уровень MVP — честно»</span>
+            </header>
+            <div class="finding-note">Для гражданского продукта с пожилыми/слабовидящими ручной smoke систематически пропускает именно найденное выше (контраст на не-белых фонах, цвет-как-единственный-код, SR на canvas-карте). Не блокер MVP, но риск надо назвать.</div>
+            <div class="finding-fix"><strong>Fix:</strong> добавить в smoke-чек-лист 3 дешёвых проверки: axe/Lighthouse одной страницы; навигация всего флоу с клавиатуры; один проход скринридером по карте+карточке.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <!-- ===== Reviewer: Map UX ===== -->
+    <section class="reviewer-section">
+      <details open>
+        <summary>
+          <h2>Ревьюер: Карта-UX</h2>
+          <span class="reviewer-source">review-map-ux.md</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Карта объявлена ядром продукта и «плавной как 2GIS», но это пока лозунг, а не спецификация: документы фиксируют что должно ощущаться и как выглядят маркеры/кластеры/линии (DESIGN.md силён), но почти не описывают как карта ведёт себя под нагрузкой — нет порогов кластеризации, деконфликта, приоритезации флаг-маркеров, бюджета тайлов, спецификации зум-контролов и жестовых конфликтов. Самое опасное — два фолбэк-триггера («тайлы недоступны» и «гео &lt;70%») заявлены, но не операционализированы. Для разработчика этого недостаточно, чтобы построить карту 2GIS-класса без новых решений на ходу.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-critical">critical</span>
+              <h3 class="finding-title">Поведение кластеризации задано одной строкой и нечислимо</h3>
+              <span class="finding-location">EXPERIENCE.md §Component Patterns {map-cluster}; §Interaction Primitives</span>
+            </header>
+            <div class="finding-note">Нет радиуса кластеризации, порога объединения, max-zoom раскрытия, поведения «спайдерфай» совпадающих точек, что происходит при тапе по неразваливающемуся кластеру. При NFR-2 (сотни-тысячи объектов) это определяет, будет ли карта 2GIS или «каша».</div>
+            <div class="finding-fix"><strong>Fix:</strong> задать числовой контракт (clusterRadius в px, maxZoom раскрытия, поведение при совпадающих координатах — спайдерфай или авто-зум + список в превью, supercluster-параметры) в EXPERIENCE.md §Карта или addendum.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-critical">critical</span>
+              <h3 class="finding-title">Триггер фолбэка «гео-покрытие района &lt;70%» не операционализирован</h3>
+              <span class="finding-location">EXPERIENCE.md §State Patterns; §Карта: режимы и поведение</span>
+            </header>
+            <div class="finding-note">Не сказано: что в знаменателе (объекты за какой период), считается на лету в клиенте или флагом из API, пересчитывается ли при смене фильтров, и что видит пользователь, УЖЕ панорамирующий в район &lt;70% (карта внезапно схлопывается в список?). Это прямой геогейт runbook (OQ-4/FR-6) и ядро доверия.</div>
+            <div class="finding-fix"><strong>Fix:</strong> определить источник и момент вычисления (рекомендуется серверный per-район флаг <code>geo_coverage</code>), правило перехода (на уровне страницы района, не при панораме), и явный обратный путь «всё равно показать карту».</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">Деконфликт и приоритезация маркеров при плотности не описаны (NFR-2)</h3>
+              <span class="finding-location">EXPERIENCE.md (правило отсутствует)</span>
+            </header>
+            <div class="finding-note">Нет правила, что амбер-флаг-маркеры имеют приоритет отрисовки/z-index над обычными при перекрытии, нет collision-detection, нет деградации плотности. Риск: флаги (ключевая ценность) тонут среди обычных маркеров или карта превращается в стену пинов.</div>
+            <div class="finding-fix"><strong>Fix:</strong> задать z-order (выбранный &gt; флаг &gt; обычный), collision/declutter-политику и поведение «слишком плотно» (кластеризовать раньше).</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">Перформанс-бюджет NFR-1 (&lt;3с) не разложен на карту</h3>
+              <span class="finding-location">EXPERIENCE.md §State Patterns, Cold load</span>
+            </header>
+            <div class="finding-note">Есть «скелетоны под раскладку» и «без спиннер-стены», но нет прогрессивной загрузки тайлов, стратегии загрузки маркеров (viewport-bbox vs всё сразу, GeoJSON vs vector tiles), скелетона именно для карты. 3с при тысячах объектов на мобильном без явной стратегии не гарантируются.</div>
+            <div class="finding-fix"><strong>Fix:</strong> описать тайл-стратегию (vector tiles + on-demand), загрузку объектов по bbox, и map-specific загрузочное состояние (серый канвас + плашка, не пустой экран).</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">«Без точки на карте» не имеет агрегированной аффордансы на самой карте</h3>
+              <span class="finding-location">EXPERIENCE.md §State Patterns; Flow 1 сбой</span>
+            </header>
+            <div class="finding-note">{data-state-ungeocoded} помечает объект в списках, но нет аффордансы «N объектов района не показаны на карте» — пользователь на карте не знает, что видит неполную картину. Бьёт по честности (несущий гардрейл) и по доверию.</div>
+            <div class="finding-fix"><strong>Fix:</strong> добавить на карту/страницу района счётчик-аффордансу «ещё N объектов без точки → открыть списком», чтобы отсутствие на карте было видимым, а не молчаливым.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Зум-контролы и контролы карты не специфицированы поведенчески</h3>
+              <span class="finding-location">DESIGN.md (вид задан); EXPERIENCE.md §Interaction Primitives</span>
+            </header>
+            <div class="finding-note">Нет: где они на экране (досягаемость одной рукой — критично для mobile-first), есть ли «моё местоположение»/«вернуть к Астане»/компас, перекрывает ли нижний лист контролы зума.</div>
+            <div class="finding-fix"><strong>Fix:</strong> специфицировать набор контролов карты, их позицию в зоне большого пальца, и их сдвиг при открытом {preview-sheet}.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Жестовые конфликты карта↔страница не разобраны</h3>
+              <span class="finding-location">EXPERIENCE.md (только «свайп вниз закрывает» лист)</span>
+            </header>
+            <div class="finding-note">Не сказано, как разводятся вертикальный скролл страницы и pan карты, нужен ли one-finger vs two-finger pan, как ведёт себя свайп по {preview-sheet} (детент-уровни peek/half/full?) против pan карты под ним.</div>
+            <div class="finding-fix"><strong>Fix:</strong> задать жестовую модель: детенты листа, gesture-handling карты (cooperative gestures), приоритет жеста по зоне касания.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Дороги-полилинии: визуал есть, поведение выбора нет</h3>
+              <span class="finding-location">DESIGN.md §Components {map-line}; EXPERIENCE.md §Component Patterns</span>
+            </header>
+            <div class="finding-note">Как выглядит ВЫБРАННАЯ линия (для точки есть золотой fill-selected, для линии selected не задан), какова зона тапа по тонкой линии (hit-area), как линия превью отличается от точки (length_km, цена/км упоминается, но в превью-контенте не зафиксирована).</div>
+            <div class="finding-fix"><strong>Fix:</strong> добавить selected-стиль линии (золотой stroke/casing), hit-tolerance для линий, линие-специфичные поля превью (длина, цена/км).</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Полигоны районов и выбор района на карте не специфицированы</h3>
+              <span class="finding-location">EXPERIENCE.md §IA, граф навигации</span>
+            </header>
+            <div class="finding-note">Есть переход «тап по району → страница района», но нет: отрисованы ли границы полигонами, как выглядит ховер/выбор, как пользователь понимает в каком районе он сейчас, как именованные районы (Алматы/Сарыарка/Есиль/Байконыр/Нура) выбираются.</div>
+            <div class="finding-fix"><strong>Fix:</strong> решить, рисуются ли районные полигоны и KATO-границы, задать стиль и селект-аффордансу, либо явно отнести выбор района к фильтрам/странице.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Детенты листа и превью для «много объектов под кластером» не определены</h3>
+              <span class="finding-location">EXPERIENCE.md §Component Patterns {preview-sheet}</span>
+            </header>
+            <div class="finding-note">{preview-sheet} хорош для одного объекта; не описано, что в превью, если тап пришёлся на совпадающие точки/неразвалившийся кластер (список-превью?).</div>
+            <div class="finding-fix"><strong>Fix:</strong> добавить вариант превью-списка для множественного попадания и зафиксировать, есть ли промежуточный детент листа.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Клавиатурное управление картой без модели фокуса по маркерам</h3>
+              <span class="finding-location">EXPERIENCE.md §Interaction Primitives/§Accessibility Floor</span>
+            </header>
+            <div class="finding-note">Заявлено стрелки=pan, +/-=zoom, но без модели фокуса по маркерам (как табать между сотнями пинов, есть ли «список объектов в кадре»). На MVP a11y — ручной smoke, поэтому low, но фокус-через-тысячи-маркеров нереализуем без списочной альтернативы.</div>
+            <div class="finding-fix"><strong>Fix:</strong> сослать клавиатурный доступ к маркерам на фолбэк/список объектов в кадре вместо обхода пинов Tab'ом.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <!-- ===== Mechanical notes ===== -->
+    <div class="mechanical">
+      <h3>Mechanical notes</h3>
+      <ul>
+        <li><strong>Token resolution:</strong> 0 битых ссылок. Все <code>{colors.*}</code>/<code>{typography.*}</code>/<code>{rounded.*}</code>/<code>{spacing.*}</code>/<code>{components.*}</code> резолвятся; короткая форма EXPERIENCE.md (<code>{flag-badge}</code>) однозначно сопоставляется.</li>
+        <li><strong>Component name parity:</strong> имена 14 компонентов идентичны между DESIGN.md.frontmatter, DESIGN.md.Components, EXPERIENCE.md.Component Patterns и State Patterns. Расхождений нет.</li>
+        <li><strong>Frontmatter completeness:</strong> DESIGN.md — полный; EXPERIENCE.md — отсутствует <code>sources:</code> (см. Inheritance discipline); <code>references: DESIGN.md</code> присутствует. <code>status: draft</code> в обоих.</li>
+        <li><strong>Граф навигации не Mermaid:</strong> ASCII-арт в обычном fenced-блоке — читаемо человеком, но не машинно-парсится. Не ошибка (рубрика не требует Mermaid).</li>
+        <li><strong>Неиспользуемые токены:</strong> <code>confirmed*</code> (×6) определены, не потребляются.</li>
+        <li><strong>Проверенные контрасты:</strong> текст-на-сплошных-фонах честны (±0.05). Провалы — на НЕ-белых фонах (link на sunken 4.28:1, выбранный чип 3.95:1) и графические (маркеры ~1.3–1.4:1) — см. Accessibility.</li>
+        <li><strong>Источники подтверждены:</strong> NFR-1, NFR-6 (RU-интерфейс — переопределён), NFR-7 сверены с PRD. Пороги ≥5, геогейт ≥70%, формулы ×1.5 / ≥50% сверены с data-model и runbook (расхождения по методике — см. Inheritance discipline).</li>
+      </ul>
+    </div>
+
+    <footer class="report-footer">
+      <div class="meta">
+        <span>Rubric: review-rubric.md</span>
+        <span>Reviewers: review-neutrality.md, review-accessibility.md, review-map-ux.md</span>
+        <span>Run at: 2026-06-18</span>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

@@ -35,3 +35,10 @@ go.work.sum
 .claude/
 _bmad/
 
+# Node / web (Story 1.1: web/ — Vite+React+TS)
+node_modules/
+**/node_modules/
+web/dist/
+**/dist/
+*.tsbuildinfo
+

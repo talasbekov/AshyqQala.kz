@@ -1,0 +1,48 @@
+name: ci-server
+
+# Path-фильтр: гоняется только при изменениях бэка/фикстур. Красный = блок merge.
+on:
+  pull_request:
+    paths: ['server/**', 'fixtures/**', '.github/workflows/ci-server.yml']
+  push:
+    branches: [main]
+    paths: ['server/**', 'fixtures/**', '.github/workflows/ci-server.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  build-test-lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum # go.sum появился в Story 1.2 (pgx v5) → кэш модулей включён
+
+      - name: gofmt (нет неформатированных файлов)
+        run: test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go build
+        run: go build ./...
+
+      - name: go test
+        run: go test ./...
+        # Последующими историями добавляются: +golden +property,
+        # go test -tags=integration (testcontainers postgis/postgis),
+        # contract+schema-hash, АРХИТЕКТУРНЫЙ go-list-тест (границы импортов;
+        # прод не импортирует tools/scrape — AC2 Story 0.6).
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v7 # v7+ требуется для golangci-lint v2.x (v6 = v1 only)
+        with:
+          version: v2.5.0
+          working-directory: server

@@ -1,0 +1,27 @@
+# ХОЛОДНЫЕ службы (по требованию, через profiles). Каркас S-0 — НЕ запускаются по умолчанию.
+# Наполняются: importer — Epic 2 (живой импорт); directus — Epic 3 (очереди гео/нормализации);
+# bot — Epic 7 (polling); nominatim — Epic 3 (batch-геокодинг, эфемерно).
+services:
+  importer:
+    profiles: ['importer']
+    build:
+      context: ../server
+      dockerfile: Dockerfile # держит GOSZAKUP_TOKEN; cmd/api токена НЕ видит (изоляция)
+    command: ['/importer']
+
+  directus:
+    profiles: ['directus']
+    image: directus/directus:11
+    # внутренняя админка поверх Postgres (очереди гео FR-5 / нормализации FR-2)
+
+  bot:
+    profiles: ['bot']
+    build:
+      context: ../server
+      dockerfile: Dockerfile
+    # command: ['/bot'] — Epic 7: cmd/bot ещё не создан (polling, без публичного эндпоинта)
+
+  nominatim:
+    profiles: ['geocode']
+    image: mediagis/nominatim:4.4
+    # локальный Nominatim для batch-геокодинга (политика ≤1 req/sec снимается на своём инстансе)

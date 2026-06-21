@@ -20,7 +20,7 @@
 - Геопривязка — `geo_objects` (POINT|LINESTRING, `length_km` для цены/км, `district_id`).
 - Флаги — `risk_flags` (`evidence` jsonb + `methodology_version` → пересчитываемость), `rnu_entries`, кэш медиан `price_benchmarks`.
 - Импорт/подписки — `import_runs`, `import_journal`, `subscriptions`, `notifications_outbox`.
-- Двуязычие — поля `name_kz`/`name_ru`, `subject_kz`/`subject_ru` с первого дня (решение по языку).
+- Двуязычие — поля `name_kk`/`name_ru`, `subject_kk`/`subject_ru` с первого дня (решение по языку).
 
 ## 3. Дефолты методики флагов (ссылка)
 

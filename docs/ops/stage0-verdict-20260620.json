@@ -1,0 +1,33 @@
+{
+  "methodology_version": "stage0-1.0",
+  "generated_at": "2026-06-20T12:13:28+05:00",
+  "data_source": "file:./data",
+  "window_months": 24,
+  "geo_gate_threshold": 0.7,
+  "oq1_volume": {
+    "contracts_in_window": 300,
+    "contracts_total": 300,
+    "sum_completeness": 1,
+    "supplier_bin_completeness": 0.9433
+  },
+  "oq4_geo_coverage": {
+    "coverage": null,
+    "sample_size": 0,
+    "successes": 0,
+    "errors": 0,
+    "ci_lower": null,
+    "ci_upper": null,
+    "ci_method": "wilson_0.95",
+    "state": "insufficient_sample"
+  },
+  "oq6_sample": {
+    "comparability_key": "direction × kato × 24mo",
+    "min_sample": 5,
+    "groups_total": 2,
+    "groups_sufficient": 2,
+    "anno_matched": 219,
+    "state": "ok"
+  },
+  "verdict": "no_go",
+  "verdict_reason": "oq4_geo_coverage: недостаточная выборка (sample_size=0, state=insufficient_sample) → гео-замер не подтверждён"
+}

@@ -32,6 +32,51 @@ go run . -customer-bins "BIN1,BIN2,BIN3" -sample 2000
 go run . -customer-bins "BIN1,BIN2,BIN3" -geocoder nominatim -geo-sample 200
 ```
 
+## Машиночитаемый вердикт (`-format json`) и CI-гейт
+
+Поверх человекочитаемой таблицы Шагов A–D инструмент отдаёт **машиночитаемый Go/No-Go-вердикт**
+(`-format json`) с **exit-кодом** для CI и **версионируемым baseline-артефактом**. Это превращает
+гейт №0 из устной договорённости в программно проверяемый контракт.
+
+```bash
+# Машиночитаемый вердикт на stdout (валидный JSON-объект; диагностика → stderr)
+go run . -source file -geocoder nominatim -format json
+
+# Записать baseline-артефакт (имя stage0-verdict-YYYYMMDD.json) рядом с docs/ops/
+go run . -geocoder nominatim -format json -verdict-out ../docs/ops/
+
+# CI-хук: красный = блок merge в Epic 2/3 (geo_coverage < 0.70 → No-Go)
+go run . -geocoder nominatim -format json -verdict-out ../docs/ops/ || echo "No-Go: блок merge"
+```
+
+**Контракт вердикта (5 обязательных ключей):** `methodology_version`, `oq1_volume`,
+`oq4_geo_coverage` (несёт **доверительный интервал** Уилсона 95% + **размер выборки**),
+`oq6_sample`, `verdict ∈ {go | go_with_fallback | no_go}`.
+
+**Контракт exit-кода (для CI):**
+
+| Условие (порядок проверки) | `verdict` | exit |
+|---|---|---|
+| гео-замер не прогонялся / выборка `n ∈ {0,1,2}` (`oq4.state != ok`) | `no_go` | 1 |
+| `oq4_geo_coverage.coverage ≥ 0.70` | `go` | 0 |
+| `coverage < 0.70` **и** НЕ задан `-allow-fallback` | `no_go` | 1 |
+| `coverage < 0.70` **и** задан `-allow-fallback` (sign-off владельца, Story 0.4) | `go_with_fallback` | 0 |
+
+- **Гейт включается автоматически в `-format json`**; в `-format text` exit-код по умолчанию
+  **не меняется** (обратная совместимость) — включить можно явным `-gate`.
+- **Честность над домыслом:** «гео не замерен» → `coverage: null` + `state: insufficient_sample`,
+  а НЕ `0%`. Недостаточная выборка не выдаётся за измерение.
+- **Частичный Go** (`go_with_fallback`) — осознанное решение владельца идти с ручной гео-очередью
+  Directus; доступно ТОЛЬКО через `-allow-fallback`, не выдаётся автоматически.
+- `methodology_version` пинит формулу+пороги: внешний пересчёт по тем же входам даёт тот же вердикт.
+
+Флаги вердикта: `-format` (`text|json`), `-verdict-out` (файл/каталог), `-verdict-date`
+(override `YYYYMMDD` для имени), `-allow-fallback`, `-gate`.
+
+> Авторитетный **живой** baseline (на токене ows_v2) коммитит **Story 0.3**. Пример-артефакт на
+> синтетических фикстурах — `docs/ops/stage0-verdict-20260620.json` (честный `data_source: file`).
+> Минимальный GitHub Actions workflow подключит этот контракт, когда появится монорепо-CI (Epic 1+).
+
 ## Фолбэк без токена (пока токен запрашивается)
 
 Токен ows_v2 запрашивается официально и идёт долго. Чтобы не простаивать, источник данных
@@ -121,7 +166,9 @@ stage0-audit/
 ├── client.go    # клиент ows_v2: Bearer + пагинация (next_page/items)
 ├── models.go    # обобщённый разбор items + кандидаты имён полей (VERIFY)
 ├── audit.go     # классификация направлений, гео-маркеры, парсинг дат
-├── main.go      # probe + шаги A–D + таблица Go/No-Go
+├── verdict.go   # тип Verdict, чистая deriveVerdict, Wilson CI, methodology_version
+├── verdict_test.go # юнит-тесты вердикта (граница гейта, честность, Wilson, детерминизм)
+├── main.go      # probe + шаги A–D + таблица Go/No-Go + JSON-вердикт/exit/артефакт
 └── README.md
 ```
 

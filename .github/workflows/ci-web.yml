@@ -1,0 +1,44 @@
+name: ci-web
+
+# Path-фильтр: гоняется только при изменениях фронта/фикстур. Красный = блок merge.
+on:
+  pull_request:
+    paths: ['web/**', 'fixtures/**', '.github/workflows/ci-web.yml']
+  push:
+    branches: [main]
+    paths: ['web/**', 'fixtures/**', '.github/workflows/ci-web.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  build-typecheck-lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: npm ci
+        run: npm ci
+
+      - name: tsc (typecheck)
+        run: npm run typecheck
+
+      - name: eslint
+        run: npm run lint
+
+      - name: prettier --check
+        run: npm run format:check
+
+      - name: vite build
+        run: npm run build
+        # Последующими историями добавляются: vitest (+контраст-гейт),
+        # Playwright smoke + cross-surface (читает @fixtures).

@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AshyqQala.kz — Келісімшарт картасы / Карточка контракта</title>
+<style>
+/* ============================================================================
+   key-contract-card.html — КАРТОЧКА КОНТРАКТА (герой сложного потока).
+   Личность: Направление B; палитра Тема 4. Слева — светлая, справа — тёмная тема
+   ОДНОЙ И ТОЙ ЖЕ карточки.
+
+   КАКИЕ СЕКЦИИ СПАЙНОВ УПРАВЛЯЮТ ЭТИМ ЭКРАНОМ:
+   • EXPERIENCE.md → Information Architecture (Карточка контракта: полные данные,
+        флаги, метаданные, первоисточник)
+   • EXPERIENCE.md → Component Patterns: {contract-card}, {flag-badge} (тап→методика +
+        «Сообщить об ошибке» рядом), {source-link}, {confirmed-tag}, {ornament-divider},
+        {lang-switch}, {theme-switch}
+   • EXPERIENCE.md → State Patterns → «Нет данных» {data-state-nodata} (срок завершения)
+   • EXPERIENCE.md → Поведение риск-флагов (4 флага «сигнал, требующий проверки»,
+        давность сигнала detected_at, защитные связи у каждого флага FR-23/§7.1)
+   • EXPERIENCE.md → Key Flows → Flow 1 (Айгуль): превью→карточка→флаг→первоисточник→шаринг
+   • DESIGN.md → Components/Colors (флаг нейтральный амбер, link-on-sunken на обоих фонах)
+
+   ГАРДРЕЙЛ: каждый флаг = бейдж + «сигнал, требующий проверки» + «Как это посчитано»
+   + дата обнаружения. «Сообщить об ошибке» — рядом с флагами, не только в подвале.
+   Запрещены «нарушение/коррупция/виновен».
+   ============================================================================ */
+
+:root {
+  --primary:#1496C0; --primary-strong:#0F7DA3; --primary-soft:#DCEFF6; --on-primary:#FFFFFF;
+  --accent:#F0B429; --accent-soft:#FBEFC9; --on-accent:#16242C;
+  --signal:#E09915; --signal-bg:#FFF6E0; --signal-fg:#7A560D; --signal-border:#F2D58C;
+  --confirmed:#2C8C7A; --confirmed-text:#1F7A6B; --confirmed-soft:#D7EEE8;
+  --muted:#8893A0; --muted-text:#5A6672; --muted-soft:#EBEFF2;
+  --surface:#FFFFFF; --sunken:#EEF6F9; --border:#D2E4EC;
+  --ink:#16242C; --ink2:#4E5E69;
+  --link:#0F7DA3; --link-sunken:#0C6585; --focus:#0C6585;
+}
+[data-theme="dark"] {
+  --primary:#3BB3D6; --primary-strong:#5FC6E3; --primary-soft:#173A47; --on-primary:#06222B;
+  --accent:#F5C14E; --accent-soft:#3A2E12; --on-accent:#16242C;
+  --signal:#E8A93A; --signal-bg:#33280F; --signal-fg:#F0CE82; --signal-border:#5C4A1E;
+  --confirmed:#3FB39C; --confirmed-text:#3FB39C; --confirmed-soft:#16352F;
+  --muted:#6B7785; --muted-text:#9AA6B2; --muted-soft:#1E2C34;
+  --surface:#16242C; --sunken:#0E1A21; --border:#2A3D47;
+  --ink:#EAF1F4; --ink2:#AAB8C0;
+  --link:#56C0E0; --link-sunken:#5BC4E4; --focus:#5FC6E3;
+}
+* { box-sizing:border-box; }
+html,body { margin:0; }
+body { font-family:"Inter","Segoe UI",Roboto,"Helvetica Neue",Arial,system-ui,sans-serif;
+  background:#cbd6dd; color:var(--ink); line-height:1.45; padding:24px 14px 56px; -webkit-font-smoothing:antialiased; }
+@media (prefers-reduced-motion: reduce){ *{ transition:none!important; animation:none!important; } }
+
+.wrap { max-width:840px; margin:0 auto; }
+.doc-h1 { font-size:22px; margin:0 0 4px; letter-spacing:-.01em; color:#0e2630; }
+.doc-p  { font-size:13px; margin:0 0 18px; color:#3c4a53; max-width:680px; }
+.cols { display:grid; gap:28px; grid-template-columns:repeat(2,minmax(330px,1fr)); }
+@media (max-width:780px){ .cols{ grid-template-columns:1fr; max-width:400px; margin:0 auto; } }
+.col-cap { font-size:11px; letter-spacing:.12em; text-transform:uppercase; font-weight:700; color:#0e2630; margin:0 0 8px; }
+.col-sub { font-size:12px; color:#3c4a53; margin:0 0 12px; }
+
+.phone { width:100%; max-width:372px; margin:0 auto; background:#0c1a22;
+  border-radius:38px; padding:10px; box-shadow:0 18px 40px rgba(12,26,34,.30); }
+.screen { position:relative; overflow:hidden; border-radius:30px; background:var(--sunken);
+  height:820px; display:flex; flex-direction:column; }
+.notch { position:absolute; top:0; left:50%; transform:translateX(-50%);
+  width:128px; height:22px; background:#0c1a22; border-radius:0 0 16px 16px; z-index:60; }
+.statusbar { height:30px; display:flex; align-items:center; justify-content:space-between;
+  padding:0 22px 0 20px; font-size:12px; font-weight:600; color:var(--ink); background:var(--surface); z-index:30; }
+
+/* шапка с back + переключателями */
+.topbar { background:var(--surface); border-bottom:1px solid var(--border); padding:8px 12px;
+  display:flex; align-items:center; gap:8px; }
+.iconbtn { width:36px; height:36px; min-width:36px; border-radius:9px; border:1px solid transparent;
+  background:transparent; color:var(--ink); display:grid; place-items:center; cursor:default; }
+.iconbtn:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+.toptitle { font-weight:700; font-size:14px; }
+.toptitle small { display:block; font-size:10.5px; color:var(--ink2); font-weight:500; }
+.head-ctrls { margin-left:auto; display:flex; align-items:center; gap:6px; }
+.lang { display:inline-flex; background:var(--sunken); border:1px solid var(--border); border-radius:999px; overflow:hidden; }
+.lang button { min-width:34px; min-height:30px; border:none; background:transparent; font-size:9.5px; font-weight:700; letter-spacing:.1em; color:var(--ink2); cursor:default; padding:0 8px; }
+.lang button.on { background:var(--primary); color:var(--on-primary); }
+.lang button:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+.theme { min-width:36px; min-height:30px; border-radius:999px; border:1px solid var(--border); background:var(--sunken); color:var(--ink2); display:grid; place-items:center; cursor:default; }
+.theme:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+
+/* скролл-область карточки */
+.scroll { flex:1; overflow-y:auto; padding:14px 16px 22px; }
+
+/* карточка контракта ({contract-card}) */
+.card { background:var(--surface); border:1px solid var(--border); border-radius:12px;
+  padding:16px; box-shadow:0 2px 8px rgba(22,36,44,.06); }
+[data-theme="dark"] .card { box-shadow:none; }
+.over { font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--primary); font-weight:700; }
+.over .ru { color:var(--ink2); text-transform:none; letter-spacing:0; font-weight:500; }
+.title { margin:4px 0 6px; font-size:18px; font-weight:700; line-height:1.22; letter-spacing:-.005em; }
+.confirmed-tag { display:inline-flex; align-items:center; gap:5px; font-size:10.5px;
+  color:var(--confirmed-text); background:var(--confirmed-soft); border-radius:999px; padding:2px 9px;
+  vertical-align:middle; white-space:nowrap; }
+.confirmed-tag .ck { color:var(--confirmed); font-weight:800; }
+.sum-row { display:flex; align-items:baseline; gap:9px; margin:8px 0 4px; }
+.sum { font-size:24px; font-weight:800; color:var(--primary-strong); letter-spacing:-.01em; }
+.sum-cap { font-size:11px; color:var(--ink2); }
+
+/* орнамент-разделитель қошқар мүйіз ({ornament-divider}) */
+.orn { display:flex; align-items:center; gap:8px; margin:13px 0 11px; color:var(--accent); }
+.orn .ln { flex:1; height:1px; background:linear-gradient(90deg,transparent,var(--border)); }
+.orn .ln.r { background:linear-gradient(90deg,var(--border),transparent); }
+
+.meta { display:grid; grid-template-columns:auto 1fr; gap:7px 12px; font-size:13px; margin:0; }
+.meta dt { color:var(--ink2); }
+.meta dd { margin:0; color:var(--ink); font-weight:500; }
+.meta dd a { color:var(--link-sunken); text-decoration:underline; text-underline-offset:2px; }
+.meta dd a:focus-visible { outline:2px solid var(--focus); outline-offset:2px; border-radius:3px; }
+/* честное «нет данных» {data-state-nodata}: курсив, muted, глиф «—» */
+.nodata { color:var(--muted-text); font-style:italic; font-weight:400; }
+.nodata::before { content:"— "; font-style:normal; }
+
+/* секция флагов */
+.sec-h { font-size:15px; font-weight:600; margin:18px 0 4px; }
+.sec-h .cnt { font-size:11px; font-weight:600; color:var(--ink2); }
+.flag-help { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:0 0 10px; }
+.report-link { font-size:11.5px; color:var(--link-sunken); text-decoration:underline; text-underline-offset:2px; white-space:nowrap; }
+.report-link:focus-visible { outline:2px solid var(--focus); outline-offset:2px; border-radius:3px; }
+
+/* блок одного флага: бейдж + дата + ссылки */
+.flag { background:var(--signal-bg); border:1px solid var(--signal-border); border-radius:10px;
+  padding:11px 12px; margin-bottom:10px; }
+.flag .top { display:flex; align-items:flex-start; gap:9px; }
+.flag .ic { width:20px; height:20px; flex:none; border-radius:50%; background:var(--signal);
+  color:var(--on-accent); display:grid; place-items:center; font-size:13px; font-weight:800; margin-top:1px; }
+.flag .txt { font-size:13px; font-weight:600; color:var(--signal-fg); line-height:1.3; }
+.flag .txt .ru { display:block; font-weight:400; font-size:11px; color:var(--muted-text); margin-top:2px; }
+.flag .date { font-size:10.5px; color:var(--signal-fg); opacity:.85; margin:7px 0 0 29px; }
+.flag .links { display:flex; flex-wrap:wrap; gap:6px 14px; margin:8px 0 0 29px; }
+.flag .links a { font-size:11.5px; font-weight:600; color:var(--link-sunken); text-decoration:underline; text-underline-offset:2px; }
+.flag .links a:focus-visible { outline:2px solid var(--focus); outline-offset:2px; border-radius:3px; }
+
+/* первоисточник ({source-link}) + confirmed-tag */
+.src-block { margin-top:16px; padding-top:14px; border-top:1px solid var(--border); }
+.src-link { display:inline-flex; align-items:center; font-size:13px; font-weight:600;
+  color:var(--link-sunken); text-decoration:underline; text-underline-offset:2px; }
+.src-link:focus-visible { outline:2px solid var(--focus); outline-offset:2px; border-radius:3px; }
+.src-conf { display:inline-flex; align-items:center; gap:5px; margin-left:8px; font-size:10.5px;
+  color:var(--confirmed-text); background:var(--confirmed-soft); border-radius:999px; padding:2px 8px; }
+
+/* нижние действия */
+.actions { display:flex; gap:9px; margin-top:16px; }
+.btn { flex:1; text-align:center; border-radius:10px; padding:11px; font-size:13px; font-weight:600; text-decoration:none; }
+.btn.primary { background:var(--primary-strong); color:var(--on-primary); }
+.btn.ghost { background:var(--surface); color:var(--ink); border:1px solid var(--border); }
+.btn:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+
+.foot-report { margin-top:14px; text-align:center; }
+.foot-report a { font-size:11.5px; color:var(--link-sunken); text-decoration:underline; text-underline-offset:2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 class="doc-h1">key-contract-card.html — Келісімшарт картасы</h1>
+  <p class="doc-p">Реконструкция ул. Кабанбай батыра · 240 млн ₸ · Заказчик: Акимат г. Астана · Подрядчик: ТОО «Астана Жол Курылыс».
+  Бейджи активных флагов (нейтральный амбер) — каждый с «Как это посчитано» и датой обнаружения; «Сообщить об ошибке» — рядом с флагами.
+  Слева — светлая тема, справа — тёмная тема той же карточки.</p>
+
+  <div class="cols">
+    <!-- ===================== СВЕТЛАЯ ТЕМА ===================== -->
+    <div>
+      <p class="col-cap">A · Светлая тема</p>
+      <p class="col-sub">Активные флаги · «нет данных» у срока · первоисточник + метка «подтверждено» · «Сообщить об ошибке» у флагов.</p>
+      <div class="phone">
+        <div class="screen" data-theme="light">
+          <div class="notch"></div>
+          <div class="statusbar"><span>9:41</span><span>5G &nbsp;84%</span></div>
+
+          <div class="topbar">
+            <button class="iconbtn" aria-label="Артқа / Назад">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <div class="toptitle">Келісімшарт<small lang="ru">/ Контракт</small></div>
+            <div class="head-ctrls">
+              <div class="lang" role="group" aria-label="Тіл / Язык">
+                <button class="on" aria-pressed="true" lang="kk">KZ</button>
+                <button aria-pressed="false" lang="ru">RU</button>
+              </div>
+              <button class="theme" aria-label="Тема: жарық / тёмная">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="scroll">
+            <div class="card">
+              <div class="over">КЕЛІСІМШАРТ · ЖОЛ <span class="ru" lang="ru">/ контракт · дорога</span></div>
+              <h1 class="title" lang="ru">Реконструкция ул. Кабанбай батыра
+                <span class="confirmed-tag"><span class="ck" aria-hidden="true">✓</span> деректер дереккөзден</span>
+              </h1>
+              <div class="sum-row"><span class="sum">240 млн ₸</span><span class="sum-cap">шарт бағасы / цена договора</span></div>
+
+              <div class="orn" aria-hidden="true">
+                <span class="ln"></span>
+                <svg width="64" height="14" viewBox="0 0 64 14" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <path d="M32 12c-3-5-9-5-9-1 0 3 4 3 4 0 0-4-6-6-11-3"/>
+                  <path d="M32 12c3-5 9-5 9-1 0 3-4 3-4 0 0-4 6-6 11-3"/>
+                  <circle cx="32" cy="3" r="1.4" fill="currentColor" stroke="none"/>
+                </svg>
+                <span class="ln r"></span>
+              </div>
+
+              <dl class="meta">
+                <dt>Тапсырыс беруші</dt><dd lang="ru">Акимат г. Астана</dd>
+                <dt>Мердігер</dt><dd><a href="#" lang="ru">ТОО «Астана Жол Курылыс» →</a></dd>
+                <dt>Аудан</dt><dd><a href="#">Есіл ауданы →</a></dd>
+                <dt>Тәсіл</dt><dd lang="ru">Из одного источника</dd>
+                <dt>Аяқталу мерзімі</dt><dd class="nodata">деректер жоқ / нет данных</dd>
+              </dl>
+
+              <h2 class="sec-h">Сигналдар <span class="cnt">/ Сигналы (2)</span></h2>
+              <div class="flag-help">
+                <span style="font-size:11px;color:var(--muted-text)">Әрқайсысы — тексеруді талап ететін сигнал, айып емес.</span>
+              </div>
+
+              <!-- Флаг 1: единственный участник -->
+              <div class="flag">
+                <div class="top">
+                  <span class="ic" aria-hidden="true">!</span>
+                  <span class="txt">Хабарландыруда бір қатысушы тіркелген — тексеруді талап ететін сигнал
+                    <span class="ru" lang="ru">В объявлении зафиксирован один участник — сигнал, требующий проверки</span>
+                  </span>
+                </div>
+                <div class="date">Сигнал 12.05.2026 контракті бойынша есептелген <span lang="ru" style="opacity:.85">/ по контракту от 12.05.2026</span></div>
+                <div class="links">
+                  <a href="#">Қалай есептелді ↗</a>
+                  <a href="#" class="report" lang="ru">Қате туралы хабарлау / Сообщить об ошибке</a>
+                </div>
+              </div>
+
+              <!-- Флаг 2: цена за км выше медианы -->
+              <div class="flag">
+                <div class="top">
+                  <span class="ic" aria-hidden="true">!</span>
+                  <span class="txt">Шақырым құны медианадан жоғары — тексеруді талап ететін сигнал
+                    <span class="ru" lang="ru">Цена за км выше медианы — сигнал, требующий проверки</span>
+                  </span>
+                </div>
+                <div class="date">Сигнал 12.05.2026 контракті бойынша есептелген <span lang="ru" style="opacity:.85">/ по контракту от 12.05.2026</span></div>
+                <div class="links">
+                  <a href="#">Қалай есептелді ↗</a>
+                  <a href="#" lang="ru">Қате туралы хабарлау / Сообщить об ошибке</a>
+                </div>
+              </div>
+
+              <div class="src-block">
+                <a class="src-link" href="#" rel="noopener">Бастапқы дереккөз: goszakup.gov.kz ↗</a>
+                <span class="src-conf"><span class="ck" aria-hidden="true" style="color:var(--confirmed);font-weight:800">✓</span> бастапқы дереккөзден</span>
+              </div>
+
+              <div class="actions">
+                <a class="btn primary" href="#">Бөлісу <span lang="ru" style="opacity:.8">/ Поделиться</span></a>
+                <a class="btn ghost" href="#">Мердігер <span lang="ru" style="opacity:.8">/ Подрядчик</span></a>
+              </div>
+              <div class="foot-report">
+                <a href="#">Карточкадағы қатені хабарлау / Сообщить об ошибке в карточке</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== ТЁМНАЯ ТЕМА ===================== -->
+    <div>
+      <p class="col-cap">B · Тёмная тема</p>
+      <p class="col-sub">Та же карточка с ручным переключателем темы. Контраст ≥ AA в обеих темах; флаг остаётся нейтральным амбером, не алым.</p>
+      <div class="phone">
+        <div class="screen" data-theme="dark">
+          <div class="notch"></div>
+          <div class="statusbar"><span>9:41</span><span>5G &nbsp;84%</span></div>
+
+          <div class="topbar">
+            <button class="iconbtn" aria-label="Артқа / Назад">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <div class="toptitle">Келісімшарт<small lang="ru">/ Контракт</small></div>
+            <div class="head-ctrls">
+              <div class="lang" role="group" aria-label="Тіл / Язык">
+                <button class="on" aria-pressed="true" lang="kk">KZ</button>
+                <button aria-pressed="false" lang="ru">RU</button>
+              </div>
+              <button class="theme" aria-label="Тема: тёмная / жарық">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="scroll">
+            <div class="card">
+              <div class="over">КЕЛІСІМШАРТ · ЖОЛ <span class="ru" lang="ru">/ контракт · дорога</span></div>
+              <h1 class="title" lang="ru">Реконструкция ул. Кабанбай батыра
+                <span class="confirmed-tag"><span class="ck" aria-hidden="true">✓</span> деректер дереккөзден</span>
+              </h1>
+              <div class="sum-row"><span class="sum">240 млн ₸</span><span class="sum-cap">шарт бағасы / цена договора</span></div>
+
+              <div class="orn" aria-hidden="true">
+                <span class="ln"></span>
+                <svg width="64" height="14" viewBox="0 0 64 14" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <path d="M32 12c-3-5-9-5-9-1 0 3 4 3 4 0 0-4-6-6-11-3"/>
+                  <path d="M32 12c3-5 9-5 9-1 0 3-4 3-4 0 0-4 6-6 11-3"/>
+                  <circle cx="32" cy="3" r="1.4" fill="currentColor" stroke="none"/>
+                </svg>
+                <span class="ln r"></span>
+              </div>
+
+              <dl class="meta">
+                <dt>Тапсырыс беруші</dt><dd lang="ru">Акимат г. Астана</dd>
+                <dt>Мердігер</dt><dd><a href="#" lang="ru">ТОО «Астана Жол Курылыс» →</a></dd>
+                <dt>Аудан</dt><dd><a href="#">Есіл ауданы →</a></dd>
+                <dt>Тәсіл</dt><dd lang="ru">Из одного источника</dd>
+                <dt>Аяқталу мерзімі</dt><dd class="nodata">деректер жоқ / нет данных</dd>
+              </dl>
+
+              <h2 class="sec-h">Сигналдар <span class="cnt">/ Сигналы (2)</span></h2>
+              <div class="flag-help">
+                <span style="font-size:11px;color:var(--muted-text)">Әрқайсысы — тексеруді талап ететін сигнал, айып емес.</span>
+              </div>
+
+              <div class="flag">
+                <div class="top">
+                  <span class="ic" aria-hidden="true">!</span>
+                  <span class="txt">Хабарландыруда бір қатысушы тіркелген — тексеруді талап ететін сигнал
+                    <span class="ru" lang="ru">В объявлении зафиксирован один участник — сигнал, требующий проверки</span>
+                  </span>
+                </div>
+                <div class="date">Сигнал 12.05.2026 контракті бойынша есептелген <span lang="ru" style="opacity:.85">/ по контракту от 12.05.2026</span></div>
+                <div class="links">
+                  <a href="#">Қалай есептелді ↗</a>
+                  <a href="#" lang="ru">Қате туралы хабарлау / Сообщить об ошибке</a>
+                </div>
+              </div>
+
+              <div class="flag">
+                <div class="top">
+                  <span class="ic" aria-hidden="true">!</span>
+                  <span class="txt">Шақырым құны медианадан жоғары — тексеруді талап ететін сигнал
+                    <span class="ru" lang="ru">Цена за км выше медианы — сигнал, требующий проверки</span>
+                  </span>
+                </div>
+                <div class="date">Сигнал 12.05.2026 контракті бойынша есептелген <span lang="ru" style="opacity:.85">/ по контракту от 12.05.2026</span></div>
+                <div class="links">
+                  <a href="#">Қалай есептелді ↗</a>
+                  <a href="#" lang="ru">Қате туралы хабарлау / Сообщить об ошибке</a>
+                </div>
+              </div>
+
+              <div class="src-block">
+                <a class="src-link" href="#" rel="noopener">Бастапқы дереккөз: goszakup.gov.kz ↗</a>
+                <span class="src-conf"><span aria-hidden="true" style="color:var(--confirmed);font-weight:800">✓</span> бастапқы дереккөзден</span>
+              </div>
+
+              <div class="actions">
+                <a class="btn primary" href="#">Бөлісу <span lang="ru" style="opacity:.8">/ Поделиться</span></a>
+                <a class="btn ghost" href="#">Мердігер <span lang="ru" style="opacity:.8">/ Подрядчик</span></a>
+              </div>
+              <div class="foot-report">
+                <a href="#">Карточкадағы қатені хабарлау / Сообщить об ошибке в карточке</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,9 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -34,6 +37,12 @@ func main() {
 		geoSample   = flag.Int("geo-sample", 200, "сколько объектов геокодировать")
 		geoDelayMs  = flag.Int("geo-delay-ms", 1100, "пауза между запросами к геокодеру, мс (политика Nominatim ~1/сек)")
 		viewbox     = flag.String("astana-viewbox", DefaultAstanaViewbox, "viewbox Астаны для геокодера")
+
+		outFormat     = flag.String("format", "text", "формат вывода: text|json (json → машиночитаемый вердикт + exit-код для CI)")
+		verdictOut    = flag.String("verdict-out", "", "путь baseline-артефакта (файл или каталог; пусто = только stdout)")
+		verdictDate   = flag.String("verdict-date", "", "дата для имени stage0-verdict-YYYYMMDD.json (override; пусто = сегодня)")
+		allowFallback = flag.Bool("allow-fallback", false, "разрешить частичный Go (go_with_fallback) при гео<гейта — требует sign-off владельца (Story 0.4)")
+		gate          = flag.Bool("gate", false, "применять exit-код вердикта и в text-режиме (json гейтит всегда; по умолчанию text exit не меняет)")
 	)
 	flag.Parse()
 
@@ -82,24 +91,99 @@ func main() {
 		os.Exit(2)
 	}
 
+	format := strings.ToLower(*outFormat)
+	if format != "text" && format != "json" {
+		fmt.Fprintf(os.Stderr, "ОШИБКА: неизвестный -format %q (text|json)\n", *outFormat)
+		os.Exit(2)
+	}
+	// AC1: в JSON-режиме stdout — ВАЛИДНЫЙ JSON-объект, поэтому весь человекочитаемый
+	// «шум» (баннер, геокодер, probe, [warn]) уходит в stderr; чистый JSON — в stdout.
+	diag := io.Writer(os.Stdout)
+	if format == "json" {
+		diag = os.Stderr
+	}
+
 	bins := splitBins(*custBins)
-	fmt.Println("AshyqQala.kz — аудит данных goszakup (Этап 0)")
-	fmt.Printf("source=%s  окно=%dмес  sample=%d  customerBins=%d\n\n", src.Name(), cfg.WindowMonths, cfg.Sample, len(bins))
+	fmt.Fprintln(diag, "AshyqQala.kz — аудит данных goszakup (Этап 0)")
+	fmt.Fprintf(diag, "source=%s  окно=%dмес  sample=%d  customerBins=%d\n\n", src.Name(), cfg.WindowMonths, cfg.Sample, len(bins))
 
 	var geo Geocoder
 	if strings.EqualFold(cfg.GeocoderKind, "nominatim") {
 		geo = NewNominatim(cfg.GeocoderURL, cfg.GeocoderUA, cfg.AstanaViewbox, true)
-		fmt.Printf("Геокодер: nominatim (sample=%d, delay=%v)\n\n", cfg.GeoSample, cfg.GeoDelay)
+		fmt.Fprintf(diag, "Геокодер: nominatim (sample=%d, delay=%v)\n\n", cfg.GeoSample, cfg.GeoDelay)
 	}
 
-	probeEndpoints(src)
 	if *probeOnly {
+		probeEndpoints(src) // явный диагностический режим — печать в stdout по запросу
 		return
+	}
+	if format != "json" {
+		probeEndpoints(src) // в text-режиме probe идёт перед аудитом (как раньше)
 	}
 
 	cutoff := time.Now().AddDate(0, -cfg.WindowMonths, 0)
 	rep := runAudit(src, cfg, bins, cutoff, geo)
+
+	opts := verdictOpts{
+		allowFallback: *allowFallback,
+		dataSource:    src.Name(),
+		generatedAt:   time.Now().Format(time.RFC3339),
+	}
+	v, code := deriveVerdict(rep, cfg, opts)
+
+	if format == "json" {
+		b, err := json.MarshalIndent(v, "", "  ")
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "ОШИБКА сериализации вердикта:", err)
+			os.Exit(2)
+		}
+		out := string(b) + "\n"
+		fmt.Print(out) // чистый JSON на stdout
+		if *verdictOut != "" {
+			if err := writeVerdictArtifact(*verdictOut, *verdictDate, out); err != nil {
+				fmt.Fprintln(os.Stderr, "ОШИБКА записи артефакта:", err)
+				os.Exit(2)
+			}
+			fmt.Fprintf(diag, "baseline-артефакт записан: %s\n", resolveVerdictPath(*verdictOut, artifactDate(*verdictDate)))
+		}
+		os.Exit(code) // json гейтит всегда (AC2): no_go → exit 1
+	}
+
 	rep.print(cfg)
+	if *gate {
+		os.Exit(code) // text-режим гейтит только по явному -gate (обратная совместимость)
+	}
+}
+
+// artifactDate — дата для имени артефакта: override или сегодня (YYYYMMDD).
+func artifactDate(override string) string {
+	if override != "" {
+		return override
+	}
+	return time.Now().Format("20060102")
+}
+
+// writeVerdictArtifact пишет JSON вердикта БАЙТ-в-байт идентично stdout (тот же
+// MarshalIndent + финальный \n) — пригодно для коммита как baseline под docs/ops/.
+func writeVerdictArtifact(out, dateOverride, content string) error {
+	path := resolveVerdictPath(out, artifactDate(dateOverride))
+	return os.WriteFile(path, []byte(content), 0o644)
+}
+
+// resolveVerdictPath: если out — существующий каталог / оканчивается разделителем /
+// не .json → дописывает имя stage0-verdict-YYYYMMDD.json; иначе пишет как есть.
+func resolveVerdictPath(out, date string) string {
+	name := "stage0-verdict-" + date + ".json"
+	if fi, err := os.Stat(out); err == nil && fi.IsDir() {
+		return filepath.Join(out, name)
+	}
+	if strings.HasSuffix(out, string(os.PathSeparator)) {
+		return filepath.Join(out, name)
+	}
+	if strings.HasSuffix(strings.ToLower(out), ".json") {
+		return out
+	}
+	return filepath.Join(out, name)
 }
 
 func splitBins(s string) []string {
@@ -251,7 +335,7 @@ func runAudit(src Source, cfg Config, bins []string, cutoff time.Time, geo Geoco
 		return nil
 	}
 	if err := src.Fetch("contract", bins, cfg.Sample, handleContracts); err != nil {
-		fmt.Printf("  [warn] contract: %v\n", err)
+		fmt.Fprintf(os.Stderr, "  [warn] contract: %v\n", err)
 	}
 
 	// ---- Шаг B: лоты (направление, гео-прокси, группы медиан) ----
@@ -289,7 +373,7 @@ func runAudit(src Source, cfg Config, bins []string, cutoff time.Time, geo Geoco
 		return nil
 	}
 	if err := src.Fetch("lots", bins, cfg.Sample, handleLots); err != nil {
-		fmt.Printf("  [warn] lots: %v\n", err)
+		fmt.Fprintf(os.Stderr, "  [warn] lots: %v\n", err)
 	}
 
 	// ---- Реальная автогеопривязка (геокодер) — опционально ----
@@ -365,7 +449,7 @@ func runAudit(src Source, cfg Config, bins []string, cutoff time.Time, geo Geoco
 		}
 		return nil
 	}); err != nil {
-		fmt.Printf("  [warn] rnu: %v\n", err)
+		fmt.Fprintf(os.Stderr, "  [warn] rnu: %v\n", err)
 	}
 	r.rnuBINs = len(rnuSet)
 	for s := range r.distinctSuppliers {
@@ -389,7 +473,7 @@ func runAudit(src Source, cfg Config, bins []string, cutoff time.Time, geo Geoco
 		}
 		return nil
 	}); err != nil {
-		fmt.Printf("  [warn] trd-buy: %v\n", err)
+		fmt.Fprintf(os.Stderr, "  [warn] trd-buy: %v\n", err)
 	}
 	if r.participantChecked > 0 {
 		r.singleParticipantShare = float64(r.singleParticipantCount) / float64(r.participantChecked)

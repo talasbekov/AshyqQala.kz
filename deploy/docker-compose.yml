@@ -1,0 +1,45 @@
+# ГОРЯЧИЙ стек (один VPS, РК). S-0: реально поднимается только `db` (AC2 Story 1.1).
+# `api` (chi+pgx) — Story 1.3; `caddy` (reverse-proxy + web + pmtiles) — Story 1.7.
+# Они под профилем `app`, поэтому `docker compose up db` их НЕ запускает.
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ashyqqala}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ashyqqala}
+      POSTGRES_DB: ${POSTGRES_DB:-ashyqqala}
+    ports:
+      # bind только на localhost (дев-БД не торчит наружу; дефолт-пароль в .env.example — placeholder)
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-ashyqqala} -d ${POSTGRES_DB:-ashyqqala}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    profiles: ['app']
+    build:
+      context: ../server
+      dockerfile: Dockerfile # добавляется в Story 1.3
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-ashyqqala}:${POSTGRES_PASSWORD:-ashyqqala}@db:5432/${POSTGRES_DB:-ashyqqala}?sslmode=disable
+    depends_on:
+      db:
+        condition: service_healthy
+
+  caddy:
+    profiles: ['app']
+    image: caddy:2
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      - api
+
+volumes:
+  db_data:

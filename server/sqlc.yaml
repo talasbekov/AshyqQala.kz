@@ -1,0 +1,16 @@
+# sqlc — типобезопасный доступ к проекции. Схема = goose-миграции (единый источник истины),
+# запросы per-domain (contracts.sql, позже lots.sql…) → sqlc emit'ит <file>.sql.go на файл
+# (анти-churn: запросы НЕ слипаются в один .gen.go). Версия sqlc запинена в Makefile.
+version: "2"
+sql:
+  - engine: "postgresql"
+    schema: "../migrations" # goose-файлы; sqlc игнорирует -- +goose Down
+    queries: "internal/store/queries"
+    gen:
+      go:
+        package: "gen"
+        out: "internal/store/gen" # НЕ править руками
+        sql_package: "pgx/v5"
+        emit_interface: true
+        emit_json_tags: true
+        emit_empty_slices: true

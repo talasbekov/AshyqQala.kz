@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AshyqQala.kz — Цветовые темы (вариант 1)</title>
+<style>
+/* ============================================================================
+   AshyqQala.kz — палитры для выбора. Светлый режим. 5 тем side by side.
+   Гардрейл: флаг = НЕЙТРАЛЬНОЕ внимание (амбер), НЕ тревожно-красный.
+   Светофор (зелёный/красный) зарезервирован под будущий «светофор регионов».
+   ----------------------------------------------------------------------------
+   ТЕМА 1 «Госпалитра / Флаг»
+     brand/primary    #0E7FA8   on-primary #FFFFFF
+     accent           #F7C948   map-marker #0E7FA8
+     signal-attention #E8A317   confirmed  #2E7D6B
+     muted/no-data    #8A94A0   link       #0E6A8C
+     surface #FFFFFF  background #F4F8FB   border #D8E3EA
+     text-primary #14222B  text-secondary #51606B
+   ----------------------------------------------------------------------------
+   ТЕМА 2 «Степь / Земля»
+     brand/primary    #B07A3C   on-primary #FFFFFF      (глина/тёплый шамот)
+     accent           #E8A317   map-marker #C06A2E
+     signal-attention #D98A14   confirmed  #5E7A4F      (сдержанная зелень степи)
+     muted/no-data    #9C9387   link       #A85E16
+     surface #FFFDF8  background #F6EFE3   border #E4D7C2
+     text-primary #2A2018  text-secondary #6B5E50
+   ----------------------------------------------------------------------------
+   ТЕМА 3 «2GIS-утилита»  (нейтрал графит + ОДИН акцент = глубокий синий)
+     brand/primary    #1E4FA3   on-primary #FFFFFF
+     accent           #E8A317   map-marker #1E4FA3
+     signal-attention #C98A12   confirmed  #2F6E5A
+     muted/no-data    #8B919A   link       #1E4FA3
+     surface #FFFFFF  background #F2F4F6   border #DCE0E5
+     text-primary #1A1F26  text-secondary #5A626C
+   ----------------------------------------------------------------------------
+   ТЕМА 4 «Открытый город / Баланс»  (прохладный голубой + золото, баланс)
+     brand/primary    #1496C0   on-primary #FFFFFF
+     accent           #F0B429   map-marker #1496C0
+     signal-attention #E09915   confirmed  #2C8C7A
+     muted/no-data    #8893A0   link       #0F7DA3
+     surface #FFFFFF  background #EEF6F9   border #D2E4EC
+     text-primary #16242C  text-secondary #4E5E69
+   ----------------------------------------------------------------------------
+   ТЕМА 5 «Тёплый гражданский»  (золото доминирует, голубой вторичен)
+     brand/primary    #D99412   on-primary #2A1C04
+     accent           #0E7FA8   map-marker #C97F0E
+     signal-attention #B96E0C   confirmed  #3E7C66
+     muted/no-data    #998E7C   link       #0E6A8C
+     surface #FFFEFB  background #FBF3E2   border #ECDCBE
+     text-primary #2A2008  text-secondary #6A5C42
+   ============================================================================ */
+
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+               Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.45;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #e9edf1;
+  color: #1a1f26;
+  padding: 24px 16px 56px;
+}
+.page-head { max-width: 1600px; margin: 0 auto 20px; }
+.page-head h1 { font-size: 22px; margin: 0 0 6px; }
+.page-head p { margin: 0; color: #4a545e; font-size: 14px; max-width: 880px; }
+.guardrail {
+  margin: 14px auto 0; max-width: 1600px;
+  background: #fff8e6; border: 1px solid #f1d27a; border-left: 4px solid #e8a317;
+  border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #5a4a12;
+}
+
+.themes {
+  max-width: 1600px; margin: 0 auto;
+  display: grid; gap: 20px;
+  grid-template-columns: repeat(5, minmax(280px, 1fr));
+}
+@media (max-width: 1500px) { .themes { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 980px)  { .themes { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 680px)  { .themes { grid-template-columns: 1fr; } }
+
+/* ---- card shell (uses per-theme CSS vars) ---- */
+.theme {
+  border-radius: 14px; overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 6px 18px rgba(20,34,43,.08);
+  display: flex; flex-direction: column;
+}
+.theme-head {
+  background: var(--primary); color: var(--on-primary);
+  padding: 14px 16px 16px;
+}
+.theme-head .idx {
+  font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+  opacity: .8;
+}
+.theme-head h2 { font-size: 17px; margin: 4px 0 4px; }
+.theme-head .mood { font-size: 12.5px; opacity: .92; line-height: 1.35; }
+.theme-head .acc-bar {
+  height: 4px; width: 56px; margin-top: 10px; border-radius: 3px;
+  background: var(--accent);
+}
+
+.theme-body { padding: 14px 14px 16px; background: var(--bg); flex: 1; }
+.sec-label {
+  font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--text-secondary); margin: 0 0 8px; font-weight: 600;
+}
+
+/* ---- token chips ---- */
+.tokens { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.tok {
+  display: flex; align-items: center; gap: 9px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 5px 8px;
+}
+.sw {
+  width: 22px; height: 22px; border-radius: 6px; flex: none;
+  border: 1px solid rgba(0,0,0,.12);
+}
+.tok .meta { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.tok .role { font-size: 11.5px; color: var(--text-primary); font-weight: 600; }
+.tok .hex  { font-size: 10.5px; color: var(--text-secondary); font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+
+/* ---- realistic contract card fragment ---- */
+.frag { margin-top: 4px; }
+.contract {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden;
+}
+.contract .map-strip {
+  height: 64px; position: relative;
+  background:
+    linear-gradient(0deg, rgba(0,0,0,.04), rgba(0,0,0,.04)),
+    repeating-linear-gradient(45deg, var(--bg) 0 10px, var(--surface) 10px 20px);
+  border-bottom: 1px solid var(--border);
+}
+.contract .map-strip .pin {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%,-60%);
+  width: 16px; height: 16px; border-radius: 50% 50% 50% 0;
+  background: var(--map-marker); transform-origin: center;
+  rotate: -45deg; box-shadow: 0 2px 4px rgba(0,0,0,.3);
+  border: 2px solid var(--surface);
+}
+.contract .inner { padding: 12px 13px 14px; }
+.contract h3 { font-size: 14.5px; margin: 0 0 8px; color: var(--text-primary); line-height: 1.3; }
+.contract .sum { font-size: 18px; font-weight: 700; color: var(--text-primary); }
+.contract .sum span { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+
+.rows { margin: 10px 0 12px; display: flex; flex-direction: column; gap: 5px; }
+.row { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }
+.row .k { color: var(--text-secondary); }
+.row .v { color: var(--text-primary); text-align: right; }
+
+.badge-attention {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--signal-bg); color: var(--signal-fg);
+  border: 1px solid var(--signal-border);
+  border-radius: 999px; padding: 5px 10px; font-size: 11.5px; font-weight: 600;
+  line-height: 1.2; margin-bottom: 10px;
+}
+.badge-attention::before {
+  content: ""; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--signal-attention); flex: none;
+}
+
+.pill-confirmed {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 600; color: var(--confirmed);
+}
+.pill-confirmed::before { content: "✓"; font-size: 12px; }
+
+.pill-nodata {
+  display: inline-flex; align-items: center;
+  font-size: 11px; font-style: italic; color: var(--muted);
+}
+
+.contract .foot {
+  margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  flex-wrap: wrap;
+}
+.contract .src { font-size: 11.5px; color: var(--link); text-decoration: none; font-weight: 600; }
+.contract .src:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <h1>AshyqQala.kz — выбор цветовой темы (вариант 1)</h1>
+  <p>5 тем разного регистра/настроения. Ориентир: 2GIS (карта-центрично, деловито,
+     узнаваемый акцент) + казахстанский характер (голубой/золото флага, степь) без фолк-перегруза.
+     Эмоция: доверие + гражданская сила. Только светлый режим.</p>
+  <div class="guardrail">
+    <strong>Гардрейл флагов:</strong> риск-флаг = «сигнал, требующий проверки» → семантический
+    цвет = <strong>нейтральное внимание (амбер)</strong>, НЕ тревожно-красный «нарушение/виновен».
+    Светофор (зелёный/красный) зарезервирован под будущий «светофор регионов» и к флагам не применяется.
+  </div>
+</div>
+
+<div class="themes">
+
+  <!-- ===================== ТЕМА 1: Госпалитра / Флаг ===================== -->
+  <section class="theme" style="
+      --primary:#0E7FA8; --on-primary:#FFFFFF; --accent:#F7C948;
+      --map-marker:#0E7FA8; --signal-attention:#E8A317; --confirmed:#2E7D6B;
+      --muted:#8A94A0; --link:#0E6A8C;
+      --surface:#FFFFFF; --bg:#F4F8FB; --border:#D8E3EA;
+      --text-primary:#14222B; --text-secondary:#51606B;
+      --signal-bg:#FFF7E2; --signal-fg:#7A5A0E; --signal-border:#F0D389;">
+    <div class="theme-head">
+      <div class="idx">Тема 1</div>
+      <h2>Госпалитра / Флаг</h2>
+      <div class="mood">Максимально узнаваемо-национально и официально: голубой флага + золото.</div>
+      <div class="acc-bar"></div>
+    </div>
+    <div class="theme-body">
+      <p class="sec-label">Семантические токены</p>
+      <div class="tokens">
+        <div class="tok"><span class="sw" style="background:#0E7FA8"></span><div class="meta"><span class="role">brand / primary</span><span class="hex">#0E7FA8</span></div></div>
+        <div class="tok"><span class="sw" style="background:#FFFFFF"></span><div class="meta"><span class="role">on-primary</span><span class="hex">#FFFFFF</span></div></div>
+        <div class="tok"><span class="sw" style="background:#F7C948"></span><div class="meta"><span class="role">accent</span><span class="hex">#F7C948</span></div></div>
+        <div class="tok"><span class="sw" style="background:#0E7FA8"></span><div class="meta"><span class="role">map-marker</span><span class="hex">#0E7FA8</span></div></div>
+        <div class="tok"><span class="sw" style="background:#E8A317"></span><div class="meta"><span class="role">signal-attention</span><span class="hex">#E8A317</span></div></div>
+        <div class="tok"><span class="sw" style="background:#2E7D6B"></span><div class="meta"><span class="role">confirmed / verified</span><span class="hex">#2E7D6B</span></div></div>
+        <div class="tok"><span class="sw" style="background:#8A94A0"></span><div class="meta"><span class="role">muted / no-data</span><span class="hex">#8A94A0</span></div></div>
+        <div class="tok"><span class="sw" style="background:#F4F8FB"></span><div class="meta"><span class="role">background</span><span class="hex">#F4F8FB</span></div></div>
+        <div class="tok"><span class="sw" style="background:#FFFFFF"></span><div class="meta"><span class="role">surface</span><span class="hex">#FFFFFF</span></div></div>
+        <div class="tok"><span class="sw" style="background:#D8E3EA"></span><div class="meta"><span class="role">border</span><span class="hex">#D8E3EA</span></div></div>
+        <div class="tok"><span class="sw" style="background:#14222B"></span><div class="meta"><span class="role">text-primary</span><span class="hex">#14222B</span></div></div>
+        <div class="tok"><span class="sw" style="background:#51606B"></span><div class="meta"><span class="role">text-secondary</span><span class="hex">#51606B</span></div></div>
+        <div class="tok"><span class="sw" style="background:#0E6A8C"></span><div class="meta"><span class="role">link (goszakup)</span><span class="hex">#0E6A8C</span></div></div>
+      </div>
+
+      <p class="sec-label">UI-фрагмент: карточка контракта</p>
+      <div class="frag"><div class="contract">
+        <div class="map-strip"><span class="pin"></span></div>
+        <div class="inner">
+          <h3>Реконструкция ул. Кабанбай батыра</h3>
+          <div class="sum">240 млн <span>₸</span></div>
+          <div class="rows">
+            <div class="row"><span class="k">Заказчик</span><span class="v">Акимат г. Астана</span></div>
+            <div class="row"><span class="k">Подрядчик</span><span class="v">ТОО «Астана Жол Курылыс»</span></div>
+            <div class="row"><span class="k">Срок завершения</span><span class="v"><span class="pill-nodata">нет данных</span></span></div>
+          </div>
+          <span class="badge-attention">Единственный участник — сигнал, требующий проверки</span><br>
+          <span class="pill-confirmed">Данные из первоисточника</span>
+          <div class="foot">
+            <a class="src" href="#">Первоисточник: goszakup.gov.kz →</a>
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ===================== ТЕМА 2: Степь / Земля ===================== -->
+  <section class="theme" style="
+      --primary:#B07A3C; --on-primary:#FFFFFF; --accent:#E8A317;
+      --map-marker:#C06A2E; --signal-attention:#D98A14; --confirmed:#5E7A4F;
+      --muted:#9C9387; --link:#A85E16;
+      --surface:#FFFDF8; --bg:#F6EFE3; --border:#E4D7C2;
+      --text-primary:#2A2018; --text-secondary:#6B5E50;
+      --signal-bg:#FBF0D6; --signal-fg:#7A5511; --signal-border:#E9CF94;">
+    <div class="theme-head">
+      <div class="idx">Тема 2</div>
+      <h2>Степь / Земля</h2>
+      <div class="mood">Тёплая природная палитра: песок, глина, золото солнца. Живой, человечный.</div>
+      <div class="acc-bar"></div>
+    </div>
+    <div class="theme-body">
+      <p class="sec-label">Семантические токены</p>
+      <div class="tokens">
+        <div class="tok"><span class="sw" style="background:#B07A3C"></span><div class="meta"><span class="role">brand / primary</span><span class="hex">#B07A3C</span></div></div>
+        <div class="tok"><span class="sw" style="background:#FFFFFF"></span><div class="meta"><span class="role">on-primary</span><span class="hex">#FFFFFF</span></div></div>
+        <div class="tok"><span class="sw" style="background:#E8A317"></span><div class="meta"><span class="role">accent</span><span class="hex">#E8A317</span></div></div>
+        <div class="tok"><span class="sw" style="background:#C06A2E"></span><div class="meta"><span class="role">map-marker</span><span class="hex">#C06A2E</span></div></div>
+        <div class="tok"><span class="sw" style="background:#D98A14"></span><div class="meta"><span class="role">signal-attention</span><span class="hex">#D98A14</span></div></div>
+        <div class="tok"><span class="sw" style="background:#5E7A4F"></span><div class="meta"><span class="role">confirmed / verified</span><span class="hex">#5E7A4F</span></div></div>
+        <div class="tok"><span class="sw" style="background:#9C9387"></span><div class="meta"><span class="role">muted / no-data</span><span class="hex">#9C9387</span></div></div>
+        <div class="tok"><span class="sw" style="background:#F6EFE3"></span><div class="meta"><span class="role">background</span><span class="hex">#F6EFE3</span></div></div>
+        <div class="tok"><span class="sw" style="background:#FFFDF8"></span><div class="meta"><span class="role">surface</span><span class="hex">#FFFDF8</span></div></div>
+        <div class="tok"><span class="sw" style="background:#E4D7C2"></span><div class="meta"><span class="role">border</span><span class="hex">#E4D7C2</span></div></div>
+        <div class="tok"><span class="sw" style="background:#2A2018"></span><div class="meta"><span class="role">text-primary</span><span class="hex">#2A2018</span></div></div>
+        <div class="tok"><span class="sw" style="background:#6B5E50"></span><div class="meta"><span class="role">text-secondary</span><span class="hex">#6B5E50</span></div></div>
+        <div class="tok"><span class="sw" style="background:#A85E16"></span><div class="meta"><span class="role">link (goszakup)</span><span class="hex">#A85E16</span></div></div>
+      </div>
+
+      <p class="sec-label">UI-фрагмент: карточка контракта</p>
+      <div class="frag"><div class="contract">
+        <div class="map-strip"><span class="pin"></span></div>
+        <div class="inner">
+          <h3>Реконструкция ул. Кабанбай батыра</h3>
+          <div class="sum">240 млн <span>₸</span></div>
+          <div class="rows">
+            <div class="row"><span class="k">Заказчик</span><span class="v">Акимат г. Астана</span></div>
+            <div class="row"><span class="k">Подрядчик</span><span class="v">ТОО «Астана Жол Курылыс»</span></div>
+            <div class="row"><span class="k">Срок завершения</span><span class="v"><span class="pill-nodata">нет данных</span></span></div>
+          </div>
+          <span class="badge-attention">Единственный участник — сигнал, требующий проверки</span><br>
+          <span class="pill-confirmed">Данные из первоисточника</span>
+          <div class="foot">
+            <a class="src" href="#">Первоисточник: goszakup.gov.kz →</a>
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ===================== ТЕМА 3: 2GIS-утилита ===================== -->
+  <section class="theme" style="
+      --primary:#1E4FA3; --on-primary:#FFFFFF; --accent:#E8A317;
+      --map-marker:#1E4FA3; --signal-attention:#C98A12; --confirmed:#2F6E5A;
+      --muted:#8B919A; --link:#1E4FA3;
+      --surface:#FFFFFF; --bg:#F2F4F6; --border:#DCE0E5;
+      --text-primary:#1A1F26; --text-secondary:#5A626C;
+      --signal-bg:#FBF2DA; --signal-fg:#6E4E0C; --signal-border:#E6CD8E;">
+    <div class="theme-head">
+      <div class="idx">Тема 3</div>
+      <h2>2GIS-утилита</h2>
+      <div class="mood">Нейтральный графит + один сильный акцент. Максимум деловитости, мотивы минимальны.</div>
+      <div class="acc-bar"></div>
+    </div>
+    <div class="theme-body">
+      <p class="sec-label">Семантические токены</p>
+      <div class="tokens">
+        <div class="tok"><span class="sw" style="background:#1E4FA3"></span><div class="meta"><span class="role">brand / primary</span><span class="hex">#1E4FA3</span></div></div>
+        <div class="tok"><span class="sw" style="background:#FFFFFF"></span><div class="meta"><span class="role">on-primary</span><span class="hex">#FFFFFF</span></div></div>
+        <div class="tok"><span class="sw" style="background:#E8A317"></span><div class="meta"><span class="role">accent</span><span class="hex">#E8A317</span></div></div>
+        <div class="tok"><span class="sw" style="background:#1E4FA3"></span><div class="meta"><span class="role">map-marker</span><span class="hex">#1E4FA3</span></div></div>
+        <div class="tok"><span class="sw" style="background:#C98A12"></span><div class="meta"><span class="role">signal-attention</span><span class="hex">#C98A12</span></div></div>
+        <div class="tok"><span class="sw" style="background:#2F6E5A"></span><div class="meta"><span class="role">confirmed / verified</span><span class="hex">#2F6E5A</span></div></div>
+        <div class="tok"><span class="sw" style="background:#8B919A"></span><div class="meta"><span class="role">muted / no-data</span><span class="hex">#8B919A</span></div></div>
+        <div class="tok"><span class="sw" style="background:#F2F4F6"></span><div class="meta"><span class="role">background</span><span class="hex">#F2F4F6</span></div></div>
+        <div class="tok"><span class="sw" style="background:#FFFFFF"></span><div class="meta"><span class="role">surface</span><span class="hex">#FFFFFF</span></div></div>
+        <div class="tok"><span class="sw" style="background:#DCE0E5"></span><div class="meta"><span class="role">border</span><span class="hex">#DCE0E5</span></div></div>
+        <div class="tok"><span class="sw" style="background:#1A1F26"></span><div class="meta"><span class="role">text-primary</span><span class="hex">#1A1F26</span></div></div>
+        <div class="tok"><span class="sw" style="background:#5A626C"></span><div class="meta"><span class="role">text-secondary</span><span class="hex">#5A626C</span></div></div>
+        <div class="tok"><span class="sw" style="background:#1E4FA3"></span><div class="meta"><span class="role">link (goszakup)</span><span class="hex">#1E4FA3</span></div></div>
+      </div>
+
+      <p class="sec-label">UI-фрагмент: карточка контракта</p>
+      <div class="frag"><div class="contract">
+        <div class="map-strip"><span class="pin"></span></div>
+        <div class="inner">
+          <h3>Реконструкция ул. Кабанбай батыра</h3>
+          <div class="sum">240 млн <span>₸</span></div>
+          <div class="rows">
+            <div class="row"><span class="k">Заказчик</span><span class="v">Акимат г. Астана</span></div>
+            <div class="row"><span class="k">Подрядчик</span><span class="v">ТОО «Астана Жол Курылыс»</span></div>
+            <div class="row"><span class="k">Срок завершения</span><span class="v"><span class="pill-nodata">нет данных</span></span></div>
+          </div>
+          <span class="badge-attention">Единственный участник — сигнал, требующий проверки</span><br>
+          <span class="pill-confirmed">Данные из первоисточника</span>
+          <div class="foot">
+            <a class="src" href="#">Первоисточник: goszakup.gov.kz →</a>
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ===================== ТЕМА 4: Открытый город / Баланс ===================== -->
+  <section class="theme" style="
+      --primary:#1496C0; --on-primary:#FFFFFF; --accent:#F0B429;
+      --map-marker:#1496C0; --signal-attention:#E09915; --confirmed:#2C8C7A;
+      --muted:#8893A0; --link:#0F7DA3;
+      --surface:#FFFFFF; --bg:#EEF6F9; --border:#D2E4EC;
+      --text-primary:#16242C; --text-secondary:#4E5E69;
+      --signal-bg:#FFF6E0; --signal-fg:#7A560D; --signal-border:#F2D58C;">
+    <div class="theme-head">
+      <div class="idx">Тема 4</div>
+      <h2>Открытый город / Баланс</h2>
+      <div class="mood">Прохладный голубой + золото. Осознанный баланс «официально × живо» — центр выбора.</div>
+      <div class="acc-bar"></div>
+    </div>
+    <div class="theme-body">
+      <p class="sec-label">Семантические токены</p>
+      <div class="tokens">
+        <div class="tok"><span class="sw" style="background:#1496C0"></span><div class="meta"><span class="role">brand / primary</span><span class="hex">#1496C0</span></div></div>
+        <div class="tok"><span class="sw" style="background:#FFFFFF"></span><div class="meta"><span class="role">on-primary</span><span class="hex">#FFFFFF</span></div></div>
+        <div class="tok"><span class="sw" style="background:#F0B429"></span><div class="meta"><span class="role">accent</span><span class="hex">#F0B429</span></div></div>
+        <div class="tok"><span class="sw" style="background:#1496C0"></span><div class="meta"><span class="role">map-marker</span><span class="hex">#1496C0</span></div></div>
+        <div class="tok"><span class="sw" style="background:#E09915"></span><div class="meta"><span class="role">signal-attention</span><span class="hex">#E09915</span></div></div>
+        <div class="tok"><span class="sw" style="background:#2C8C7A"></span><div class="meta"><span class="role">confirmed / verified</span><span class="hex">#2C8C7A</span></div></div>
+        <div class="tok"><span class="sw" style="background:#8893A0"></span><div class="meta"><span class="role">muted / no-data</span><span class="hex">#8893A0</span></div></div>
+        <div class="tok"><span class="sw" style="background:#EEF6F9"></span><div class="meta"><span class="role">background</span><span class="hex">#EEF6F9</span></div></div>
+        <div class="tok"><span class="sw" style="background:#FFFFFF"></span><div class="meta"><span class="role">surface</span><span class="hex">#FFFFFF</span></div></div>
+        <div class="tok"><span class="sw" style="background:#D2E4EC"></span><div class="meta"><span class="role">border</span><span class="hex">#D2E4EC</span></div></div>
+        <div class="tok"><span class="sw" style="background:#16242C"></span><div class="meta"><span class="role">text-primary</span><span class="hex">#16242C</span></div></div>
+        <div class="tok"><span class="sw" style="background:#4E5E69"></span><div class="meta"><span class="role">text-secondary</span><span class="hex">#4E5E69</span></div></div>
+        <div class="tok"><span class="sw" style="background:#0F7DA3"></span><div class="meta"><span class="role">link (goszakup)</span><span class="hex">#0F7DA3</span></div></div>
+      </div>
+
+      <p class="sec-label">UI-фрагмент: карточка контракта</p>
+      <div class="frag"><div class="contract">
+        <div class="map-strip"><span class="pin"></span></div>
+        <div class="inner">
+          <h3>Реконструкция ул. Кабанбай батыра</h3>
+          <div class="sum">240 млн <span>₸</span></div>
+          <div class="rows">
+            <div class="row"><span class="k">Заказчик</span><span class="v">Акимат г. Астана</span></div>
+            <div class="row"><span class="k">Подрядчик</span><span class="v">ТОО «Астана Жол Курылыс»</span></div>
+            <div class="row"><span class="k">Срок завершения</span><span class="v"><span class="pill-nodata">нет данных</span></span></div>
+          </div>
+          <span class="badge-attention">Единственный участник — сигнал, требующий проверки</span><br>
+          <span class="pill-confirmed">Данные из первоисточника</span>
+          <div class="foot">
+            <a class="src" href="#">Первоисточник: goszakup.gov.kz →</a>
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ===================== ТЕМА 5: Тёплый гражданский ===================== -->
+  <section class="theme" style="
+      --primary:#D99412; --on-primary:#2A1C04; --accent:#0E7FA8;
+      --map-marker:#C97F0E; --signal-attention:#B96E0C; --confirmed:#3E7C66;
+      --muted:#998E7C; --link:#0E6A8C;
+      --surface:#FFFEFB; --bg:#FBF3E2; --border:#ECDCBE;
+      --text-primary:#2A2008; --text-secondary:#6A5C42;
+      --signal-bg:#F7EAC9; --signal-fg:#6E4408; --signal-border:#E0C485;">
+    <div class="theme-head">
+      <div class="idx">Тема 5</div>
+      <h2>Тёплый гражданский</h2>
+      <div class="mood">Золото доминирует, голубой вторичен. Дружелюбнее, гражданская теплота — но серьёзно.</div>
+      <div class="acc-bar"></div>
+    </div>
+    <div class="theme-body">
+      <p class="sec-label">Семантические токены</p>
+      <div class="tokens">
+        <div class="tok"><span class="sw" style="background:#D99412"></span><div class="meta"><span class="role">brand / primary</span><span class="hex">#D99412</span></div></div>
+        <div class="tok"><span class="sw" style="background:#2A1C04"></span><div class="meta"><span class="role">on-primary</span><span class="hex">#2A1C04</span></div></div>
+        <div class="tok"><span class="sw" style="background:#0E7FA8"></span><div class="meta"><span class="role">accent</span><span class="hex">#0E7FA8</span></div></div>
+        <div class="tok"><span class="sw" style="background:#C97F0E"></span><div class="meta"><span class="role">map-marker</span><span class="hex">#C97F0E</span></div></div>
+        <div class="tok"><span class="sw" style="background:#B96E0C"></span><div class="meta"><span class="role">signal-attention</span><span class="hex">#B96E0C</span></div></div>
+        <div class="tok"><span class="sw" style="background:#3E7C66"></span><div class="meta"><span class="role">confirmed / verified</span><span class="hex">#3E7C66</span></div></div>
+        <div class="tok"><span class="sw" style="background:#998E7C"></span><div class="meta"><span class="role">muted / no-data</span><span class="hex">#998E7C</span></div></div>
+        <div class="tok"><span class="sw" style="background:#FBF3E2"></span><div class="meta"><span class="role">background</span><span class="hex">#FBF3E2</span></div></div>
+        <div class="tok"><span class="sw" style="background:#FFFEFB"></span><div class="meta"><span class="role">surface</span><span class="hex">#FFFEFB</span></div></div>
+        <div class="tok"><span class="sw" style="background:#ECDCBE"></span><div class="meta"><span class="role">border</span><span class="hex">#ECDCBE</span></div></div>
+        <div class="tok"><span class="sw" style="background:#2A2008"></span><div class="meta"><span class="role">text-primary</span><span class="hex">#2A2008</span></div></div>
+        <div class="tok"><span class="sw" style="background:#6A5C42"></span><div class="meta"><span class="role">text-secondary</span><span class="hex">#6A5C42</span></div></div>
+        <div class="tok"><span class="sw" style="background:#0E6A8C"></span><div class="meta"><span class="role">link (goszakup)</span><span class="hex">#0E6A8C</span></div></div>
+      </div>
+
+      <p class="sec-label">UI-фрагмент: карточка контракта</p>
+      <div class="frag"><div class="contract">
+        <div class="map-strip"><span class="pin"></span></div>
+        <div class="inner">
+          <h3>Реконструкция ул. Кабанбай батыра</h3>
+          <div class="sum">240 млн <span>₸</span></div>
+          <div class="rows">
+            <div class="row"><span class="k">Заказчик</span><span class="v">Акимат г. Астана</span></div>
+            <div class="row"><span class="k">Подрядчик</span><span class="v">ТОО «Астана Жол Курылыс»</span></div>
+            <div class="row"><span class="k">Срок завершения</span><span class="v"><span class="pill-nodata">нет данных</span></span></div>
+          </div>
+          <span class="badge-attention">Единственный участник — сигнал, требующий проверки</span><br>
+          <span class="pill-confirmed">Данные из первоисточника</span>
+          <div class="foot">
+            <a class="src" href="#">Первоисточник: goszakup.gov.kz →</a>
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

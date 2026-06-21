@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AshyqQala.kz — Картада / Карта Астаны</title>
+<style>
+/* ============================================================================
+   key-map.html — КАРТА АСТАНЫ (канонический вход, cold start).
+   Личность: Направление B «Открытый город / баланс»; палитра Тема 4.
+
+   КАКИЕ СЕКЦИИ СПАЙНОВ УПРАВЛЯЮТ ЭТИМ ЭКРАНОМ:
+   • EXPERIENCE.md → Information Architecture (Карта Астаны = главная, cold start)
+   • EXPERIENCE.md → Component Patterns: {map-marker-point/flagged/confirmed/selected},
+        {map-line}, {map-cluster} (count-badge + flag-indicator), {preview-sheet},
+        {lang-switch}, {theme-switch}, {filter-chip?нет}, {source-link}
+   • EXPERIENCE.md → State Patterns: «Объект не геопривязан» (агрегат «без точки на карте»),
+        «Тайлы карты недоступны» / «Гео-покрытие района <70%» (ФОЛБЭК-список)
+   • EXPERIENCE.md → Карта: режимы и поведение (два фолбэк-триггера)
+   • EXPERIENCE.md → Interaction Primitives (зум-контролы в зоне большого пальца)
+   • DESIGN.md → Colors / Shapes (статус маркера = форма/глиф, не только цвет, WCAG 1.4.1)
+
+   ГАРДРЕЙЛ: флаг = нейтральный амбер «сигнал, требующий проверки» (#E09915),
+   НЕ алый, НЕ «горячая точка»; амбер-пин равен по весу голубому.
+   Маркеры различаются ФОРМОЙ/ГЛИФОМ: пусто / «!» / «✓» / двойное кольцо.
+   ============================================================================ */
+
+:root {
+  /* ===== Тема 4 «Открытый город / Баланс» — светлые токены (DESIGN.md) ===== */
+  --primary:#1496C0; --primary-strong:#0F7DA3; --primary-soft:#DCEFF6; --on-primary:#FFFFFF;
+  --accent:#F0B429; --accent-soft:#FBEFC9; --on-accent:#16242C;
+  --signal:#E09915; --signal-bg:#FFF6E0; --signal-fg:#7A560D; --signal-border:#F2D58C;
+  --confirmed:#2C8C7A; --confirmed-text:#1F7A6B; --confirmed-soft:#D7EEE8;
+  --muted:#8893A0; --muted-text:#5A6672; --muted-soft:#EBEFF2;
+  --surface:#FFFFFF; --sunken:#EEF6F9; --border:#D2E4EC;
+  --ink:#16242C; --ink2:#4E5E69;
+  --link:#0F7DA3; --link-sunken:#0C6585; --focus:#0C6585;
+}
+[data-theme="dark"] {
+  --primary:#3BB3D6; --primary-strong:#5FC6E3; --primary-soft:#173A47; --on-primary:#06222B;
+  --accent:#F5C14E; --accent-soft:#3A2E12; --on-accent:#16242C;
+  --signal:#E8A93A; --signal-bg:#33280F; --signal-fg:#F0CE82; --signal-border:#5C4A1E;
+  --confirmed:#3FB39C; --confirmed-text:#3FB39C; --confirmed-soft:#16352F;
+  --muted:#6B7785; --muted-text:#9AA6B2; --muted-soft:#1E2C34;
+  --surface:#16242C; --sunken:#0E1A21; --border:#2A3D47;
+  --ink:#EAF1F4; --ink2:#AAB8C0;
+  --link:#56C0E0; --link-sunken:#5BC4E4; --focus:#5FC6E3;
+}
+* { box-sizing:border-box; }
+html,body { margin:0; }
+body {
+  font-family:"Inter","Segoe UI",Roboto,"Helvetica Neue",Arial,system-ui,sans-serif;
+  background:#cbd6dd; color:var(--ink); line-height:1.45;
+  padding:24px 14px 56px; -webkit-font-smoothing:antialiased;
+}
+@media (prefers-reduced-motion: reduce){ *{ transition:none!important; animation:none!important; } }
+
+/* ---- страница-обёртка моков ---- */
+.wrap { max-width:840px; margin:0 auto; }
+.doc-h1 { font-size:22px; margin:0 0 4px; letter-spacing:-.01em; color:#0e2630; }
+.doc-p  { font-size:13px; margin:0 0 18px; color:#3c4a53; max-width:680px; }
+.cols { display:grid; gap:28px; grid-template-columns:repeat(2,minmax(330px,1fr)); }
+@media (max-width:780px){ .cols{ grid-template-columns:1fr; max-width:400px; margin:0 auto; } }
+.col-cap { font-size:11px; letter-spacing:.12em; text-transform:uppercase; font-weight:700;
+  color:#0e2630; margin:0 0 8px; }
+.col-sub { font-size:12px; color:#3c4a53; margin:0 0 12px; }
+
+/* ---- телефонная рамка ---- */
+.phone { width:100%; max-width:372px; margin:0 auto; background:#0c1a22;
+  border-radius:38px; padding:10px; box-shadow:0 18px 40px rgba(12,26,34,.30); }
+.screen { position:relative; overflow:hidden; border-radius:30px; background:var(--sunken);
+  height:780px; display:flex; flex-direction:column; }
+.notch { position:absolute; top:0; left:50%; transform:translateX(-50%);
+  width:128px; height:22px; background:#0c1a22; border-radius:0 0 16px 16px; z-index:60; }
+.statusbar { height:30px; display:flex; align-items:center; justify-content:space-between;
+  padding:0 22px 0 20px; font-size:12px; font-weight:600; color:var(--ink); background:var(--surface); z-index:30; }
+
+/* ---- шапка: бренд + переключатели языка/темы ---- */
+.topbar { position:relative; z-index:25; background:var(--surface);
+  border-bottom:1px solid var(--border); padding:8px 12px;
+  display:flex; align-items:center; gap:8px; }
+.brand { display:flex; align-items:center; gap:8px; min-width:0; }
+.mark { width:28px; height:28px; border-radius:9px; background:var(--primary); color:#fff;
+  display:grid; place-items:center; font-weight:800; font-size:13px; flex:none; }
+.bname { font-weight:700; font-size:14px; letter-spacing:-.01em; line-height:1; }
+.bname small { color:var(--ink2); font-weight:500; font-size:10.5px; display:block; margin-top:2px; }
+.head-ctrls { margin-left:auto; display:flex; align-items:center; gap:6px; }
+
+/* переключатель языка KZ/RU ({lang-switch}) */
+.lang { display:inline-flex; background:var(--sunken); border:1px solid var(--border);
+  border-radius:999px; overflow:hidden; }
+.lang button { min-width:34px; min-height:30px; border:none; background:transparent;
+  font-size:9.5px; font-weight:700; letter-spacing:.1em; color:var(--ink2); cursor:default; padding:0 8px; }
+.lang button.on { background:var(--primary); color:var(--on-primary); }
+.lang button:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+
+/* переключатель темы ({theme-switch}) */
+.theme { min-width:36px; min-height:30px; border-radius:999px; border:1px solid var(--border);
+  background:var(--sunken); color:var(--ink2); display:grid; place-items:center; cursor:default; }
+.theme:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+
+/* поисковая строка под шапкой */
+.searchrow { background:var(--surface); border-bottom:1px solid var(--border); padding:8px 12px; }
+.search { display:flex; align-items:center; gap:8px; background:var(--sunken);
+  border:1px solid var(--border); border-radius:10px; padding:8px 11px; color:var(--ink2); font-size:12.5px; }
+
+/* ---- карта ---- */
+.map { position:relative; flex:1; overflow:hidden;
+  background:linear-gradient(135deg,#dcecf2 0%,#e7f2f6 42%,#e2eef4 100%); }
+[data-theme="dark"] .map { background:linear-gradient(135deg,#10242d 0%,#13313c 45%,#102832 100%); }
+.grid { position:absolute; inset:0;
+  background-image:linear-gradient(rgba(20,150,192,.07) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(20,150,192,.07) 1px,transparent 1px);
+  background-size:46px 46px; }
+.river { position:absolute; left:-12%; top:34%; width:130%; height:96px;
+  background:linear-gradient(180deg,rgba(20,150,192,.22),rgba(20,150,192,.10));
+  transform:rotate(-13deg); filter:blur(1px); }
+.river-cap { position:absolute; left:6%; top:52%; transform:rotate(-13deg);
+  font-size:10px; font-style:italic; color:var(--primary-strong); opacity:.8; }
+
+/* полилиния дороги (объект) */
+.road { position:absolute; left:14%; top:24%; width:66%; height:240px; }
+.road svg { width:100%; height:100%; overflow:visible; }
+
+/* маркеры: статус формой/глифом */
+.mk { position:absolute; transform:translate(-50%,-100%); z-index:6;
+  display:flex; flex-direction:column; align-items:center; }
+.mk button.pin-hit { all:unset; cursor:default; position:relative;
+  width:44px; height:44px; display:grid; place-items:center; } /* хитбокс ≥44px */
+.mk button.pin-hit:focus-visible { outline:2px solid var(--focus); outline-offset:2px; border-radius:14px; }
+.pin { position:relative; width:26px; height:26px; border-radius:50% 50% 50% 2px;
+  transform:rotate(45deg); border:2px solid var(--surface);
+  box-shadow:0 3px 6px rgba(12,26,34,.30); display:grid; place-items:center; }
+.pin .g { transform:rotate(-45deg); font-size:13px; font-weight:800; line-height:1; }
+.pin.normal { background:var(--primary); }                    /* пусто = обычный */
+.pin.flagged { background:var(--signal); }                    /* «!» = флаг */
+.pin.flagged .g { color:var(--on-accent); }
+.pin.confirmed { background:var(--confirmed); }               /* «✓» = подтверждён */
+.pin.confirmed .g { color:var(--surface); }
+/* выбранный: ×1.25 + двойное кольцо-обводка, сохраняет глиф статуса */
+.mk.sel .pin { width:32px; height:32px; background:var(--accent); border:3px solid var(--surface);
+  box-shadow:0 0 0 2px var(--primary-strong), 0 4px 8px rgba(12,26,34,.34); }
+.mk.sel .pin .g { color:var(--on-accent); }
+.dotlabel { margin-top:7px; background:var(--surface); border:1px solid var(--border);
+  font-size:10px; padding:1px 7px; border-radius:11px; white-space:nowrap; color:var(--ink);
+  box-shadow:0 1px 3px rgba(12,26,34,.12); }
+
+/* кластер ({map-cluster}: count-badge + flag-indicator) */
+.cluster { position:absolute; transform:translate(-50%,-50%); z-index:7; }
+.cluster button { all:unset; cursor:default; position:relative; width:54px; height:54px;
+  display:grid; place-items:center; }
+.cluster button:focus-visible { outline:2px solid var(--focus); outline-offset:2px; border-radius:999px; }
+.cl-circle { width:42px; height:42px; border-radius:999px; background:var(--primary);
+  color:var(--on-primary); display:grid; place-items:center; font-weight:700; font-size:15px;
+  box-shadow:0 0 0 8px rgba(20,150,192,.22), 0 3px 8px rgba(12,26,34,.30); }
+/* флаг-индикатор: амбер-кольцо + «!»-точка (флаг не теряется при сворачивании) */
+.cluster.has-flag .cl-circle { box-shadow:0 0 0 4px var(--signal), 0 0 0 9px rgba(224,153,21,.25), 0 3px 8px rgba(12,26,34,.30); }
+.cl-flagdot { position:absolute; top:0; right:2px; width:18px; height:18px; border-radius:999px;
+  background:var(--signal); color:var(--on-accent); display:grid; place-items:center;
+  font-size:11px; font-weight:800; border:2px solid var(--surface); }
+
+/* агрегат «без точки на карте» (честное состояние; data-state-ungeocoded) */
+.ungeo { position:absolute; left:12px; bottom:118px; z-index:9; max-width:230px;
+  background:var(--surface); border:1px solid var(--border); border-radius:10px;
+  padding:8px 10px; box-shadow:0 3px 8px rgba(12,26,34,.18);
+  display:flex; align-items:center; gap:8px; }
+.ungeo .pic { width:22px; height:22px; flex:none; color:var(--muted); }
+.ungeo a { font-size:11.5px; color:var(--link-sunken); text-decoration:underline; text-underline-offset:2px; }
+.ungeo .lead { font-size:11px; color:var(--muted-text); }
+
+/* зум-контролы — нижняя зона (зона большого пальца) */
+.zoom { position:absolute; right:12px; bottom:16px; z-index:12;
+  display:flex; flex-direction:column; background:var(--surface); border:1px solid var(--border);
+  border-radius:10px; overflow:hidden; box-shadow:0 3px 8px rgba(12,26,34,.18); }
+.zoom button { width:44px; height:44px; border:none; background:transparent; font-size:19px;
+  color:var(--ink); cursor:default; }
+.zoom button:focus-visible { outline:2px solid var(--focus); outline-offset:-3px; }
+.zoom button+button { border-top:1px solid var(--border); }
+.recenter { position:absolute; right:12px; bottom:122px; z-index:12; width:44px; height:44px;
+  background:var(--surface); border:1px solid var(--border); border-radius:10px;
+  display:grid; place-items:center; box-shadow:0 3px 8px rgba(12,26,34,.18); }
+
+/* ---- нижний лист превью ({preview-sheet}) ---- */
+.sheet { position:relative; z-index:20; background:var(--surface);
+  border-radius:18px 18px 0 0; margin-top:-14px; padding:10px 15px 14px;
+  box-shadow:0 -8px 22px rgba(12,26,34,.12); }
+.handle { width:38px; height:4px; border-radius:3px; background:var(--border); margin:0 auto 9px; }
+.c-over { font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--primary); font-weight:700; }
+.c-title { margin:3px 0 5px; font-size:17px; font-weight:700; line-height:1.2; letter-spacing:-.005em; }
+.c-sum-row { display:flex; align-items:baseline; gap:8px; margin-bottom:8px; }
+.c-sum { font-size:21px; font-weight:800; color:var(--primary-strong); letter-spacing:-.01em; }
+.c-sum-cap { font-size:11px; color:var(--ink2); }
+.c-meta { display:grid; grid-template-columns:auto 1fr; gap:5px 10px; font-size:12.5px; margin:0; }
+.c-meta dt { color:var(--ink2); }
+.c-meta dd { margin:0; color:var(--ink); font-weight:500; }
+.c-meta dd a { color:var(--link-sunken); text-decoration:underline; text-underline-offset:2px; }
+
+/* бейдж флага ({flag-badge}) — амбер, глиф «!», суффикс */
+.flagbadge { display:inline-flex; align-items:center; gap:8px; min-height:44px;
+  background:var(--signal-bg); border:1px solid var(--signal-border); color:var(--signal-fg);
+  font-size:11.5px; font-weight:600; padding:7px 11px; border-radius:999px; margin-top:10px; }
+.flagbadge .ic { width:18px; height:18px; flex:none; border-radius:50%; background:var(--signal);
+  color:var(--on-accent); display:grid; place-items:center; font-size:12px; font-weight:800; }
+.flagbadge .meta-method { font-size:10.5px; color:var(--link-sunken); text-decoration:underline;
+  text-underline-offset:2px; margin-left:2px; font-weight:600; }
+
+.sheet-btn { margin-top:11px; display:block; text-align:center; background:var(--primary-strong);
+  color:var(--on-primary); font-size:13px; font-weight:600; padding:11px; text-decoration:none; border-radius:10px; }
+.sheet-btn:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+.src-link { display:inline-block; margin-top:10px; font-size:12px; font-weight:600;
+  color:var(--link-sunken); text-decoration:underline; text-underline-offset:2px; }
+.confirmed-tag { display:inline-flex; align-items:center; gap:4px; font-size:10.5px;
+  color:var(--confirmed-text); background:var(--confirmed-soft); border-radius:999px;
+  padding:2px 8px; margin-left:6px; vertical-align:middle; }
+
+/* ============ ФОЛБЭК-КОЛОНКА (тайлы недоступны / гео <70%) ============ */
+.fb-banner { display:flex; gap:9px; align-items:flex-start; background:var(--signal-bg);
+  border:1px solid var(--signal-border); border-radius:10px; padding:10px 12px; margin:0 0 4px;
+  color:var(--signal-fg); font-size:12px; }
+.fb-banner .bi { flex:none; width:18px; height:18px; }
+.fb-banner b { display:block; }
+.fb-list { flex:1; overflow-y:auto; padding:12px 14px 14px; }
+.fb-actions { display:flex; gap:8px; margin:10px 0 12px; flex-wrap:wrap; }
+.fb-actions a { font-size:11.5px; color:var(--link-sunken); text-decoration:underline; text-underline-offset:2px; }
+.fb-item { background:var(--surface); border:1px solid var(--border); border-radius:12px;
+  padding:11px 12px; margin-bottom:10px; }
+.fb-item .over { font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--primary); font-weight:700; }
+.fb-item .ttl { font-size:14px; font-weight:700; margin:2px 0 4px; line-height:1.25; }
+.fb-item .rows { display:flex; flex-wrap:wrap; gap:4px 14px; font-size:11.5px; color:var(--ink2); }
+.fb-item .rows b { color:var(--ink); }
+.fb-mini-flag { display:inline-flex; align-items:center; gap:6px; margin-top:7px;
+  background:var(--signal-bg); border:1px solid var(--signal-border); color:var(--signal-fg);
+  font-size:10.5px; font-weight:600; padding:4px 8px; border-radius:999px; }
+.fb-mini-flag .d { width:6px; height:6px; border-radius:50%; background:var(--signal); }
+.fb-ungeo-tag { display:inline-flex; align-items:center; gap:5px; margin-top:7px; font-size:11px;
+  color:var(--muted-text); font-style:normal; }
+.fb-ungeo-tag svg { color:var(--muted); }
+.fb-insuff { background:var(--muted-soft); border:1px solid var(--border); border-radius:6px;
+  padding:8px 10px; font-size:11px; color:var(--muted-text); margin-top:7px; }
+.fb-insuff b { color:var(--ink); font-weight:600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 class="doc-h1">key-map.html — Картада (Карта Астаны)</h1>
+  <p class="doc-p">Канонический вход / cold start. Слева — режим карты с маркерами разной формы и глифа,
+  кластером и фолбэк-агрегатом «без точки на карте». Справа — фолбэк-режим (тайлы недоступны / гео&lt;70%):
+  баннер-пояснение + текстовый список района. KZ — основной язык, RU — в подписях.</p>
+
+  <div class="cols">
+    <!-- ===================== РЕЖИМ КАРТЫ ===================== -->
+    <div>
+      <p class="col-cap">A · Режим карты</p>
+      <p class="col-sub">Маркеры формой/глифом · кластер со счётчиком и флаг-индикатором · полилиния дороги · река Ишим · нижний лист превью.</p>
+      <div class="phone">
+        <div class="screen" data-theme="light">
+          <div class="notch"></div>
+          <div class="statusbar"><span>9:41</span><span>5G &nbsp;84%</span></div>
+
+          <div class="topbar">
+            <div class="brand">
+              <div class="mark">AQ</div>
+              <div class="bname">Ашық Қала<small lang="ru">Астана · ашықтық</small></div>
+            </div>
+            <div class="head-ctrls">
+              <div class="lang" role="group" aria-label="Тіл / Язык">
+                <button class="on" aria-pressed="true" lang="kk">KZ</button>
+                <button aria-pressed="false" lang="ru">RU</button>
+              </div>
+              <button class="theme" aria-label="Тема: жарық / тёмная" title="Тема">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="searchrow">
+            <div class="search">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+              Нысанды немесе мердігерді іздеу
+            </div>
+          </div>
+
+          <div class="map" role="application" aria-label="Астана картасы — нысандар тізімі балама ретінде қолжетімді">
+            <div class="grid"></div>
+            <div class="river"></div>
+            <div class="river-cap" lang="ru">р. Ишим</div>
+            <div class="road">
+              <svg viewBox="0 0 300 240">
+                <polyline points="18,220 90,156 150,122 214,58 286,28" fill="none" stroke="#1496C0" stroke-width="7" stroke-linecap="round" opacity=".92"/>
+                <polyline points="18,220 90,156 150,122 214,58 286,28" fill="none" stroke="#fff" stroke-width="1.6" stroke-dasharray="6 7"/>
+              </svg>
+            </div>
+
+            <!-- выбранный (на трассе): двойное кольцо, сохраняет «пусто»/обычный статус -->
+            <div class="mk sel" style="left:50%; top:46%;">
+              <button class="pin-hit" aria-label="Таңдалған нысан: Кабанбай батыра көшесі. Реконструкция жолы">
+                <span class="pin normal"></span>
+              </button>
+              <div class="dotlabel" lang="ru">Кабанбай б.</div>
+            </div>
+            <!-- с флагом: глиф «!» -->
+            <div class="mk" style="left:30%; top:64%;">
+              <button class="pin-hit" aria-label="Флагы бар нысан — тексеруді талап ететін сигнал">
+                <span class="pin flagged"><span class="g">!</span></span>
+              </button>
+            </div>
+            <!-- подтверждён: глиф «✓» -->
+            <div class="mk" style="left:73%; top:34%;">
+              <button class="pin-hit" aria-label="Бастапқы дереккөзден расталған нысан">
+                <span class="pin confirmed"><span class="g">✓</span></span>
+              </button>
+            </div>
+            <!-- обычный: пустой пин -->
+            <div class="mk" style="left:23%; top:38%;">
+              <button class="pin-hit" aria-label="Әдеттегі нысан">
+                <span class="pin normal"></span>
+              </button>
+            </div>
+
+            <!-- кластер со счётчиком + флаг-индикатор -->
+            <div class="cluster has-flag" style="left:62%; top:70%;">
+              <button aria-label="7 нысан тобы, ішінде флагы бар. Ашу үшін жақындатыңыз">
+                <span class="cl-circle">7</span>
+                <span class="cl-flagdot" aria-hidden="true">!</span>
+              </button>
+            </div>
+
+            <!-- агрегат «без точки на карте» -->
+            <div class="ungeo">
+              <svg class="pic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s7-6.5 7-12a7 7 0 0 0-12-4.9"/><path d="M5.5 7A7 7 0 0 0 5 9c0 5.5 7 12 7 12"/><path d="M3 3l18 18"/></svg>
+              <div>
+                <span class="lead" lang="ru">3 нысан картада көрсетілмеген</span><br>
+                <a href="#">Тағы 3 нысан картада жоқ → тізіммен ашу</a>
+              </div>
+            </div>
+
+            <button class="recenter" aria-label="Астанаға қайта оралу">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1496C0" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+            </button>
+            <div class="zoom"><button aria-label="Жақындату">+</button><button aria-label="Алыстату">−</button></div>
+          </div>
+
+          <!-- нижний лист превью -->
+          <div class="sheet" role="dialog" aria-modal="false" aria-label="Нысан превьюі: Кабанбай батыра көшесі">
+            <div class="handle" aria-hidden="true"></div>
+            <div class="c-over">КЕЛІСІМШАРТ · ЖОЛ <span lang="ru" style="text-transform:none;letter-spacing:0;color:var(--ink2)">/ контракт · дорога</span></div>
+            <h2 class="c-title" lang="ru">Реконструкция ул. Кабанбай батыра
+              <span class="confirmed-tag"><span aria-hidden="true">✓</span> расталған</span>
+            </h2>
+            <div class="c-sum-row"><span class="c-sum">240 млн ₸</span><span class="c-sum-cap">шарт бағасы</span></div>
+            <dl class="c-meta">
+              <dt>Тапсырыс беруші</dt><dd lang="ru">Акимат г. Астана</dd>
+              <dt>Мердігер</dt><dd><a href="#" lang="ru">ТОО «Астана Жол Курылыс»</a></dd>
+            </dl>
+            <div class="flagbadge">
+              <span class="ic" aria-hidden="true">!</span>
+              <span>Хабарландыруда бір қатысушы — тексеруді талап ететін сигнал
+                <a class="meta-method" href="#">Қалай есептелді</a></span>
+            </div>
+            <a class="sheet-btn" href="#">Толығырақ <span lang="ru" style="opacity:.8">/ Подробнее</span></a>
+            <a class="src-link" href="#">Бастапқы дереккөз: goszakup.gov.kz ↗</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== ФОЛБЭК-РЕЖИМ ===================== -->
+    <div>
+      <p class="col-cap">B · Фолбэк-режим</p>
+      <p class="col-sub">Тайлы недоступны ИЛИ гео&lt;70%: баннер-пояснение + текстовый список объектов района вместо карты. Честные состояния — нейтральным стилем.</p>
+      <div class="phone">
+        <div class="screen" data-theme="light">
+          <div class="notch"></div>
+          <div class="statusbar"><span>9:41</span><span>3G &nbsp;61%</span></div>
+
+          <div class="topbar">
+            <div class="brand">
+              <div class="mark">AQ</div>
+              <div class="bname">Ашық Қала<small lang="ru">Есіл ауданы · тізім</small></div>
+            </div>
+            <div class="head-ctrls">
+              <div class="lang" role="group" aria-label="Тіл / Язык">
+                <button class="on" aria-pressed="true" lang="kk">KZ</button>
+                <button aria-pressed="false" lang="ru">RU</button>
+              </div>
+              <button class="theme" aria-label="Тема: жарық / тёмная" title="Тема">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="fb-list">
+            <div class="fb-banner">
+              <svg class="bi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+              <span><b>Бұл аудан тізіммен көрсетіледі</b>
+                <span style="color:var(--muted-text)">картадағы нүктелер әзірге толық емес (&lt;70%).</span>
+                <span lang="ru" style="display:block;color:var(--muted-text);margin-top:3px">Этот район показан списком — точек на карте пока недостаточно.</span>
+              </span>
+            </div>
+            <div class="fb-actions">
+              <a href="#">Аудан таңдау</a>
+              <a href="#">Іздеу</a>
+              <a href="#">Бәрібір картаны көрсету →</a>
+            </div>
+
+            <div class="fb-item">
+              <div class="over">ЖОЛ · в работе</div>
+              <div class="ttl" lang="ru">Реконструкция ул. Кабанбай батыра</div>
+              <div class="rows"><span>Сома: <b>240 млн ₸</b></span><span lang="ru">Мердігер: <b>ТОО «Астана Жол…»</b></span></div>
+              <div class="fb-mini-flag"><span class="d"></span> Бір қатысушы — тексеруді талап ететін сигнал</div>
+            </div>
+
+            <div class="fb-item">
+              <div class="over">СУ ҚҰБЫРЫ · план</div>
+              <div class="ttl" lang="ru">Водопровод мкр. Сарыарка, участок 4</div>
+              <div class="rows"><span>Сома: <b>96 млн ₸</b></span><span lang="ru">Мердігер: <b>ТОО «Есіл Су»</b></span></div>
+              <div class="fb-ungeo-tag">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s7-6.5 7-12a7 7 0 0 0-12-4.9"/><path d="M5.5 7A7 7 0 0 0 5 9c0 5.5 7 12 7 12"/><path d="M3 3l18 18"/></svg>
+                картадағы нүкте әзірге жоқ <span lang="ru" style="color:var(--muted)">· без точки на карте</span>
+              </div>
+            </div>
+
+            <div class="fb-item">
+              <div class="over">ЖОЛ · завершён</div>
+              <div class="ttl" lang="ru">Ремонт ул. Достык, 2 этап</div>
+              <div class="rows"><span>Сома: <b>54 млн ₸</b></span><span lang="ru">Мердігер: <b>ТОО «Нұр Құрылыс»</b></span></div>
+              <div class="fb-insuff">≈ <b>Шақырым құны</b> — салыстыруға жеткілікті дерек жоқ (&lt;5).
+                <span lang="ru" style="color:var(--muted)">недостаточно сопоставимых данных</span></div>
+            </div>
+
+            <div class="fb-actions" style="margin-top:2px">
+              <a href="#">Тағы 2 нысан картада жоқ → тізіммен қарау</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

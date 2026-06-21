@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AshyqQala.kz — Флаг методикасы / Методика флага</title>
+<style>
+/* ============================================================================
+   key-flag-methodology.html — ОБЪЯСНЕНИЕ МЕТОДИКИ ФЛАГА (несущий оверлей/модалка).
+   Флаг «Цена за км выше медианы». Личность: Направление B; палитра Тема 4.
+
+   КАКИЕ СЕКЦИИ СПАЙНОВ УПРАВЛЯЮТ ЭТИМ ЭКРАНОМ:
+   • EXPERIENCE.md → Information Architecture (Объяснение методики флага:
+        формула, evidence, methodology_version, дата расчёта, «пересчитать вручную»)
+   • EXPERIENCE.md → Component Patterns: {flag-badge} (тап→методика), {source-link}
+   • EXPERIENCE.md → Поведение риск-флагов (медиана × 1.5; окно 24 мес скользящее;
+        ключ сопоставимости направление × kato × 24 мес; min_sample = 5;
+        формула воспроизводима вручную; защитные связи у флага FR-23/§7.1)
+   • EXPERIENCE.md → State Patterns → «Объяснение методики при недостаточной выборке»
+        (формула/пороги показаны всегда; вместо значения — «недостаточно сопоставимых
+        данных», какого порога не хватило) + {data-state-insufficient}
+   • EXPERIENCE.md → Accessibility Floor (role=dialog/aria-modal, focus-trap, возврат
+        фокуса на {flag-badge}, видимый focus-ring, Esc закрывает)
+   • DESIGN.md → Shapes ({rounded.lg} модальный слой), Colors (нейтральный амбер)
+
+   ГАРДРЕЙЛ: нейтральный тон «сигнал, требующий проверки», не «завышение/нарушение».
+   ============================================================================ */
+
+:root {
+  --primary:#1496C0; --primary-strong:#0F7DA3; --primary-soft:#DCEFF6; --on-primary:#FFFFFF;
+  --accent:#F0B429; --accent-soft:#FBEFC9; --on-accent:#16242C;
+  --signal:#E09915; --signal-bg:#FFF6E0; --signal-fg:#7A560D; --signal-border:#F2D58C;
+  --confirmed:#2C8C7A; --confirmed-text:#1F7A6B; --confirmed-soft:#D7EEE8;
+  --muted:#8893A0; --muted-text:#5A6672; --muted-soft:#EBEFF2;
+  --surface:#FFFFFF; --sunken:#EEF6F9; --border:#D2E4EC;
+  --ink:#16242C; --ink2:#4E5E69;
+  --link:#0F7DA3; --link-sunken:#0C6585; --focus:#0C6585;
+}
+[data-theme="dark"] {
+  --primary:#3BB3D6; --primary-strong:#5FC6E3; --primary-soft:#173A47; --on-primary:#06222B;
+  --accent:#F5C14E; --accent-soft:#3A2E12; --on-accent:#16242C;
+  --signal:#E8A93A; --signal-bg:#33280F; --signal-fg:#F0CE82; --signal-border:#5C4A1E;
+  --confirmed:#3FB39C; --confirmed-text:#3FB39C; --confirmed-soft:#16352F;
+  --muted:#6B7785; --muted-text:#9AA6B2; --muted-soft:#1E2C34;
+  --surface:#16242C; --sunken:#0E1A21; --border:#2A3D47;
+  --ink:#EAF1F4; --ink2:#AAB8C0;
+  --link:#56C0E0; --link-sunken:#5BC4E4; --focus:#5FC6E3;
+}
+* { box-sizing:border-box; }
+html,body { margin:0; }
+body { font-family:"Inter","Segoe UI",Roboto,"Helvetica Neue",Arial,system-ui,sans-serif;
+  background:#cbd6dd; color:var(--ink); line-height:1.45; padding:24px 14px 56px; -webkit-font-smoothing:antialiased; }
+@media (prefers-reduced-motion: reduce){ *{ transition:none!important; animation:none!important; } }
+
+.wrap { max-width:840px; margin:0 auto; }
+.doc-h1 { font-size:22px; margin:0 0 4px; letter-spacing:-.01em; color:#0e2630; }
+.doc-p  { font-size:13px; margin:0 0 18px; color:#3c4a53; max-width:680px; }
+.cols { display:grid; gap:28px; grid-template-columns:repeat(2,minmax(330px,1fr)); }
+@media (max-width:780px){ .cols{ grid-template-columns:1fr; max-width:400px; margin:0 auto; } }
+.col-cap { font-size:11px; letter-spacing:.12em; text-transform:uppercase; font-weight:700; color:#0e2630; margin:0 0 8px; }
+.col-sub { font-size:12px; color:#3c4a53; margin:0 0 12px; }
+
+.phone { width:100%; max-width:372px; margin:0 auto; background:#0c1a22;
+  border-radius:38px; padding:10px; box-shadow:0 18px 40px rgba(12,26,34,.30); }
+.screen { position:relative; overflow:hidden; border-radius:30px; background:var(--sunken);
+  height:820px; display:flex; flex-direction:column; }
+.notch { position:absolute; top:0; left:50%; transform:translateX(-50%);
+  width:128px; height:22px; background:#0c1a22; border-radius:0 0 16px 16px; z-index:60; }
+
+/* затемнённая подложка карточки (контекст модалки) */
+.backdrop { position:absolute; inset:0; background:rgba(8,18,24,.46); z-index:40; }
+.behind { flex:1; padding:42px 16px 0; opacity:.5; filter:saturate(.7); pointer-events:none; }
+.behind .ghost-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px; }
+.behind .gl { height:11px; background:var(--muted-soft); border-radius:5px; margin-bottom:9px; }
+.behind .gl.s { width:55%; } .behind .gl.m { width:80%; } .behind .gl.l { width:96%; }
+
+/* модальный слой ({rounded.lg} сверху) */
+.modal { position:absolute; left:0; right:0; bottom:0; z-index:50; background:var(--surface);
+  border-radius:18px 18px 0 0; box-shadow:0 -10px 30px rgba(8,18,24,.4);
+  max-height:90%; display:flex; flex-direction:column; }
+.m-grip { width:40px; height:4px; border-radius:3px; background:var(--border); margin:9px auto 0; }
+.m-head { display:flex; align-items:flex-start; gap:10px; padding:10px 16px 8px; border-bottom:1px solid var(--border); }
+.m-titlewrap { flex:1; min-width:0; }
+.m-over { font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--primary); font-weight:700; }
+.m-title { font-size:17px; font-weight:700; margin:3px 0 0; line-height:1.25; letter-spacing:-.005em; }
+.m-close { width:36px; height:36px; min-width:36px; border-radius:9px; border:1px solid var(--border);
+  background:var(--sunken); color:var(--ink); display:grid; place-items:center; cursor:default; flex:none; }
+.m-close:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+.m-body { overflow-y:auto; padding:14px 16px 18px; }
+
+/* верхний нейтральный бейдж флага */
+.flag-strip { display:flex; align-items:center; gap:9px; background:var(--signal-bg);
+  border:1px solid var(--signal-border); border-radius:10px; padding:10px 12px; color:var(--signal-fg); }
+.flag-strip .ic { width:20px; height:20px; flex:none; border-radius:50%; background:var(--signal);
+  color:var(--on-accent); display:grid; place-items:center; font-size:13px; font-weight:800; }
+.flag-strip .t { font-size:12.5px; font-weight:600; line-height:1.3; }
+.flag-strip .t .ru { display:block; font-weight:400; font-size:10.5px; color:var(--muted-text); margin-top:2px; }
+
+.note { font-size:11.5px; color:var(--muted-text); margin:11px 0 4px; line-height:1.45; }
+
+/* секция-заголовок */
+.s-h { font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink2);
+  font-weight:700; margin:16px 0 7px; }
+
+/* формула */
+.formula { background:var(--sunken); border:1px solid var(--border); border-radius:10px;
+  padding:13px 14px; text-align:center; }
+.formula .eq { font-family:ui-monospace,"SF Mono","Roboto Mono",Menlo,Consolas,monospace;
+  font-size:14px; font-weight:600; color:var(--ink); }
+.formula .eq b { color:var(--primary-strong); }
+.formula .cap { font-size:11px; color:var(--ink2); margin-top:6px; }
+
+/* параметры (ключ сопоставимости) */
+.params { display:grid; grid-template-columns:auto 1fr; gap:7px 12px; font-size:12.5px; margin:0; }
+.params dt { color:var(--ink2); }
+.params dd { margin:0; color:var(--ink); font-weight:500; }
+.params dd .mono { font-family:ui-monospace,"SF Mono","Roboto Mono",Menlo,Consolas,monospace; font-size:11.5px; color:var(--primary-strong); }
+
+/* evidence-таблица (числа) */
+.ev { width:100%; border-collapse:collapse; font-size:12.5px; margin-top:3px; }
+.ev th, .ev td { text-align:left; padding:7px 8px; border-bottom:1px solid var(--border); }
+.ev th { color:var(--ink2); font-weight:600; font-size:11px; }
+.ev td.num { font-family:ui-monospace,"SF Mono","Roboto Mono",Menlo,Consolas,monospace; text-align:right; font-weight:600; }
+.ev tr.hl td { background:var(--signal-bg); color:var(--signal-fg); }
+.ev tr.hl td.num { color:var(--signal-fg); }
+
+/* мета-строка: версия + дата */
+.metaline { display:flex; flex-wrap:wrap; gap:6px 16px; font-size:11.5px; color:var(--muted-text); margin-top:12px; }
+.metaline .mono { font-family:ui-monospace,"SF Mono","Roboto Mono",Menlo,Consolas,monospace; color:var(--ink2); }
+
+/* блок «недостаточно данных» {data-state-insufficient} — сплошной бордюр, глиф «<5», не ошибка */
+.insuff { background:var(--muted-soft); border:1px solid var(--border); border-radius:6px;
+  padding:12px 13px; margin-top:4px; }
+.insuff .badge { display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:var(--ink); }
+.insuff .badge .g { display:grid; place-items:center; width:24px; height:20px; border-radius:5px;
+  background:var(--surface); border:1px solid var(--border); font-size:11px; font-weight:700; color:var(--muted-text);
+  font-family:ui-monospace,"SF Mono","Roboto Mono",Menlo,Consolas,monospace; }
+.insuff .body { font-size:12px; color:var(--muted-text); margin-top:8px; line-height:1.5; }
+.insuff .body .ru { display:block; color:var(--muted); margin-top:3px; }
+.insuff .which { font-family:ui-monospace,"SF Mono","Roboto Mono",Menlo,Consolas,monospace; color:var(--primary-strong); }
+
+/* действия модалки */
+.m-actions { display:flex; gap:9px; margin-top:18px; }
+.m-actions .btn { flex:1; text-align:center; border-radius:10px; padding:11px; font-size:13px; font-weight:600; text-decoration:none; cursor:default; border:none; }
+.m-actions .recalc { background:var(--primary-strong); color:var(--on-primary); }
+.m-actions .src { background:var(--surface); color:var(--link-sunken); border:1px solid var(--border); text-decoration:underline; text-underline-offset:2px; }
+.m-actions .btn:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+
+.protect { display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:13px; justify-content:center; }
+.protect a { font-size:11.5px; color:var(--link-sunken); text-decoration:underline; text-underline-offset:2px; }
+.protect a:focus-visible { outline:2px solid var(--focus); outline-offset:2px; border-radius:3px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 class="doc-h1">key-flag-methodology.html — Флаг методикасы</h1>
+  <p class="doc-p">Несущий оверлей (role=dialog). Флаг «Цена за км выше медианы»: формула (медиана × 1.5),
+  скользящее окно 24 мес, ключ сопоставимости (направление × район × 24 мес), evidence (числа),
+  methodology_version, «Пересчитать вручную». Справа — состояние «недостаточно сопоставимых данных» (выборка &lt;5) как альтернатива флагу.</p>
+
+  <div class="cols">
+    <!-- ===================== ФЛАГ ВЫСТАВЛЕН ===================== -->
+    <div>
+      <p class="col-cap">A · Сигнал выставлен</p>
+      <p class="col-sub">Формула · окно 24 мес · ключ сопоставимости · evidence · версия методики + дата · «Пересчитать вручную».</p>
+      <div class="phone">
+        <div class="screen" data-theme="light">
+          <div class="notch"></div>
+          <!-- контекст под модалкой -->
+          <div class="behind" aria-hidden="true">
+            <div class="ghost-card">
+              <div class="gl l"></div><div class="gl m"></div><div class="gl s"></div>
+              <div class="gl l" style="margin-top:14px;background:var(--signal-bg)"></div>
+            </div>
+          </div>
+          <div class="backdrop" aria-hidden="true"></div>
+
+          <!-- МОДАЛКА -->
+          <div class="modal" role="dialog" aria-modal="true" aria-labelledby="m1-title">
+            <div class="m-grip" aria-hidden="true"></div>
+            <div class="m-head">
+              <div class="m-titlewrap">
+                <div class="m-over">МЕТОДИКА · СИГНАЛ</div>
+                <h2 class="m-title" id="m1-title">Шақырым құны медианадан жоғары
+                  <span style="display:block;font-size:11px;font-weight:500;color:var(--ink2)" lang="ru">Цена за км выше медианы</span>
+                </h2>
+              </div>
+              <button class="m-close" aria-label="Жабу / Закрыть (Esc)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+
+            <div class="m-body">
+              <div class="flag-strip">
+                <span class="ic" aria-hidden="true">!</span>
+                <span class="t">Тексеруді талап ететін сигнал
+                  <span class="ru" lang="ru">Сигнал, требующий проверки — не вывод и не обвинение</span>
+                </span>
+              </div>
+              <p class="note">Формула әдейі қарапайым, оны үшінші тарап қолмен қайта есептей алады.
+                <span lang="ru" style="color:var(--muted)">Формула намеренно простая — её можно пересчитать вручную.</span></p>
+
+              <div class="s-h">Формула / Формула</div>
+              <div class="formula">
+                <div class="eq">шақырым құны &gt; <b>медиана × 1.5</b></div>
+                <div class="cap">медиана = аудан бойынша орташа (медианалық) ₸/км · <span lang="ru">медиана по группе сопоставимости</span></div>
+              </div>
+
+              <div class="s-h">Салыстыру кілті / Ключ сопоставимости</div>
+              <dl class="params">
+                <dt>Бағыт</dt><dd>Жол / <span lang="ru">дорога</span></dd>
+                <dt>Аудан (KATO)</dt><dd>Есіл · <span class="mono">71XXXX</span></dd>
+                <dt>Терезе</dt><dd>24 ай, жылжымалы / <span lang="ru">24 мес, скользящее</span></dd>
+                <dt>Кему шегі</dt><dd><span class="mono">median.min_sample = 5</span></dd>
+              </dl>
+
+              <div class="s-h">Evidence · нақты сандар / числа</div>
+              <table class="ev">
+                <thead><tr><th>Көрсеткіш / показатель</th><th style="text-align:right">Мән</th></tr></thead>
+                <tbody>
+                  <tr><td>Топтағы келісімшарт / в группе</td><td class="num">9</td></tr>
+                  <tr><td>Аудан медианасы ₸/км</td><td class="num">38,4 млн</td></tr>
+                  <tr><td>Шек (медиана × 1.5)</td><td class="num">57,6 млн</td></tr>
+                  <tr class="hl"><td>Осы келісімшарт ₸/км</td><td class="num">71,0 млн</td></tr>
+                </tbody>
+              </table>
+
+              <div class="metaline">
+                <span>Нұсқа / версия: <span class="mono">methodology_version 1.0</span></span>
+                <span>Есептелді / расчёт: <span class="mono">12.05.2026</span></span>
+              </div>
+
+              <div class="m-actions">
+                <button class="btn recalc">Қолмен қайта есептеу <span lang="ru" style="opacity:.85">/ Пересчитать</span></button>
+                <a class="btn src" href="#" rel="noopener">Дереккөз goszakup ↗</a>
+              </div>
+              <div class="protect">
+                <a href="#" lang="ru">Қате туралы хабарлау / Сообщить об ошибке</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== НЕДОСТАТОЧНО ДАННЫХ ===================== -->
+    <div>
+      <p class="col-cap">B · Недостаточно данных</p>
+      <p class="col-sub">Альтернатива флагу: формула и пороги показаны всегда, но вместо значения — «недостаточно сопоставимых данных» (выборка &lt;5), с указанием, какого порога не хватило.</p>
+      <div class="phone">
+        <div class="screen" data-theme="light">
+          <div class="notch"></div>
+          <div class="behind" aria-hidden="true">
+            <div class="ghost-card">
+              <div class="gl l"></div><div class="gl m"></div><div class="gl s"></div>
+              <div class="gl m" style="margin-top:14px;background:var(--muted-soft)"></div>
+            </div>
+          </div>
+          <div class="backdrop" aria-hidden="true"></div>
+
+          <div class="modal" role="dialog" aria-modal="true" aria-labelledby="m2-title">
+            <div class="m-grip" aria-hidden="true"></div>
+            <div class="m-head">
+              <div class="m-titlewrap">
+                <div class="m-over">МЕТОДИКА · СИГНАЛ</div>
+                <h2 class="m-title" id="m2-title">Шақырым құны медианадан жоғары
+                  <span style="display:block;font-size:11px;font-weight:500;color:var(--ink2)" lang="ru">Цена за км выше медианы</span>
+                </h2>
+              </div>
+              <button class="m-close" aria-label="Жабу / Закрыть (Esc)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+
+            <div class="m-body">
+              <p class="note" style="margin-top:0">Формула мен шектер әрқашан көрсетіледі, сигнал қойылмаса да.
+                <span lang="ru" style="color:var(--muted)">Формула и пороги показаны всегда, даже когда сигнал не выставлен.</span></p>
+
+              <div class="s-h">Формула / Формула</div>
+              <div class="formula">
+                <div class="eq">шақырым құны &gt; <b>медиана × 1.5</b></div>
+                <div class="cap">медиана = аудан бойынша орташа (медианалық) ₸/км</div>
+              </div>
+
+              <div class="s-h">Салыстыру кілті / Ключ сопоставимости</div>
+              <dl class="params">
+                <dt>Бағыт</dt><dd>Жол / <span lang="ru">дорога</span></dd>
+                <dt>Аудан (KATO)</dt><dd>Есіл · <span class="mono">71XXXX</span></dd>
+                <dt>Терезе</dt><dd>24 ай, жылжымалы / <span lang="ru">24 мес</span></dd>
+                <dt>Кему шегі</dt><dd><span class="mono">median.min_sample = 5</span></dd>
+              </dl>
+
+              <div class="s-h">Нәтиже / Результат</div>
+              <div class="insuff">
+                <div class="badge"><span class="g" aria-hidden="true">&lt;5</span> Салыстыруға жеткілікті дерек жоқ</div>
+                <div class="body">Бұл топта тек <b style="color:var(--ink)">3</b> салыстырмалы келісімшарт бар —
+                  <span class="which">median.min_sample = 5</span> шегіне жетпейді. Сондықтан сигнал қойылмайды, медиана көрсетілмейді.
+                  <span class="ru" lang="ru">В группе только 3 сопоставимых контракта — не достигнут порог median.min_sample = 5. Сигнал не выставляется, медиана не показывается.</span>
+                </div>
+              </div>
+              <p class="note">Сигналдың жоқтығы «бәрі таза» дегенді білдірмейді — салыстыруға дерек жеткіліксіз.
+                <span lang="ru" style="color:var(--muted)">Отсутствие сигнала — не «всё чисто», а недостаток данных для сравнения.</span></p>
+
+              <div class="metaline">
+                <span>Нұсқа / версия: <span class="mono">methodology_version 1.0</span></span>
+                <span>Тексерілді / проверка: <span class="mono">12.05.2026</span></span>
+              </div>
+
+              <div class="m-actions">
+                <button class="btn recalc">Қолмен тексеру <span lang="ru" style="opacity:.85">/ Проверить</span></button>
+                <a class="btn src" href="#" rel="noopener">Дереккөз goszakup ↗</a>
+              </div>
+              <div class="protect">
+                <a href="#" lang="ru">Қате туралы хабарлау / Сообщить об ошибке</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

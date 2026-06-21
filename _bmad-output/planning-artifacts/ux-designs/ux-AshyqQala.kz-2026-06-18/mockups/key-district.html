@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AshyqQala.kz — Аудан беті / Страница района (Есіл)</title>
+<style>
+/* ============================================================================
+   key-district.html — СТРАНИЦА РАЙОНА (сводный вид). Район «Есіл».
+   Личность: Направление B; палитра Тема 4.
+
+   КАКИЕ СЕКЦИИ СПАЙНОВ УПРАВЛЯЮТ ЭТИМ ЭКРАНОМ:
+   • EXPERIENCE.md → Information Architecture (Страница района: список объектов,
+        медианы, агрегированные флаги; вход из полигона/контракта/бота)
+   • EXPERIENCE.md → Component Patterns: {filter-chip} (выбранное состояние = заливка
+        + белый текст + галочка «✓»), {contract-card}, {flag-badge}, {source-link},
+        {ornament-divider}, {lang-switch}, {theme-switch}
+   • EXPERIENCE.md → State Patterns: «Недостаточно сопоставимых данных»
+        {data-state-insufficient} (медиана малой группы), «Агрегат без точки на карте»,
+        «Страница района: пусто / загрузка» (без выдуманных медиан)
+   • EXPERIENCE.md → Поведение риск-флагов (медиана района; «преобладание подрядчика
+        в районе» — доля ≥50% по выборке, НЕ юр-монополия; флаг «сигнал, требующий проверки»)
+   • EXPERIENCE.md → Key Flows → Flow 3 (Данияр): сравнение медианы района
+   • DESIGN.md → Components ({filter-chip} выбранный 5.97:1, не bледный primary-soft)
+
+   ГАРДРЕЙЛ: флаги нейтральны; честные состояния нейтральным стилем; «Преобладание
+   подрядчика в районе» (НЕ «монополия»).
+   ============================================================================ */
+
+:root {
+  --primary:#1496C0; --primary-strong:#0F7DA3; --primary-soft:#DCEFF6; --on-primary:#FFFFFF;
+  --accent:#F0B429; --accent-soft:#FBEFC9; --on-accent:#16242C;
+  --signal:#E09915; --signal-bg:#FFF6E0; --signal-fg:#7A560D; --signal-border:#F2D58C;
+  --confirmed:#2C8C7A; --confirmed-text:#1F7A6B; --confirmed-soft:#D7EEE8;
+  --muted:#8893A0; --muted-text:#5A6672; --muted-soft:#EBEFF2;
+  --surface:#FFFFFF; --sunken:#EEF6F9; --border:#D2E4EC;
+  --ink:#16242C; --ink2:#4E5E69;
+  --link:#0F7DA3; --link-sunken:#0C6585; --focus:#0C6585;
+}
+[data-theme="dark"] {
+  --primary:#3BB3D6; --primary-strong:#5FC6E3; --primary-soft:#173A47; --on-primary:#06222B;
+  --accent:#F5C14E; --accent-soft:#3A2E12; --on-accent:#16242C;
+  --signal:#E8A93A; --signal-bg:#33280F; --signal-fg:#F0CE82; --signal-border:#5C4A1E;
+  --confirmed:#3FB39C; --confirmed-text:#3FB39C; --confirmed-soft:#16352F;
+  --muted:#6B7785; --muted-text:#9AA6B2; --muted-soft:#1E2C34;
+  --surface:#16242C; --sunken:#0E1A21; --border:#2A3D47;
+  --ink:#EAF1F4; --ink2:#AAB8C0;
+  --link:#56C0E0; --link-sunken:#5BC4E4; --focus:#5FC6E3;
+}
+* { box-sizing:border-box; }
+html,body { margin:0; }
+body { font-family:"Inter","Segoe UI",Roboto,"Helvetica Neue",Arial,system-ui,sans-serif;
+  background:#cbd6dd; color:var(--ink); line-height:1.45; padding:24px 14px 56px; -webkit-font-smoothing:antialiased; }
+@media (prefers-reduced-motion: reduce){ *{ transition:none!important; animation:none!important; } }
+
+.wrap { max-width:440px; margin:0 auto; }
+.doc-h1 { font-size:22px; margin:0 0 4px; letter-spacing:-.01em; color:#0e2630; }
+.doc-p  { font-size:13px; margin:0 0 18px; color:#3c4a53; }
+
+.phone { width:100%; max-width:372px; margin:0 auto; background:#0c1a22;
+  border-radius:38px; padding:10px; box-shadow:0 18px 40px rgba(12,26,34,.30); }
+.screen { position:relative; overflow:hidden; border-radius:30px; background:var(--sunken);
+  height:860px; display:flex; flex-direction:column; }
+.notch { position:absolute; top:0; left:50%; transform:translateX(-50%);
+  width:128px; height:22px; background:#0c1a22; border-radius:0 0 16px 16px; z-index:60; }
+.statusbar { height:30px; display:flex; align-items:center; justify-content:space-between;
+  padding:0 22px 0 20px; font-size:12px; font-weight:600; color:var(--ink); background:var(--surface); z-index:30; }
+
+/* шапка */
+.topbar { background:var(--surface); border-bottom:1px solid var(--border); padding:8px 12px;
+  display:flex; align-items:center; gap:8px; }
+.iconbtn { width:36px; height:36px; min-width:36px; border-radius:9px; border:1px solid transparent;
+  background:transparent; color:var(--ink); display:grid; place-items:center; cursor:default; }
+.iconbtn:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+.toptitle { font-weight:700; font-size:14px; }
+.toptitle small { display:block; font-size:10.5px; color:var(--ink2); font-weight:500; }
+.head-ctrls { margin-left:auto; display:flex; align-items:center; gap:6px; }
+.lang { display:inline-flex; background:var(--sunken); border:1px solid var(--border); border-radius:999px; overflow:hidden; }
+.lang button { min-width:34px; min-height:30px; border:none; background:transparent; font-size:9.5px; font-weight:700; letter-spacing:.1em; color:var(--ink2); cursor:default; padding:0 8px; }
+.lang button.on { background:var(--primary); color:var(--on-primary); }
+.lang button:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+.theme { min-width:36px; min-height:30px; border-radius:999px; border:1px solid var(--border); background:var(--sunken); color:var(--ink2); display:grid; place-items:center; cursor:default; }
+.theme:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+
+.scroll { flex:1; overflow-y:auto; padding:14px 16px 22px; }
+
+/* герой района */
+.hero-over { font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--primary); font-weight:700; }
+.hero-title { font-size:24px; font-weight:700; margin:3px 0 2px; letter-spacing:-.01em; }
+.hero-sub { font-size:12.5px; color:var(--ink2); margin:0; }
+
+/* орнамент-разделитель */
+.orn { display:flex; align-items:center; gap:8px; margin:13px 0 12px; color:var(--accent); }
+.orn .ln { flex:1; height:1px; background:linear-gradient(90deg,transparent,var(--border)); }
+.orn .ln.r { background:linear-gradient(90deg,var(--border),transparent); }
+
+/* фильтр-чипы ({filter-chip}) */
+.chips { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:14px; }
+.chip { display:inline-flex; align-items:center; gap:6px; min-height:36px; padding:6px 12px;
+  border-radius:999px; background:var(--sunken); border:1px solid var(--border);
+  color:var(--ink2); font-size:12px; font-weight:500; cursor:default; }
+.chip:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+/* выбранный: насыщенная заливка + белый текст + галочка (не-цветовой признак) */
+.chip.on { background:var(--link-sunken); border-color:var(--link-sunken); color:var(--on-primary); font-weight:600; }
+[data-theme="dark"] .chip.on { background:var(--primary); border-color:var(--primary); color:var(--on-primary); }
+.chip.on .ck { font-weight:800; }
+
+/* статистика-сводка */
+.stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+.stat { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 13px; box-shadow:0 2px 8px rgba(22,36,44,.06); }
+[data-theme="dark"] .stat { box-shadow:none; }
+.stat .k { font-size:11px; color:var(--ink2); }
+.stat .v { font-size:21px; font-weight:800; color:var(--ink); letter-spacing:-.01em; margin-top:2px; }
+.stat .v.sum { color:var(--primary-strong); }
+.stat .v .u { font-size:12px; font-weight:600; color:var(--ink2); }
+
+/* агрегированные флаги района */
+.agg-h { font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink2); font-weight:700; margin:4px 0 8px; }
+.agg-flags { display:flex; flex-direction:column; gap:8px; margin-bottom:6px; }
+.agg-flag { display:flex; align-items:center; gap:9px; background:var(--signal-bg);
+  border:1px solid var(--signal-border); border-radius:10px; padding:9px 11px; color:var(--signal-fg); }
+.agg-flag .ic { width:18px; height:18px; flex:none; border-radius:50%; background:var(--signal);
+  color:var(--on-accent); display:grid; place-items:center; font-size:11px; font-weight:800; }
+.agg-flag .t { font-size:11.5px; font-weight:600; flex:1; line-height:1.3; }
+.agg-flag .n { font-size:13px; font-weight:800; }
+.agg-flag a { font-size:10.5px; color:var(--link-sunken); text-decoration:underline; text-underline-offset:2px; font-weight:600; white-space:nowrap; }
+.agg-note { font-size:10.5px; color:var(--muted-text); margin:0 0 14px; }
+
+/* медиана района vs город */
+.median { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:13px 14px; margin-bottom:14px; box-shadow:0 2px 8px rgba(22,36,44,.06); }
+[data-theme="dark"] .median { box-shadow:none; }
+.median .mh { font-size:13px; font-weight:600; margin-bottom:9px; }
+.median .row { display:flex; align-items:center; gap:9px; margin-bottom:8px; }
+.median .lbl { width:84px; flex:none; font-size:11.5px; color:var(--ink2); }
+.median .bar { flex:1; height:14px; border-radius:999px; background:var(--sunken); overflow:hidden; }
+.median .bar i { display:block; height:100%; border-radius:999px; }
+.median .bar.dist i { background:var(--primary); }
+.median .bar.city i { background:var(--muted); }
+.median .val { width:78px; flex:none; text-align:right; font-size:12px; font-weight:700;
+  font-family:ui-monospace,"SF Mono","Roboto Mono",Menlo,Consolas,monospace; }
+.median .cmp { font-size:11px; color:var(--muted-text); margin-top:2px; }
+.median .cmp b { color:var(--ink); }
+
+/* список объектов */
+.list-h { font-size:15px; font-weight:600; margin:6px 0 9px; }
+.list-h .cnt { font-size:11px; color:var(--ink2); font-weight:500; }
+.item { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 13px; margin-bottom:10px; box-shadow:0 2px 8px rgba(22,36,44,.05); }
+[data-theme="dark"] .item { box-shadow:none; }
+.item .over { font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--primary); font-weight:700; }
+.item .ttl { font-size:14px; font-weight:700; margin:2px 0 4px; line-height:1.25; }
+.item .ttl a { color:var(--ink); text-decoration:none; }
+.item .ttl a:focus-visible { outline:2px solid var(--focus); outline-offset:2px; border-radius:3px; }
+.item .rows { display:flex; flex-wrap:wrap; gap:3px 14px; font-size:11.5px; color:var(--ink2); }
+.item .rows b { color:var(--ink); }
+.item .mini-flag { display:inline-flex; align-items:center; gap:6px; margin-top:8px;
+  background:var(--signal-bg); border:1px solid var(--signal-border); color:var(--signal-fg);
+  font-size:10.5px; font-weight:600; padding:4px 9px; border-radius:999px; }
+.item .mini-flag .d { width:14px; height:14px; flex:none; border-radius:50%; background:var(--signal);
+  color:var(--on-accent); display:grid; place-items:center; font-size:9px; font-weight:800; }
+.item .mini-flag a { color:var(--link-sunken); text-decoration:underline; text-underline-offset:2px; font-weight:600; margin-left:2px; }
+.item .src { display:inline-block; margin-top:8px; font-size:11px; font-weight:600; color:var(--link-sunken); text-decoration:underline; text-underline-offset:2px; }
+
+/* честное «недостаточно сопоставимых данных» {data-state-insufficient} */
+.insuff { background:var(--muted-soft); border:1px solid var(--border); border-radius:6px;
+  padding:9px 11px; font-size:11px; color:var(--muted-text); margin-top:8px; display:flex; gap:8px; align-items:flex-start; }
+.insuff .g { display:grid; place-items:center; min-width:24px; height:18px; border-radius:5px; background:var(--surface);
+  border:1px solid var(--border); font-size:10px; font-weight:700; color:var(--muted-text); flex:none;
+  font-family:ui-monospace,"SF Mono","Roboto Mono",Menlo,Consolas,monospace; }
+.insuff b { color:var(--ink); font-weight:600; }
+.insuff .ru { color:var(--muted); }
+
+/* агрегат «без точки на карте» */
+.ungeo { display:flex; align-items:center; gap:9px; background:var(--sunken); border:1px solid var(--border);
+  border-radius:10px; padding:10px 12px; margin-top:4px; }
+.ungeo svg { color:var(--muted); flex:none; }
+.ungeo a { font-size:12px; color:var(--link-sunken); text-decoration:underline; text-underline-offset:2px; font-weight:600; }
+.ungeo .lead { font-size:11px; color:var(--muted-text); display:block; margin-bottom:1px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 class="doc-h1">key-district.html — Аудан беті (Есіл)</h1>
+  <p class="doc-p">Сводный вид района «Есіл»: число объектов, суммы, агрегированные флаги, медиана ₸/км
+  с сравнением с городской, список объектов. Фильтр-чипы с корректным выбранным состоянием, блок
+  «недостаточно сопоставимых данных» и агрегат «N объектов без точки на карте».</p>
+
+  <div class="phone">
+    <div class="screen" data-theme="light">
+      <div class="notch"></div>
+      <div class="statusbar"><span>9:41</span><span>5G &nbsp;84%</span></div>
+
+      <div class="topbar">
+        <button class="iconbtn" aria-label="Артқа / Назад">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div class="toptitle">Аудан<small lang="ru">/ Район</small></div>
+        <div class="head-ctrls">
+          <div class="lang" role="group" aria-label="Тіл / Язык">
+            <button class="on" aria-pressed="true" lang="kk">KZ</button>
+            <button aria-pressed="false" lang="ru">RU</button>
+          </div>
+          <button class="theme" aria-label="Тема: жарық / тёмная">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="scroll">
+        <div class="hero-over">АУДАН · АСТАНА <span lang="ru" style="color:var(--ink2);text-transform:none;letter-spacing:0;font-weight:500">/ район</span></div>
+        <h1 class="hero-title">Есіл ауданы</h1>
+        <p class="hero-sub">Жол және су құбыры келісімшарттары · <span lang="ru">дороги и водоснабжение</span></p>
+
+        <div class="orn" aria-hidden="true">
+          <span class="ln"></span>
+          <svg width="64" height="14" viewBox="0 0 64 14" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M32 12c-3-5-9-5-9-1 0 3 4 3 4 0 0-4-6-6-11-3"/>
+            <path d="M32 12c3-5 9-5 9-1 0 3-4 3-4 0 0-4 6-6 11-3"/>
+            <circle cx="32" cy="3" r="1.4" fill="currentColor" stroke="none"/>
+          </svg>
+          <span class="ln r"></span>
+        </div>
+
+        <!-- фильтр-чипы -->
+        <div class="chips" role="group" aria-label="Сүзгілер / Фильтры">
+          <button class="chip on" aria-pressed="true"><span class="ck" aria-hidden="true">✓</span> Жол</button>
+          <button class="chip" aria-pressed="false">Су құбыры</button>
+          <button class="chip on" aria-pressed="true"><span class="ck" aria-hidden="true">✓</span> Сигналы бар</button>
+          <button class="chip" aria-pressed="false">12 ай</button>
+          <button class="chip" aria-pressed="false">24 ай</button>
+        </div>
+
+        <!-- сводка -->
+        <div class="stats">
+          <div class="stat"><div class="k">Нысандар / объектов</div><div class="v">18</div></div>
+          <div class="stat"><div class="k">Жалпы сома / сумма</div><div class="v sum">2,4 <span class="u">млрд ₸</span></div></div>
+        </div>
+
+        <!-- агрегированные флаги -->
+        <div class="agg-h">Аудан сигналдары / Сигналы района</div>
+        <div class="agg-flags">
+          <div class="agg-flag">
+            <span class="ic" aria-hidden="true">!</span>
+            <span class="t">Бір қатысушы тіркелген — тексеруді талап ететін сигнал
+              <span lang="ru" style="display:block;font-weight:400;color:var(--muted-text);font-size:10px;margin-top:1px">Один участник в объявлении</span></span>
+            <span class="n">5</span>
+          </div>
+          <div class="agg-flag">
+            <span class="ic" aria-hidden="true">!</span>
+            <span class="t">Шақырым құны медианадан жоғары — сигнал
+              <span lang="ru" style="display:block;font-weight:400;color:var(--muted-text);font-size:10px;margin-top:1px">Цена за км выше медианы</span></span>
+            <span class="n">2</span>
+          </div>
+          <div class="agg-flag">
+            <span class="ic" aria-hidden="true">!</span>
+            <span class="t">Аудандағы мердігердің басымдығы — сигнал
+              <span lang="ru" style="display:block;font-weight:400;color:var(--muted-text);font-size:10px;margin-top:1px">Преобладание подрядчика в районе</span></span>
+            <span class="n">1</span>
+          </div>
+        </div>
+        <p class="agg-note">Әрбір сигнал — тексеруді талап етеді, айып емес. <span lang="ru">Каждый — сигнал, требующий проверки, не обвинение.</span></p>
+
+        <!-- медиана района vs город -->
+        <div class="median">
+          <div class="mh">Жол ₸/км медианасы / Медиана дороги ₸/км</div>
+          <div class="row">
+            <span class="lbl">Есіл ауданы</span>
+            <span class="bar dist"><i style="width:72%"></i></span>
+            <span class="val">38,4 млн</span>
+          </div>
+          <div class="row">
+            <span class="lbl" lang="ru">По городу</span>
+            <span class="bar city"><i style="width:62%"></i></span>
+            <span class="val">33,1 млн</span>
+          </div>
+          <div class="cmp">Ауданда қалалық медианадан <b>+16%</b> жоғары · <span lang="ru">в районе на +16% выше городской</span>
+            <span style="display:block;margin-top:3px;color:var(--muted)">9 келісімшарт бойынша есептелген · methodology_version 1.0</span></div>
+        </div>
+
+        <!-- список объектов -->
+        <h2 class="list-h">Нысандар <span class="cnt">/ Объекты района</span></h2>
+
+        <div class="item">
+          <div class="over">ЖОЛ · в работе</div>
+          <div class="ttl"><a href="#" lang="ru">Реконструкция ул. Кабанбай батыра</a></div>
+          <div class="rows"><span>Сома: <b>240 млн ₸</b></span><span lang="ru">Мердігер: <b>ТОО «Астана Жол…»</b></span></div>
+          <div class="mini-flag"><span class="d" aria-hidden="true">!</span> Бір қатысушы — тексеруді талап ететін сигнал
+            <a href="#">Қалай есептелді</a></div><br>
+          <a class="src" href="#" rel="noopener">Бастапқы дереккөз: goszakup.gov.kz ↗</a>
+        </div>
+
+        <div class="item">
+          <div class="over">ЖОЛ · завершён</div>
+          <div class="ttl"><a href="#" lang="ru">Ремонт ул. Сыганак, 1 этап</a></div>
+          <div class="rows"><span>Сома: <b>112 млн ₸</b></span><span lang="ru">Мердігер: <b>ТОО «Есіл Жол»</b></span></div>
+          <div class="mini-flag"><span class="d" aria-hidden="true">!</span> Шақырым құны медианадан жоғары
+            <a href="#">Қалай есептелді</a></div><br>
+          <a class="src" href="#" rel="noopener">Бастапқы дереккөз: goszakup.gov.kz ↗</a>
+        </div>
+
+        <div class="item">
+          <div class="over">СУ ҚҰБЫРЫ · план</div>
+          <div class="ttl"><a href="#" lang="ru">Водопровод мкр. Чубары, участок 7</a></div>
+          <div class="rows"><span>Сома: <b>87 млн ₸</b></span><span lang="ru">Мердігер: <b>ТОО «Су Желісі»</b></span></div>
+          <!-- честное состояние: недостаточно сопоставимых данных -->
+          <div class="insuff">
+            <span class="g" aria-hidden="true">&lt;5</span>
+            <span><b>Шақырым құны</b> — салыстыруға жеткілікті дерек жоқ (топта 3 келісімшарт, шек 5).
+              <span class="ru" lang="ru">Недостаточно сопоставимых данных — сигнал не выставляется.</span></span>
+          </div>
+        </div>
+
+        <!-- агрегат без точки на карте -->
+        <div class="ungeo">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s7-6.5 7-12a7 7 0 0 0-12-4.9"/><path d="M5.5 7A7 7 0 0 0 5 9c0 5.5 7 12 7 12"/><path d="M3 3l18 18"/></svg>
+          <div>
+            <span class="lead" lang="ru">Аудандағы 4 нысан геопривязкасыз</span>
+            <a href="#">Тағы 4 нысан картада көрсетілмеген → тізіммен ашу</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
