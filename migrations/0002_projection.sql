@@ -7,7 +7,7 @@ CREATE TABLE contracts (
     goszakup_contract_id TEXT NOT NULL UNIQUE,                             -- natural / публичный id
     subject_ru           TEXT,
     subject_kk           TEXT,
-    amount               NUMERIC(18, 2),                                   -- ₸; в API (1.3) — СТРОКОЙ
+    amount_tng           BIGINT,                                          -- целые ₸; на проводе СТРОКОЙ (wire-конвенция: db==json==OpenAPI)
     sign_date            DATE,
     plan_start           DATE,
     plan_end             DATE,

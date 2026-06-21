@@ -13,7 +13,7 @@ type Contract struct {
 	GoszakupContractID string             `json:"goszakup_contract_id"`
 	SubjectRu          pgtype.Text        `json:"subject_ru"`
 	SubjectKk          pgtype.Text        `json:"subject_kk"`
-	Amount             pgtype.Numeric     `json:"amount"`
+	AmountTng          pgtype.Int8        `json:"amount_tng"`
 	SignDate           pgtype.Date        `json:"sign_date"`
 	PlanStart          pgtype.Date        `json:"plan_start"`
 	PlanEnd            pgtype.Date        `json:"plan_end"`

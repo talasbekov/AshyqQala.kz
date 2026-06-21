@@ -44,14 +44,10 @@ func TestGetContractByID_Integration(t *testing.T) {
 	if !c.Direction.Valid || c.Direction.String != "road" {
 		t.Fatalf("direction = %+v, ожидалось road", c.Direction)
 	}
-	// NUMERIC→pgtype.Numeric — самый рискованный scan-путь; проверяем явно.
-	amt, err := c.Amount.Float64Value()
-	if err != nil || !amt.Valid {
-		t.Fatalf("amount невалиден: err=%v val=%+v", err, c.Amount)
+	// BIGINT amount_tng → pgtype.Int8; проверяем явно (целые тенге).
+	if !c.AmountTng.Valid || c.AmountTng.Int64 != 123456789 {
+		t.Fatalf("amount_tng = %+v, ожидалось 123456789", c.AmountTng)
 	}
-	if amt.Float64 != 123456789.00 {
-		t.Fatalf("amount = %v, ожидалось 123456789.00", amt.Float64)
-	}
-	t.Logf("OK: id=%d goszakup_id=%s subject_ru=%q direction=%s amount=%.2f",
-		c.ID, c.GoszakupContractID, c.SubjectRu.String, c.Direction.String, amt.Float64)
+	t.Logf("OK: id=%d goszakup_id=%s subject_ru=%q direction=%s amount_tng=%d",
+		c.ID, c.GoszakupContractID, c.SubjectRu.String, c.Direction.String, c.AmountTng.Int64)
 }

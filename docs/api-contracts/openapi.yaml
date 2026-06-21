@@ -1,0 +1,109 @@
+openapi: 3.0.3
+info:
+  title: AshyqQala.kz API
+  version: 0.1.0
+  description: >
+    Публичный read-only API. Рукописный АРБИТР контракта: openapi-typescript генерит TS-типы фронта,
+    kin-openapi валидирует ответы Go-хендлеров в тестах (НЕ генерация из хендлеров).
+    Честный конверт {value,state}: value:null ⇒ "no_data". Полный value_state-enum — из registry (Story 1.4).
+
+paths:
+  /healthz:
+    get:
+      summary: Health-проба (БД доступна)
+      responses:
+        '200':
+          description: сервис и БД доступны
+          content:
+            text/plain:
+              schema: { type: string }
+        '503':
+          description: БД недоступна
+          content:
+            text/plain:
+              schema: { type: string }
+
+  /api/contracts/{goszakup_id}:
+    get:
+      summary: Карточка контракта по natural goszakup_id
+      parameters:
+        - name: goszakup_id
+          in: path
+          required: true
+          description: Публичный natural id (НЕ суррогатный bigint)
+          schema: { type: string }
+      responses:
+        '200':
+          description: контракт найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Contract' }
+        '404':
+          description: контракт не найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          description: внутренняя ошибка
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+components:
+  schemas:
+    StringField:
+      type: object
+      additionalProperties: false
+      required: [value, state]
+      properties:
+        value:
+          type: string
+          nullable: true
+        state:
+          type: string
+          enum: [ok, no_data] # расширяется из registry в Story 1.4
+    Contract:
+      type: object
+      additionalProperties: false
+      required:
+        - goszakup_contract_id
+        - subject_ru
+        - subject_kk
+        - amount_tng
+        - sign_date
+        - plan_start
+        - plan_end
+        - status
+        - direction
+        - kato_code
+        - source_url
+        - imported_at
+        - updated_at
+      properties:
+        goszakup_contract_id: { type: string }
+        subject_ru: { $ref: '#/components/schemas/StringField' }
+        subject_kk: { $ref: '#/components/schemas/StringField' }
+        amount_tng: { $ref: '#/components/schemas/StringField' } # целые тенге СТРОКОЙ
+        sign_date: { $ref: '#/components/schemas/StringField' }
+        plan_start: { $ref: '#/components/schemas/StringField' }
+        plan_end: { $ref: '#/components/schemas/StringField' }
+        status: { $ref: '#/components/schemas/StringField' }
+        direction: { $ref: '#/components/schemas/StringField' }
+        kato_code: { $ref: '#/components/schemas/StringField' }
+        source_url: { $ref: '#/components/schemas/StringField' }
+        imported_at: { $ref: '#/components/schemas/StringField' } # ISO8601 Z в value; единый конверт + честный no_data
+        updated_at: { $ref: '#/components/schemas/StringField' }
+    Error:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum: [NOT_FOUND, VALIDATION_FAILED, INVALID_CURSOR, RATE_LIMITED, INTERNAL]
+            message: { type: string }

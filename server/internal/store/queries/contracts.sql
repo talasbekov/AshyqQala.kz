@@ -5,7 +5,7 @@ SELECT
     goszakup_contract_id,
     subject_ru,
     subject_kk,
-    amount,
+    amount_tng,
     sign_date,
     plan_start,
     plan_end,
