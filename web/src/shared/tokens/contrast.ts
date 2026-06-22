@@ -7,8 +7,13 @@ function channel(v: number): number {
 }
 
 // relativeLuminance — относительная яркость по WCAG для hex-цвета (#RGB или #RRGGBB).
+// Честный fail (а не молчаливый NaN): отвергаем мусор и alpha (#RRGGBBAA — контраст к
+// полупрозрачному не определён). Допускаются только 3- и 6-значные hex.
 export function relativeLuminance(hex: string): number {
   const c = hex.replace('#', '');
+  if (!/^([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(c)) {
+    throw new Error(`relativeLuminance: ожидался 3/6-значный hex, получено "${hex}"`);
+  }
   const full =
     c.length === 3
       ? c

@@ -83,4 +83,14 @@ describe('WCAG контраст ключевых пар токенов', () => {
   it('contrastRatio: белый/чёрный = 21', () => {
     expect(contrastRatio('#FFFFFF', '#000000')).toBeCloseTo(21, 0);
   });
+
+  it('3-значный hex эквивалентен 6-значному', () => {
+    expect(contrastRatio('#fff', '#000')).toBeCloseTo(21, 0);
+  });
+
+  it('битый hex и alpha (8-значный) → честный throw, не NaN', () => {
+    expect(() => contrastRatio('#ZZZZZZ', '#FFFFFF')).toThrow();
+    expect(() => contrastRatio('#FF000080', '#FFFFFF')).toThrow(); // alpha не поддержан
+    expect(() => contrastRatio('#FF00', '#FFFFFF')).toThrow(); // 4-значный
+  });
 });

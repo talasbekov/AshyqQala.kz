@@ -46,5 +46,10 @@ jobs:
 
       - name: vite build
         run: npm run build
-        # Последующими историями добавляются: Playwright smoke + cross-surface (читает @fixtures);
-        # axe-гейты активируются с первыми компонентами.
+
+      - name: playwright smoke (сквозной web-путь: маршрут → Query → карточка)
+        run: |
+          npx playwright install --with-deps chromium
+          npm run e2e
+        # Полный байт Postgres→chi→Caddy→React — ручная DoD-проверка `docker compose --profile app up`;
+        # cross-surface (OG/Telegram) + axe-гейты — последующие истории.

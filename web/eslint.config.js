@@ -21,5 +21,21 @@ export default tseslint.config(
       globals: { ...globals.node },
     },
   },
+  {
+    // i18n-граница (Story 1.6): сырой toLocaleString/toLocaleDateString/toLocaleTimeString запрещён —
+    // числа/даты/₸ только через formatMoney/formatDate (Intl) из shared/i18n (формат следует языку chrome).
+    files: ['**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            'CallExpression[callee.property.name=/^toLocale(String|DateString|TimeString)$/]',
+          message:
+            'Сырой toLocale*String запрещён — используй formatMoney/formatDate (Intl) из shared/i18n.',
+        },
+      ],
+    },
+  },
   prettier,
 );

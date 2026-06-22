@@ -1,6 +1,21 @@
-# Caddy reverse-proxy — каркас S-0. Полная конфигурация (SPA + /api → cmd/api + /tiles pmtiles)
-# наполняется в Story 1.7 (DoD walking skeleton: байт Postgres→sqlc→chi→Caddy→React).
+# Caddy reverse-proxy (Story 1.7, walking skeleton). Байт: браузер→Caddy→(SPA | api:8080→chi→pgx→Postgres).
+# Локально :80 без TLS; авто-TLS (Let's Encrypt) — прод-настройка позже.
 :80 {
-	# /api/* → api:8080 (Story 1.3); статика web/dist + /tiles/*.pmtiles (Story 1.7/1.8)
-	respond "AshyqQala.kz — caddy skeleton (S-0). API/SPA wiring: Story 1.7." 200
+	# /metrics НЕ публикуется наружу (deferred-work → Story 1.7): на публичном edge — 404.
+	# Метрики chi остаются доступны ТОЛЬКО внутри docker-сети на api:8080 (внутренние IP).
+	handle /metrics* {
+		respond 404
+	}
+
+	# /api/* → chi (cmd/api). Путь передаётся как есть: chi обслуживает /api/contracts/{id}.
+	handle /api/* {
+		reverse_proxy api:8080
+	}
+
+	# SPA: статика web/dist + фолбэк на index.html для client-side маршрутов (React Router).
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
 }

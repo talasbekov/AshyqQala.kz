@@ -1,8 +1,12 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { App } from './App';
+import { RouterProvider } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
 import './shared/tokens/tokens.css';
+import './shared/i18n'; // инициализация i18next (chrome ns, kk-дефолт) + синк <html lang>
 import { initTheme } from './shared/tokens/theme';
+import { queryClient } from './app/queryClient';
+import { router } from './router';
 
 initTheme(); // применяет [data-theme] из сохранённого выбора / prefers-color-scheme
 
@@ -13,6 +17,8 @@ if (!rootEl) {
 
 createRoot(rootEl).render(
   <StrictMode>
-    <App />
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
   </StrictMode>,
 );

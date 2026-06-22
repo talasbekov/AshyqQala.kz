@@ -1,6 +1,6 @@
-# ГОРЯЧИЙ стек (один VPS, РК). S-0: реально поднимается только `db` (AC2 Story 1.1).
-# `api` (chi+pgx) — Story 1.3; `caddy` (reverse-proxy + web + pmtiles) — Story 1.7.
-# Они под профилем `app`, поэтому `docker compose up db` их НЕ запускает.
+# ГОРЯЧИЙ стек (один VPS, РК). Профиль `app` = сквозной walking skeleton (Story 1.7):
+# `docker compose --profile app up` → db → migrate(goose) → seed(DEMO-0001) → api(chi) → caddy(SPA+/api).
+# Без профиля `docker compose up db` поднимает только БД (как в 1.1).
 services:
   db:
     image: postgis/postgis:16-3.4
@@ -19,20 +19,57 @@ services:
       timeout: 5s
       retries: 10
 
-  api:
+  # Миграции схемы (goose) — one-shot до api. Тот же вызов, что в Makefile migrate-up.
+  migrate:
     profiles: ['app']
-    build:
-      context: ../server
-      dockerfile: Dockerfile # добавляется в Story 1.3
+    image: golang:1.25-alpine
+    working_dir: /work
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER:-ashyqqala}:${POSTGRES_PASSWORD:-ashyqqala}@db:5432/${POSTGRES_DB:-ashyqqala}?sslmode=disable
+    volumes:
+      - ../migrations:/work/migrations:ro
+    command: ['sh', '-c', 'go run github.com/pressly/goose/v3/cmd/goose@v3.27.1 -dir migrations postgres "$$DATABASE_URL" up']
     depends_on:
       db:
         condition: service_healthy
 
+  # Seed демо-строки DEMO-0001 (psql из postgis-образа) — one-shot после миграций.
+  seed:
+    profiles: ['app']
+    image: postgis/postgis:16-3.4
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:-ashyqqala}
+    volumes:
+      - ../fixtures:/fixtures:ro
+    command:
+      [
+        'sh',
+        '-c',
+        'psql -h db -U ${POSTGRES_USER:-ashyqqala} -d ${POSTGRES_DB:-ashyqqala} -v ON_ERROR_STOP=1 -f /fixtures/seed/contracts.sql',
+      ]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  api:
+    profiles: ['app']
+    build:
+      context: ../server
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-ashyqqala}:${POSTGRES_PASSWORD:-ashyqqala}@db:5432/${POSTGRES_DB:-ashyqqala}?sslmode=disable
+      API_ADDR: ':8080'
+    depends_on:
+      db:
+        condition: service_healthy
+      seed:
+        condition: service_completed_successfully
+
   caddy:
     profiles: ['app']
-    image: caddy:2
+    build:
+      context: ../web
+      dockerfile: Dockerfile
     ports:
       - '80:80'
       - '443:443'

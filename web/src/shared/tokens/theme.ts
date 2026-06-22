@@ -22,6 +22,7 @@ export function resolveInitialTheme(): Theme {
 }
 
 export function applyTheme(theme: Theme): void {
+  if (typeof document === 'undefined') return; // SSR/node — нет DOM, no-op (симметрично window-guard)
   document.documentElement.setAttribute('data-theme', theme);
 }
 

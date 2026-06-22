@@ -2,7 +2,9 @@
   "rules": {
     "color-no-hex": true,
     "declaration-property-value-disallowed-list": {
-      "outline": ["/^none$/", "/^0$/"]
+      "outline": ["/none/", "/^0(px)?$/"],
+      "outline-style": ["/none/"],
+      "outline-width": ["/^0(px)?$/"]
     }
   },
   "overrides": [

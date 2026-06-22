@@ -1,0 +1,96 @@
+/* Карточка контракта (walking skeleton, Story 1.7). Только семантические токены (1.5), без хардкода. */
+.contract-card {
+  box-sizing: border-box;
+  max-width: 640px;
+  margin: var(--space-4) auto;
+  padding: var(--space-gutter);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+.contract-card__overlabel {
+  margin: 0 0 var(--space-2);
+  font-size: var(--type-label-caps-size);
+  font-weight: var(--type-label-caps-weight);
+  letter-spacing: var(--type-label-caps-letter-spacing);
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.contract-card__subject {
+  margin: 0 0 var(--space-3);
+  font-size: var(--type-heading-size);
+  font-weight: var(--type-heading-weight);
+  line-height: var(--type-heading-line-height);
+}
+
+.contract-card__amount {
+  margin: 0 0 var(--space-5);
+  font-size: var(--type-amount-size);
+  font-weight: var(--type-amount-weight);
+  line-height: var(--type-amount-line-height);
+}
+
+.contract-card__meta {
+  display: grid;
+  gap: var(--space-row-gap);
+  margin: 0;
+}
+
+.contract-card__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  font-size: var(--type-body-size);
+}
+
+.contract-card__row dt {
+  color: var(--color-text-secondary);
+}
+
+.contract-card__source {
+  display: inline-block;
+  margin-top: var(--space-5);
+  min-height: var(--space-tap-target);
+  font-size: var(--type-body-size);
+  font-weight: var(--type-body-strong-weight);
+  color: var(--color-link-on-sunken);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Скелетон — заглушки под раскладку (нейтральный muted-soft, не спиннер). */
+.contract-skeleton__line {
+  background: var(--color-muted-soft);
+  border-radius: var(--radius-sm);
+}
+
+.contract-skeleton__line--label {
+  width: 30%;
+  height: 0.75rem;
+  margin-bottom: var(--space-2);
+}
+
+.contract-skeleton__line--subject {
+  width: 80%;
+  height: 1.25rem;
+  margin-bottom: var(--space-3);
+}
+
+.contract-skeleton__line--amount {
+  width: 50%;
+  height: 1.5rem;
+  margin-bottom: var(--space-5);
+}
+
+.contract-skeleton__meta {
+  display: grid;
+  gap: var(--space-row-gap);
+}
+
+.contract-skeleton__line--row {
+  width: 100%;
+  height: 1rem;
+}

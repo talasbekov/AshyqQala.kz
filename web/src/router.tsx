@@ -1,6 +1,10 @@
-// Каркас маршрутизации. React Router (data API) + TanStack Query подключаются в Story 1.7
-// (Query владеет загрузкой; Router-loader НЕ фетчит). Внешний id карточки = natural goszakup_id
-// (URL-схема — общий контракт, Story 1.3). Здесь — типизированный задел путей.
+// Маршрутизация: React Router data API. Внешний id карточки = natural goszakup_id (URL-схема —
+// общий контракт, Story 1.3). ВАЖНО (AC1): Router-loader НЕ фетчит — данные грузит TanStack Query
+// в компоненте маршрута (useContract). Здесь — только определения маршрутов.
+import { createBrowserRouter } from 'react-router-dom';
+import { App, HomeView } from './App';
+import { ContractRoute } from './features/contract';
+
 export type RouteId = 'contract' | 'contractor' | 'district' | 'map' | 'search';
 
 export const routePaths: Record<RouteId, string> = {
@@ -10,3 +14,14 @@ export const routePaths: Record<RouteId, string> = {
   map: '/map',
   search: '/search',
 };
+
+export const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <App />,
+    children: [
+      { index: true, element: <HomeView /> },
+      { path: 'contracts/:goszakupId', element: <ContractRoute /> },
+    ],
+  },
+]);
