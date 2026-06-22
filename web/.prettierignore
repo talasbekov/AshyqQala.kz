@@ -1,3 +1,4 @@
 dist
 node_modules
 *.gen.ts
+src/shared/tokens/tokens.css

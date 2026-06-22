@@ -1,0 +1,15 @@
+{
+  "rules": {
+    "color-no-hex": true,
+    "declaration-property-value-disallowed-list": {
+      "outline": ["/^none$/", "/^0$/"]
+    }
+  },
+  "overrides": [
+    {
+      "files": ["src/shared/tokens/tokens.css"],
+      "comment": "Файл-определение токенов — единственное легальное место hex-литералов (источник переменных).",
+      "rules": { "color-no-hex": null }
+    }
+  ]
+}

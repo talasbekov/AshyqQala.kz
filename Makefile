@@ -26,7 +26,7 @@ help: ## Список целей
 
 # ---- codegen ----
 .PHONY: gen gen-sqlc gen-web gen-tokens
-gen: gen-sqlc gen-web ## Сумма gen-целей (S-0: входов ещё нет → таргеты no-op до 1.2/1.3; tokens — 1.5)
+gen: gen-sqlc gen-web gen-tokens ## Сумма gen-целей (sqlc + openapi-typescript + дизайн-токены)
 
 gen-sqlc: ## sqlc generate (per-domain .sql → per-file .gen.go; анти-churn). sqlc через Docker (go run несовместим: replace-директивы)
 	@if ls migrations/*.sql >/dev/null 2>&1; then \
@@ -46,9 +46,12 @@ gen-tokens: ## tokens.json (DTCG) → tokens.css + tokens.ts (свой codegen) 
 	cd $(WEB_DIR) && npm run gen-tokens
 
 # ---- проверки ----
-.PHONY: test lint build
+.PHONY: test lint build check-registry
 test: ## go test (server) — golden/property/integration добавляются последующими историями
 	cd $(SERVER_DIR) && go test ./...
+
+check-registry: ## Сторожа registry (Story 1.4): перекрёстный тест registry↔OpenAPI↔Go + doc-нейтральность (taboo RU/KZ)
+	cd $(SERVER_DIR) && go test ./internal/registry/... ./internal/render/...
 
 lint: ## go vet + gofmt (server); tsc/eslint/prettier — в web-CI
 	cd $(SERVER_DIR) && go vet ./... && { out=$$(gofmt -l .); [ -z "$$out" ] || { echo "gofmt: не отформатированы:"; echo "$$out"; exit 1; }; }

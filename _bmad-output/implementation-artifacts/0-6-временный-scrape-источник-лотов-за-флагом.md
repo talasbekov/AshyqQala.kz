@@ -226,16 +226,35 @@ architecture.md строки 778–781]
 
 ### Agent Model Used
 
-(заполняется dev-агентом при реализации)
+claude-opus-4-8[1m] (Claude Opus 4.8, 1M context) — dev-story workflow.
 
 ### Debug Log References
 
+- Task 0 (проверка фундамента монорепо, 2026-06-22):
+  - `server/` модуль `ashyqqala/server` ✓; `cmd/{api,importer,stage0}` ✓; `tools/{osm,scrape,tiles}` ✓ — каталоги-скелет от Story 1.1.
+  - `migrations/0002_projection.sql` содержит ТОЛЬКО таблицу `contracts`; `lots` — TODO («когда появятся organizations/lots — B-3 / Epic 2»). 🔴 проекции `lots` нет.
+  - `server/internal/ingest/decode/` — только `doc.go` (заглушка, 2 строки). 🔴 decode-граница не реализована (Story 2.1, backlog).
+  - `server/internal/goszakup/` — только `doc.go` (заглушка). 🔴 интерфейс `Source` не определён (Story 2.1, backlog).
+  - `server/internal/store/projection/` — только `doc.go` (заглушка). 🔴 store для `lots` нет.
+  - `server/tools/scrape/` — только `.gitkeep` (ожидаемо: наполняет данная история).
+
 ### Completion Notes List
 
+- **⛔ HALT на Task 0 (предусловие).** Скелет монорепо (Story 1.1, done) есть, но три из четырёх несущих компонентов AC1–AC3 — пустые заглушки/отсутствуют:
+  - проекция `lots` (миграция + `internal/store`) — НЕ создана (Story 1.2 сделала только `contracts`; `lots` отложена в Epic 2 / B-3);
+  - `internal/ingest/decode` — пустой `doc.go` (Story 2.1, backlog);
+  - `internal/goszakup` `Source` (точка swap `scrape → ows`) — пустой `doc.go` (Story 2.1, backlog).
+- Реализовать перенос парсера + интерим-импорт + маппинг в `lots` через `ingest/decode` НЕВОЗМОЖНО, пока нет проекции `lots`, decode-границы и интерфейса `Source`. История подтверждённо сидит downstream фундамента Epic 1 (1.2) и Epic 2 (2.1).
+- **Гардрейл соблюдён:** проекцию `lots`/миграции (скоуп 1.2/Epic 2) и `ingest/decode`+`Source` (скоуп 2.1) в рамках этой истории НЕ создаю — это прямой запрет Task 0 и раздела «Зависимости» (дублирование сломало бы анти-churn структуру). Честность над домыслом: не имитирую несуществующие пакеты.
+- **Эскалация владельцу — решение о последовательности.** Реалистичный путь (как и предсказывала сама история): сначала проекция `lots` (расширение Story 1.2 / Epic 2 B-3) + минимальные `internal/ingest/decode` и интерфейс `Source` (Story 2.1), затем 0.6.
+
 ### File List
+
+- (изменений кода нет) `_bmad-output/implementation-artifacts/0-6-временный-scrape-источник-лотов-за-флагом.md` — заполнены Dev Agent Record (Task 0 HALT) и Change Log.
 
 ## Change Log
 
 | Дата | Изменение |
 |---|---|
 | 2026-06-21 | Создан context engine для Story 0.6 (трек «Парсер-мост»). Исчерпывающий анализ: epics 0.6–0.9, architecture (отклонение + целевое дерево + границы), модель данных `lots`, код `stage0-audit/scrape.go`+`source.go`, предыдущие истории 0.1/0.2 + Sprint Change Proposal. **Зафиксирован критичный блокер:** AC1–AC3 зависят от ещё не созданного монорепо (Story 1.1 скелет, 1.2 проекция `lots`+sqlc, 2.1 `ingest/decode`) — Task 0 = предусловие/HALT + эскалация владельцу по последовательности. Статус → ready-for-dev. |
+| 2026-06-22 | Запуск dev-story. **Task 0 (предусловие) — HALT.** Проверено фактическое состояние репо: скелет монорепо (Story 1.1, done) есть, но проекция `lots` (миграция + store), `internal/ingest/decode` и `internal/goszakup` `Source` — пустые заглушки/отсутствуют (1.2 сделала только `contracts`; `lots` → TODO Epic 2/B-3; `ingest/decode`+`Source` → скоуп Story 2.1, backlog). Историю нельзя реализовать поверх несуществующего фундамента; создавать его здесь запрещено (чужой скоуп 1.2/2.1, анти-churn). Эскалировано владельцу: решить последовательность (сначала проекция `lots` + Story 2.1, затем 0.6). Статус остаётся ready-for-dev (реализация не начата). |

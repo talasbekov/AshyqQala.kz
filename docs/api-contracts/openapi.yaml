@@ -61,7 +61,18 @@ components:
           nullable: true
         state:
           type: string
-          enum: [ok, no_data] # расширяется из registry в Story 1.4
+          # value_state — синхронно с registry/values/honest_states.json (перекрёстный тест, Story 1.4 AC4)
+          enum: [ok, no_data, insufficient_sample, not_comparable, stale, geocode_pending, geocode_failed, source_conflict, redacted, not_applicable, error]
+    FlagField:
+      type: object
+      additionalProperties: false
+      # Задел карточки флага (Epic 4/5): двухосевой enum, ось flag_state. Эндпоинты появятся позже.
+      required: [state]
+      properties:
+        state:
+          type: string
+          # flag_state — синхронно с registry/values/honest_states.json (перекрёстный тест, Story 1.4 AC4)
+          enum: [raised, not_raised, insufficient_data, not_published]
     Contract:
       type: object
       additionalProperties: false

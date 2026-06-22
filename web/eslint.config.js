@@ -15,8 +15,8 @@ export default tseslint.config(
     },
   },
   {
-    // Node-контекст: конфиги сборки/тулинга (вне браузера)
-    files: ['*.{js,cjs,mjs,ts}', 'vite.config.ts'],
+    // Node-контекст: конфиги сборки/тулинга и codegen-скрипты (вне браузера)
+    files: ['*.{js,cjs,mjs,ts}', 'vite.config.ts', 'scripts/**/*.{js,cjs,mjs}'],
     languageOptions: {
       globals: { ...globals.node },
     },

@@ -1,0 +1,22 @@
+{
+  "_comment": "Двухосевой enum честных состояний (AR-16). Читается в РАНТАЙМЕ (не codegen). Человек правит ТОЛЬКО здесь; равенство с Go-константами и OpenAPI гарантирует перекрёстный тест (Story 1.4 AC4).",
+  "value_state": [
+    "ok",
+    "no_data",
+    "insufficient_sample",
+    "not_comparable",
+    "stale",
+    "geocode_pending",
+    "geocode_failed",
+    "source_conflict",
+    "redacted",
+    "not_applicable",
+    "error"
+  ],
+  "flag_state": [
+    "raised",
+    "not_raised",
+    "insufficient_data",
+    "not_published"
+  ]
+}

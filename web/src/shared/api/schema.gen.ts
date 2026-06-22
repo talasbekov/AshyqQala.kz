@@ -113,7 +113,11 @@ export interface components {
         StringField: {
             value: string | null;
             /** @enum {string} */
-            state: "ok" | "no_data";
+            state: "ok" | "no_data" | "insufficient_sample" | "not_comparable" | "stale" | "geocode_pending" | "geocode_failed" | "source_conflict" | "redacted" | "not_applicable" | "error";
+        };
+        FlagField: {
+            /** @enum {string} */
+            state: "raised" | "not_raised" | "insufficient_data" | "not_published";
         };
         Contract: {
             goszakup_contract_id: string;

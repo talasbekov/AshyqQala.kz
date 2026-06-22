@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-06-19T18:38:34+0500
-last_updated: 2026-06-22T00:00:00+0500
+last_updated: 2026-06-22T14:45:00+0500
 project: AshyqQala.kz
 project_key: NOKEY
 tracking_system: file-system
@@ -61,8 +61,8 @@ development_status:
   1-1-монорепо-скелет-и-compose-db: done
   1-2-миграция-contracts-и-sqlc-анти-churn-структура: done
   1-3-cmd-api-контракт-эндпоинт-wire-форматы-openapi-url-схема: done
-  1-4-registry-двухосевой-enum-честных-состояний-render-каркас: backlog
-  1-5-дизайн-токены-и-две-темы: backlog
+  1-4-registry-двухосевой-enum-честных-состояний-render-каркас: done
+  1-5-дизайн-токены-и-две-темы: review
   1-6-i18n-каркас-kz-дефолт-и-обёртки-инкапсуляторы: backlog
   1-7-сквозная-карточка-контракта-walking-skeleton-dod: backlog
   1-8-скелет-карта-с-pmtiles-подложкой-и-тремя-точками: backlog

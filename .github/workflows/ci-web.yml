@@ -35,10 +35,16 @@ jobs:
       - name: eslint
         run: npm run lint
 
+      - name: stylelint (запрет хардкода + outline:none без замены)
+        run: npm run lint:css
+
       - name: prettier --check
         run: npm run format:check
 
+      - name: vitest (golden codegen + контраст-каркас)
+        run: npm run test
+
       - name: vite build
         run: npm run build
-        # Последующими историями добавляются: vitest (+контраст-гейт),
-        # Playwright smoke + cross-surface (читает @fixtures).
+        # Последующими историями добавляются: Playwright smoke + cross-surface (читает @fixtures);
+        # axe-гейты активируются с первыми компонентами.

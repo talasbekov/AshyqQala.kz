@@ -1,14 +1,14 @@
 name: ci-registry
 
-# Каркас S-0. registry/ в S-0 СПИТ (значения/флаги — Story 1.4). Наполняется перекрёстным
-# тестом (~7 осей + сторожа), doc-нейтральностью (taboo-лексикон RU/KZ), generated==regenerated.
+# Сторожа единого источника истины (registry/). Красный = блок merge.
+# Наполнено в Story 1.4: перекрёстный тест (registry↔OpenAPI↔Go), doc-нейтральность (taboo RU/KZ),
+# generated==regenerated (OpenAPI→TS, sqlc). Оси i18n/tokens добавляются в 1.5/1.6.
 on:
-  # S-0: только registry/**. Перекрёстный тест (~7 осей: + server/**, web/**) включается в Story 1.4.
   pull_request:
-    paths: ['registry/**', '.github/workflows/ci-registry.yml']
+    paths: ['registry/**', 'server/**', 'web/**', 'docs/api-contracts/**', 'migrations/**', '.github/workflows/ci-registry.yml']
   push:
     branches: [main]
-    paths: ['registry/**', '.github/workflows/ci-registry.yml']
+    paths: ['registry/**', 'server/**', 'web/**', 'docs/api-contracts/**', 'migrations/**', '.github/workflows/ci-registry.yml']
 
 permissions:
   contents: read
@@ -18,5 +18,44 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: placeholder (наполняется в Story 1.4)
-        run: echo "registry guards scaffold — Story 1.4 (honest_states, taboo_lexicon, generated==regenerated)"
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
+
+      - name: Перекрёстный тест (registry↔OpenAPI↔Go) + doc-нейтральность (taboo RU/KZ)
+        working-directory: server
+        run: go test ./internal/registry/... ./internal/render/...
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: generated==regenerated (OpenAPI → TS-типы)
+        run: |
+          make gen-web
+          # --porcelain ловит и изменённые, и НОВЫЕ untracked сгенерированные файлы (в отличие от diff --exit-code)
+          if [ -n "$(git status --porcelain -- web/src/shared/api/schema.gen.ts)" ]; then
+            echo "::error::OpenAPI→TS дрейф (изменён/не закоммичен): запусти 'make gen-web' и закоммить web/src/shared/api/schema.gen.ts"
+            git --no-pager diff -- web/src/shared/api/schema.gen.ts
+            exit 1
+          fi
+
+      - name: generated==regenerated (sqlc)
+        run: |
+          make gen-sqlc
+          if [ -n "$(git status --porcelain -- server/internal/store/gen)" ]; then
+            echo "::error::sqlc дрейф (изменён/не закоммичен): запусти 'make gen-sqlc' и закоммить server/internal/store/gen"
+            git --no-pager diff -- server/internal/store/gen
+            exit 1
+          fi
+
+      - name: generated==regenerated (дизайн-токены)
+        run: |
+          make gen-tokens
+          if [ -n "$(git status --porcelain -- web/src/shared/tokens/tokens.css web/src/shared/tokens/tokens.gen.ts)" ]; then
+            echo "::error::tokens дрейф (изменён/не закоммичен): запусти 'make gen-tokens' и закоммить web/src/shared/tokens/tokens.css + tokens.gen.ts"
+            git --no-pager diff -- web/src/shared/tokens/tokens.css web/src/shared/tokens/tokens.gen.ts
+            exit 1
+          fi

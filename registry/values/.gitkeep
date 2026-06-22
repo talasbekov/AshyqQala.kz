@@ -1,2 +1,0 @@
-# registry/values — ЧИТАЕТСЯ В РАНТАЙМЕ (не codegen): methodology_params, honest_states,
-# glossary{kk,ru}, taboo_lexicon, event_types, error_codes, lexicon. В S-0 СПИТ (наполняется Story 1.4).

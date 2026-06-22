@@ -5,18 +5,20 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
+
+	"ashyqqala/server/internal/registry"
 )
 
 // Field — честный конверт значения на проводе: {value, state}.
-// value:null ⇒ честное состояние "no_data" (НИКОГДА 0 / пустая строка). Полный value_state-enum
-// (insufficient_sample/not_comparable/stale/…) приходит из registry в Story 1.4; здесь — ok/no_data.
+// value:null ⇒ честное состояние "no_data" (НИКОГДА 0 / пустая строка). State — типизированный
+// закрытый value_state-enum из registry (Story 1.4); на проводе остаётся lower_snake-строкой.
 type Field[T any] struct {
-	Value *T     `json:"value"`
-	State string `json:"state"`
+	Value *T                  `json:"value"`
+	State registry.ValueState `json:"state"`
 }
 
-func okField[T any](v T) Field[T] { return Field[T]{Value: &v, State: "ok"} }
-func noData[T any]() Field[T]     { return Field[T]{State: "no_data"} }
+func okField[T any](v T) Field[T] { return Field[T]{Value: &v, State: registry.StateOK} }
+func noData[T any]() Field[T]     { return Field[T]{State: registry.StateNoData} }
 
 func fromText(t pgtype.Text) Field[string] {
 	if !t.Valid {

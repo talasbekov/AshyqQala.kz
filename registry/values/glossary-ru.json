@@ -1,0 +1,19 @@
+{
+  "frame.signal": "сигнал, требующий проверки",
+  "state.unknown": "неизвестно, см. методику",
+  "value_state.ok": "данные есть",
+  "value_state.no_data": "нет данных",
+  "value_state.insufficient_sample": "недостаточно сопоставимых данных",
+  "value_state.not_comparable": "данные несопоставимы",
+  "value_state.stale": "данные устарели",
+  "value_state.geocode_pending": "геопривязка выполняется",
+  "value_state.geocode_failed": "геопривязка не удалась",
+  "value_state.source_conflict": "конфликт источников",
+  "value_state.redacted": "данные скрыты",
+  "value_state.not_applicable": "неприменимо",
+  "value_state.error": "ошибка расчёта",
+  "flag_state.raised": "сигнал отмечен",
+  "flag_state.not_raised": "сигнал не отмечен",
+  "flag_state.insufficient_data": "недостаточно данных для оценки",
+  "flag_state.not_published": "не опубликовано"
+}

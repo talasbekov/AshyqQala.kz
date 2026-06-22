@@ -1,0 +1,19 @@
+{
+  "frame.signal": "тексеруді талап ететін сигнал",
+  "state.unknown": "белгісіз, әдістемені қараңыз",
+  "value_state.ok": "деректер бар",
+  "value_state.no_data": "деректер жоқ",
+  "value_state.insufficient_sample": "салыстыруға жеткілікті дерек жоқ",
+  "value_state.not_comparable": "деректер салыстырылмайды",
+  "value_state.stale": "деректер ескірген",
+  "value_state.geocode_pending": "геобайланыс орындалуда",
+  "value_state.geocode_failed": "геобайланыс сәтсіз аяқталды",
+  "value_state.source_conflict": "дереккөздер қайшылығы",
+  "value_state.redacted": "деректер жасырылған",
+  "value_state.not_applicable": "қолданылмайды",
+  "value_state.error": "есептеу қатесі",
+  "flag_state.raised": "сигнал белгіленді",
+  "flag_state.not_raised": "сигнал белгіленбеді",
+  "flag_state.insufficient_data": "бағалауға дерек жеткіліксіз",
+  "flag_state.not_published": "жарияланбаған"
+}
