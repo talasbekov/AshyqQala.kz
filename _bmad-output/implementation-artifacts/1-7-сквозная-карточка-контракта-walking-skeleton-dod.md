@@ -4,7 +4,7 @@ baseline_commit: 6e39a2ca260585289ee01d10fbac2a59da83de91
 
 # Story 1.7: Сквозная карточка контракта (walking skeleton DoD)
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -208,7 +208,7 @@ claude-opus-4-8[1m] (Claude Opus 4.8, 1M context) — create-story (context engi
 - `web/src/router.tsx` — `createBrowserRouter` (layout `/` + `contracts/:goszakupId`); `routePaths` сохранён; loader НЕ фетчит.
 - `web/src/main.tsx` — `QueryClientProvider` поверх `RouterProvider`, StrictMode/`initTheme()`/`import './shared/i18n'` сохранены.
 - `web/src/App.tsx` — корневой layout (header+`<Outlet/>`) + `HomeView` со ссылкой на DEMO-0001 (входная точка сквозного пути).
-- `web/vite.config.ts` — `test.include: ['src/**/*.test.*']` (e2e исключён из vitest — гоняет Playwright).
+- `web/vite.config.ts` — `test.include: ['src/**/*.test.{ts,tsx}']` (e2e исключён из vitest — гоняет Playwright).
 - `.github/workflows/ci-web.yml` — шаг Playwright smoke (`playwright install --with-deps chromium` + `npm run e2e`).
 
 **Изменено (deploy):**
@@ -229,3 +229,30 @@ claude-opus-4-8[1m] (Claude Opus 4.8, 1M context) — create-story (context engi
 | 2026-06-22 | 0.1    | create-story: контекст-инжиниринг (web+deploy, бэкенд не меняется)                                                       | Amelia (Dev) |
 | 2026-06-22 | 1.0    | dev-story: AC1 Router(data API)+Query+скелетон; AC2 server/web Dockerfile + Caddyfile + compose `app`; AC3 smoke+StrictMode-дисциплина | Amelia (Dev) |
 | 2026-06-22 | 1.1    | Финализация: верификация (web-гейт 46/46, Playwright smoke зелёный, compose config валиден), File List, Change Log, статус→review | Amelia (Dev) |
+
+## Review Findings (code review 2026-06-22)
+
+> Adversarial-ревью тремя слоями (Blind Hunter + Edge Case Hunter + Acceptance Auditor), скоуп `6e39a2c..HEAD` (коммит «1.7 story», бандл 1.5/1.6/1.7). Итог: **1 decision-needed, 4 patch, 2 defer, 3 dismissed.** Headline-находка (Value `ok+null`) верифицирована вручную.
+
+**Decision-needed (РАЗРЕШЕНО → patch):**
+
+- [x] [Review][Decision] `direction`/`status` выводятся как сырой машинный код («Контракт · road», «active») — **решение владельца: локализовать сейчас** (соответствует примеру спеки «КОНТРАКТ · ДОРОГА»). Стало patch P5.
+
+**Patch:**
+
+- [x] [Review][Patch] (P5, из decision) Локализовать enum-значения `direction` (road/water/other) и `status` — добавить kk/ru-метки в `chrome.json`, рендерить через `t()` вместо сырого `value` [web/src/features/contract/ContractCard.tsx:28,38; web/src/shared/i18n/locales/*/chrome.json]
+- [x] [Review][Patch] `Value` рендерит ПУСТО при `state==='ok' && value===null` — `ok+null` проваливается в `dataStateFromValueState('ok')→'success'`→`<>{children}</>` без children → поле исчезает без честной метки (дыра в honest-автомате; бэкенд так сейчас не отдаёт, но wire-тип `value:string|null` это допускает) [web/src/features/contract/ContractCard.tsx:12-17]
+- [x] [Review][Patch] Маршрут 404/`errorElement` не реализован, хотя Task 2 отмечен `[x]` («нейтральный заглушечный») — неизвестный URL даёт дефолтный англоязычный error-экран React Router вне layout [web/src/router.tsx:18-27]
+- [x] [Review][Patch] Выбор языка хрупок: `i18n.language === 'ru'` → локаль с регионом (`ru-RU`) молча даёт `kk` вместо `ru`; надёжнее `i18n.language.startsWith('ru')` [web/src/features/contract/ContractRoute.tsx:12]
+- [x] [Review][Patch] Неточность File List: записано `test.include: ['src/**/*.test.*']`, фактически `['src/**/*.test.{ts,tsx}']` [story doc, раздел File List]
+
+**Defer (вынесено в deferred-work.md):**
+
+- [x] [Review][Defer] `caddy.depends_on: [api]` без `condition: service_healthy` (+ у api нет healthcheck, образ distroless без shell) → гонка первого запроса (502) сразу после `docker compose up` [deploy/docker-compose.yml:68-79] — deferred, deploy-hardening вне walking-skeleton (ручная DoD-проверка терпит прогрев)
+- [x] [Review][Defer] `migrate` через `go run github.com/pressly/goose@v3.27.1` тянет модуль из сети на каждом холодном старте без ретрая → хрупко к сетевым/IPv6 сбоям среды [deploy/docker-compose.yml:22-34] — deferred, deploy-hardening
+
+**Dismissed (шум / false-positive):**
+
+- Пустой `goszakupId` → вечный скелетон (`enabled:false`→`isPending` навсегда): недостижимо через роутер (param требует непустой сегмент; после фикса 404 ловится явно), defensive-дефолт `''` не даёт краша.
+- `formatMoney` принимает отрицательное (`^-?\d+$`): int64 знаковый, честнее показать реальное значение, чем прятать; нет данных, что бэкенд шлёт минус.
+- `Icon`: `flag` и `error` делят глиф `'!'`: глиф декоративен (`aria-hidden=true`, смысл несёт соседний текст DataState), а DESIGN.md прямо предписывает `!` для флага — WCAG-1.4.1 удовлетворён текстом, менять нельзя.

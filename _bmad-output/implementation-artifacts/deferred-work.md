@@ -1,5 +1,10 @@
 # Deferred Work
 
+## Deferred from: code review of 1-7-сквозная-карточка-контракта-walking-skeleton-dod (2026-06-22)
+
+- **`caddy` зависит от `api` только по старту, не по health** (`deploy/docker-compose.yml`) — `caddy.depends_on: [api]` (короткая форма = `service_started`), а у `api` нет `healthcheck` (образ distroless — нет shell/curl для стандартной проверки). Первые запросы `/api/*` сразу после `docker compose --profile app up` могут получить 502 от `reverse_proxy api:8080`, пока chi поднимается. Для ручной DoD-проверки — транзиентный флай. Захардить позже: добавить Go-based healthcheck в api (вызов своего бинаря) + `caddy.depends_on.api.condition: service_healthy`, ИЛИ `lb_try_duration`/retry в Caddyfile reverse_proxy.
+- **`migrate` тянет goose из сети на каждом холодном старте** (`deploy/docker-compose.yml`) — `go run github.com/pressly/goose/v3/cmd/goose@v3.27.1` скачивает модуль при каждом запуске one-shot `migrate`, без ретрая. Хрупко к сетевым/IPv6 сбоям среды (см. memory: Docker Hub/IPv6 ретраи). Захардить: предсобрать goose в builder-слое образа / вендорить / добавить `restart`-политику с бэкоффом для one-shot миграции.
+
 ## Deferred from: code review of 1-1-монорепо-скелет-и-compose-db (2026-06-21)
 
 - **`/metrics` на публичном listener без гейтинга** (Story 1.3) — `cmd/api` отдаёт `/metrics` (promhttp: go-runtime-внутренности, позже SM-C1/SM-C2) на том же публичном listener, что и `/api/*`. В **Story 1.7** (Caddy reverse-proxy) ограничить путь `/metrics` (allow только внутренние IP) ИЛИ вынести на отдельный admin-listener.

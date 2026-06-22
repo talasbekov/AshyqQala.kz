@@ -9,7 +9,7 @@ import { ContractSkeleton } from './ContractSkeleton';
 export function ContractRoute() {
   const { goszakupId = '' } = useParams();
   const { i18n, t } = useTranslation('chrome');
-  const lang: Lang = i18n.language === 'ru' ? 'ru' : 'kk';
+  const lang: Lang = i18n.language.startsWith('ru') ? 'ru' : 'kk';
 
   const q = useContract(goszakupId);
 

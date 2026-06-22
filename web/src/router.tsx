@@ -2,7 +2,7 @@
 // общий контракт, Story 1.3). ВАЖНО (AC1): Router-loader НЕ фетчит — данные грузит TanStack Query
 // в компоненте маршрута (useContract). Здесь — только определения маршрутов.
 import { createBrowserRouter } from 'react-router-dom';
-import { App, HomeView } from './App';
+import { App, HomeView, NotFoundView, RouteError } from './App';
 import { ContractRoute } from './features/contract';
 
 export type RouteId = 'contract' | 'contractor' | 'district' | 'map' | 'search';
@@ -19,9 +19,12 @@ export const router = createBrowserRouter([
   {
     path: '/',
     element: <App />,
+    errorElement: <RouteError />,
     children: [
       { index: true, element: <HomeView /> },
       { path: 'contracts/:goszakupId', element: <ContractRoute /> },
+      // Нейтральная 404-заглушка для неизвестных путей (review-фикс P2; полноценная — позже).
+      { path: '*', element: <NotFoundView /> },
     ],
   },
 ]);

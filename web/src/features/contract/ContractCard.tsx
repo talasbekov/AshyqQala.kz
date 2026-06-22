@@ -13,7 +13,10 @@ function Value({ field, format }: { field: StringField; format?: (v: string) => 
   if (field.state === 'ok' && field.value !== null) {
     return <>{format ? format(field.value) : field.value}</>;
   }
-  return <DataState kind={dataStateFromValueState(field.state)} state={field.state} />;
+  // state='ok' но value=null (wire-тип это допускает) — честность: «нет данных», а НЕ пустой
+  // success-фрагмент (review-фикс P1: дыра ok+null в honest-автомате).
+  const state = field.state === 'ok' ? 'no_data' : field.state;
+  return <DataState kind={dataStateFromValueState(state)} state={state} />;
 }
 
 export function ContractCard({ contract, lang }: { contract: Contract; lang: Lang }) {
@@ -25,7 +28,11 @@ export function ContractCard({ contract, lang }: { contract: Contract; lang: Lan
   return (
     <article className="contract-card" aria-labelledby="contract-subject">
       <p className="contract-card__overlabel">
-        {t('contract.overlabel')} · <Value field={contract.direction} />
+        {t('contract.overlabel')} ·{' '}
+        <Value
+          field={contract.direction}
+          format={(v) => t(`contract.direction.${v}`, { defaultValue: v })}
+        />
       </p>
       <h2 id="contract-subject" className="contract-card__subject" lang={lang}>
         <Value field={subject} />
@@ -37,7 +44,10 @@ export function ContractCard({ contract, lang }: { contract: Contract; lang: Lan
         <div className="contract-card__row">
           <dt>{t('contract.field.status')}</dt>
           <dd>
-            <Value field={contract.status} />
+            <Value
+              field={contract.status}
+              format={(v) => t(`contract.status.${v}`, { defaultValue: v })}
+            />
           </dd>
         </div>
         <div className="contract-card__row">
