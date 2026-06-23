@@ -11,8 +11,15 @@ import (
 type Querier interface {
 	// Читает контракт по публичному natural id (goszakup_contract_id); удалённые скрыты.
 	GetContractByID(ctx context.Context, goszakupContractID string) (Contract, error)
+	// Гео-результат по natural goszakup_lot_id (для тестов/проверки).
+	GetGeoLotByLotID(ctx context.Context, goszakupLotID string) (InterimGeoLot, error)
 	// Лот по публичному natural id; удалённые скрыты.
 	GetLotByID(ctx context.Context, goszakupLotID string) (Lot, error)
+	// Перечисление лотов для batch-обработки (геокодинг — Story 0.7); удалённые скрыты, порядок стабилен.
+	ListLots(ctx context.Context) ([]Lot, error)
+	// Идемпотентный UPSERT гео-результата лота по goszakup_lot_id (повтор batch-Nominatim не плодит дубли).
+	// unmatched → lat/lon NULL (честность: «без точки на карте», НЕ 0,0). ⏳ интерим (Story 0.7).
+	UpsertGeoLot(ctx context.Context, arg UpsertGeoLotParams) error
 	// Идемпотентный UPSERT лота по natural goszakup_lot_id (импортёр перестраивает проекцию; повтор не плодит дубли).
 	UpsertLot(ctx context.Context, arg UpsertLotParams) error
 }

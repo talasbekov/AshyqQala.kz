@@ -140,3 +140,59 @@ func TestViolatesGoszakupBoundary(t *testing.T) {
 		t.Error("импорт не-goszakup не должен считаться нарушением")
 	}
 }
+
+// hotPathBinaries — прод-бинари: НЕ должны тянуть парсер (tools/scrape) даже ТРАНЗИТИВНО (AC2, Story 0.6).
+// Парсер за build-tag `scrape` → в дефолтном билде его нет; этот страж доказывает изоляцию машинно.
+var hotPathBinaries = []string{
+	"ashyqqala/server/cmd/api",
+	"ashyqqala/server/cmd/importer",
+}
+
+// scrapePkgPrefix — корень временного парсера (трек «Парсер-мост»). Любой пакет под ним — парсер.
+const scrapePkgPrefix = "ashyqqala/server/tools/scrape"
+
+// importsScrape — чистый предикат: dep есть пакет парсера (точное имя или подпакет). Вынесен для
+// negative-control (страж умеет КРАСНЕТЬ, а не «всегда зелёный»). См. [[guards-must-prove-red]].
+func importsScrape(dep string) bool {
+	return dep == scrapePkgPrefix || strings.HasPrefix(dep, scrapePkgPrefix+"/")
+}
+
+// TestHotPathDoesNotImportScrape — AC2/AR-27: cmd/api и cmd/importer не тянут tools/scrape транзитивно
+// (.Deps, не только прямые .Imports). Парсер физически вне горячего пути; страж краснеет, если импорт
+// появится (исполняемая граница, не комментарий). go list — дефолтные теги (scrape-код исключён).
+func TestHotPathDoesNotImportScrape(t *testing.T) {
+	for _, bin := range hotPathBinaries {
+		out, err := exec.Command("go", "list", "-f", "{{ range .Deps }}{{ . }}\n{{ end }}", bin).CombinedOutput()
+		if err != nil {
+			t.Fatalf("go list %s: %v\n%s", bin, err, out)
+		}
+		for dep := range strings.FieldsSeq(string(out)) {
+			if importsScrape(dep) {
+				t.Errorf("прод-бинарь %s тянет парсер %q (AC2: scrape ТОЛЬКО за build-tag, вне горячего пути)", bin, dep)
+			}
+		}
+	}
+}
+
+// TestImportsScrape — negative/positive control предиката изоляции парсера (способен покраснеть).
+// Чист (без exec) → кэшируется, ловит регресс логики стража независимо от тёплого кэша go list.
+func TestImportsScrape(t *testing.T) {
+	for _, d := range []string{
+		scrapePkgPrefix,
+		scrapePkgPrefix + "/cmd/interim-import",  // 0.6 (импорт scraped-лотов)
+		scrapePkgPrefix + "/cmd/interim-geocode", // 0.7 (batch-геокодинг) — тот же трек, тот же страж
+	} {
+		if !importsScrape(d) {
+			t.Errorf("importsScrape(%q) = false, ожидалось true", d)
+		}
+	}
+	for _, d := range []string{
+		"ashyqqala/server/internal/ingest/decode",
+		"net/http",
+		"ashyqqala/server/tools/scraper-not", // содержит «scrape», но не подпакет tools/scrape
+	} {
+		if importsScrape(d) {
+			t.Errorf("importsScrape(%q) = true, ожидалось false", d)
+		}
+	}
+}

@@ -51,6 +51,59 @@ func (q *Queries) GetLotByID(ctx context.Context, goszakupLotID string) (Lot, er
 	return i, err
 }
 
+const listLots = `-- name: ListLots :many
+SELECT
+    id,
+    goszakup_lot_id,
+    announcement_id,
+    title_ru,
+    title_kk,
+    amount,
+    quantity,
+    unit,
+    kato_code,
+    is_deleted,
+    imported_at,
+    updated_at
+FROM lots
+WHERE NOT is_deleted
+ORDER BY id
+`
+
+// Перечисление лотов для batch-обработки (геокодинг — Story 0.7); удалённые скрыты, порядок стабилен.
+func (q *Queries) ListLots(ctx context.Context) ([]Lot, error) {
+	rows, err := q.db.Query(ctx, listLots)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Lot{}
+	for rows.Next() {
+		var i Lot
+		if err := rows.Scan(
+			&i.ID,
+			&i.GoszakupLotID,
+			&i.AnnouncementID,
+			&i.TitleRu,
+			&i.TitleKk,
+			&i.Amount,
+			&i.Quantity,
+			&i.Unit,
+			&i.KatoCode,
+			&i.IsDeleted,
+			&i.ImportedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const upsertLot = `-- name: UpsertLot :exec
 INSERT INTO lots (
     goszakup_lot_id, announcement_id, title_ru, title_kk, amount, quantity, unit, kato_code

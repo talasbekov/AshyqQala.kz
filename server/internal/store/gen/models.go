@@ -26,6 +26,18 @@ type Contract struct {
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 }
 
+type InterimGeoLot struct {
+	ID            int64              `json:"id"`
+	GoszakupLotID string             `json:"goszakup_lot_id"`
+	Lat           pgtype.Float8      `json:"lat"`
+	Lon           pgtype.Float8      `json:"lon"`
+	KatoCode      pgtype.Text        `json:"kato_code"`
+	GeocodeStatus string             `json:"geocode_status"`
+	Confidence    pgtype.Float8      `json:"confidence"`
+	AddressText   pgtype.Text        `json:"address_text"`
+	GeocodedAt    pgtype.Timestamptz `json:"geocoded_at"`
+}
+
 type Lot struct {
 	ID             int64              `json:"id"`
 	GoszakupLotID  string             `json:"goszakup_lot_id"`

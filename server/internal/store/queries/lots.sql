@@ -33,3 +33,22 @@ SELECT
 FROM lots
 WHERE goszakup_lot_id = $1
   AND NOT is_deleted;
+
+-- name: ListLots :many
+-- Перечисление лотов для batch-обработки (геокодинг — Story 0.7); удалённые скрыты, порядок стабилен.
+SELECT
+    id,
+    goszakup_lot_id,
+    announcement_id,
+    title_ru,
+    title_kk,
+    amount,
+    quantity,
+    unit,
+    kato_code,
+    is_deleted,
+    imported_at,
+    updated_at
+FROM lots
+WHERE NOT is_deleted
+ORDER BY id;

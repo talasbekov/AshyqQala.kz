@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-06-19T18:38:34+0500
-last_updated: 2026-06-23T16:00:00+0500
+last_updated: 2026-06-24T00:30:00+0500
 project: AshyqQala.kz
 project_key: NOKEY
 tracking_system: file-system
@@ -45,13 +45,13 @@ development_status:
   # Epic 0: Гейт №0 и предполётная подготовка
   epic-0: in-progress
   0-1-токен-ows_v2-и-подтверждение-доступа-к-эндпоинтам: in-progress
-  0-2-машиночитаемый-go-no-go-вердикт-stage0-audit: review
+  0-2-машиночитаемый-go-no-go-вердикт-stage0-audit: done
   0-3-прогон-гейта-на-живых-данных-распределение-пропусков: backlog
   0-4-предполётные-решения-идемпотентность-частичный-go-демо-схема: backlog
   0-5-юридическая-предполётная-проверка-параллельно: backlog
   # ⏳ Трек «Парсер-мост» (ВРЕМЕННЫЙ, до получения токена) — Sprint Change Proposal 2026-06-20
-  0-6-временный-scrape-источник-лотов-за-флагом: ready-for-dev
-  0-7-гео-привязка-scraped-лотов-batch-nominatim: backlog
+  0-6-временный-scrape-источник-лотов-за-флагом: done
+  0-7-гео-привязка-scraped-лотов-batch-nominatim: done
   0-8-ранняя-карта-астаны-на-реальных-лотах: backlog
   0-9-эскалация-юридической-проверки-парсинга: backlog
   epic-0-retrospective: optional

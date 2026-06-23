@@ -23,3 +23,8 @@ func (s *LotStore) UpsertLot(ctx context.Context, p gen.UpsertLotParams) error {
 func (s *LotStore) GetLotByID(ctx context.Context, goszakupLotID string) (gen.Lot, error) {
 	return s.q.GetLotByID(ctx, goszakupLotID)
 }
+
+// ListLots — все неудалённые лоты (для batch-обработки; геокодинг — Story 0.7).
+func (s *LotStore) ListLots(ctx context.Context) ([]gen.Lot, error) {
+	return s.q.ListLots(ctx)
+}
