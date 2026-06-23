@@ -1,8 +1,12 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { components } from '../../shared/api/schema.gen';
 import type { Lang } from '../../shared/i18n';
 import { formatMoney, formatDate } from '../../shared/i18n/format';
 import { DataState, dataStateFromValueState } from '../../shared/state/DataState';
+import { FlagBadge, MethodologyDialog, flagsFor, type ContractFlag } from '../flag';
+import { ReportError, reportErrorMailto } from '../share';
+import '../flag/flag.css';
 import './contract-card.css';
 
 type Contract = components['schemas']['Contract'];
@@ -24,6 +28,15 @@ export function ContractCard({ contract, lang }: { contract: Contract; lang: Lan
   // subject — в активном языке; lang-атрибут DOM обязателен (доменные данные на языке источника).
   const subject = lang === 'kk' ? contract.subject_kk : contract.subject_ru;
   const src = contract.source_url;
+  const sourceUrl = src.state === 'ok' && src.value !== null ? src.value : null;
+
+  // Ручные флаги-истории (Story 1.9). Gate нейтральности: бейдж публикуется только с путём к методике
+  // (onOpenMethodology) И дверью «Сообщить об ошибке» (reportErrorHref) — оба обязательны.
+  const flags = flagsFor(contract.goszakup_contract_id);
+  const [methFlag, setMethFlag] = useState<ContractFlag | null>(null);
+  const reportHref = reportErrorMailto(
+    t('report_error.subject', { id: contract.goszakup_contract_id }),
+  );
 
   return (
     <article className="contract-card" aria-labelledby="contract-subject">
@@ -75,16 +88,49 @@ export function ContractCard({ contract, lang }: { contract: Contract; lang: Lan
           </dd>
         </div>
       </dl>
-      {src.state === 'ok' && src.value !== null ? (
+
+      {sourceUrl !== null ? (
         <a
           className="contract-card__source"
-          href={src.value}
+          href={sourceUrl}
           target="_blank"
           rel="noopener noreferrer"
         >
           {t('contract.source')} ↗
         </a>
       ) : null}
+
+      {flags.length > 0 && (
+        <section className="contract-card__signals">
+          <h3 className="contract-card__signals-heading">
+            {t('contract.signals_heading', { count: flags.length })}
+          </h3>
+          <p className="contract-card__signals-note">{t('contract.signals_note')}</p>
+          {flags.map((f) => (
+            <FlagBadge
+              key={f.flagId}
+              flag={f}
+              lang={lang}
+              onOpenMethodology={() => setMethFlag(f)}
+              reportErrorHref={reportHref}
+            />
+          ))}
+          <ReportError
+            contractId={contract.goszakup_contract_id}
+            className="contract-card__report"
+          />
+        </section>
+      )}
+
+      {methFlag && (
+        <MethodologyDialog
+          flag={methFlag}
+          lang={lang}
+          sourceUrl={sourceUrl}
+          reportErrorHref={reportHref}
+          onClose={() => setMethFlag(null)}
+        />
+      )}
     </article>
   );
 }

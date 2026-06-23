@@ -46,12 +46,15 @@ gen-tokens: ## tokens.json (DTCG) → tokens.css + tokens.ts (свой codegen) 
 	cd $(WEB_DIR) && npm run gen-tokens
 
 # ---- проверки ----
-.PHONY: test lint build check-registry
-test: ## go test (server) — golden/property/integration добавляются последующими историями
+.PHONY: test lint build check-registry check-core
+test: ## go test (server) — unit/property/golden/go-list; integration (testcontainers) — позже
 	cd $(SERVER_DIR) && go test ./...
 
 check-registry: ## Сторожа registry (Story 1.4): перекрёстный тест registry↔OpenAPI↔Go + doc-нейтральность (taboo RU/KZ)
 	cd $(SERVER_DIR) && go test ./internal/registry/... ./internal/render/...
+
+check-core: ## Сторож ядра (Story 1.10): go-list-границы — median/flags/normalize/benchmark не импортируют store/httpapi/goszakup/время
+	cd $(SERVER_DIR) && go test -count=1 ./internal/arch/...
 
 lint: ## go vet + gofmt (server); tsc/eslint/prettier — в web-CI
 	cd $(SERVER_DIR) && go vet ./... && { out=$$(gofmt -l .); [ -z "$$out" ] || { echo "gofmt: не отформатированы:"; echo "$$out"; exit 1; }; }

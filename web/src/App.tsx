@@ -8,6 +8,9 @@ export function App() {
     <>
       <header className="app-header">
         <Link to="/">{t('app.title')}</Link>
+        <nav className="app-nav">
+          <Link to="/map">{t('map.title')}</Link>
+        </nav>
       </header>
       <main>
         <Outlet />

@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { Lang } from '../../shared/i18n';
 import { useContract } from './useContract';
+import type { ContractFetchError } from './useContract';
 import { ContractCard } from './ContractCard';
 import { ContractSkeleton } from './ContractSkeleton';
 
@@ -15,9 +16,12 @@ export function ContractRoute() {
 
   if (q.isPending) return <ContractSkeleton />;
   if (q.isError) {
+    // 404 → честное «нет данных по объекту» (не общая ошибка) — закрывает deferred 1.8.
+    const status = (q.error as Partial<ContractFetchError>).status;
+    const key = status === 404 ? 'contract.not_found' : 'contract.error';
     return (
       <p className="contract-error" role="alert">
-        {t('contract.error')}
+        {t(key)}
       </p>
     );
   }

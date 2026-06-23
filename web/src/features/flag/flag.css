@@ -1,0 +1,243 @@
+/* Бейдж флага + экран методики (Story 1.9). Только семантические токены (Story 1.5), без hex-литералов.
+   Нейтральность: raised — амбер signal-attention (НЕ алый); insufficient — нейтральный muted. */
+
+.aq-flag {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-3);
+}
+
+/* Бейдж-кнопка: пилюля. raised → амбер; insufficient → muted. Хитбокс ≥44px, focus-ring. */
+.aq-flag__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--space-tap-target);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: var(--type-body-size);
+  text-align: left;
+  cursor: pointer;
+}
+
+.aq-flag--raised .aq-flag__badge {
+  background: var(--color-signal-attention-bg);
+  border-color: var(--color-signal-attention-border);
+  color: var(--color-signal-attention-fg);
+}
+
+.aq-flag--insufficient .aq-flag__badge {
+  background: var(--color-muted-soft);
+  border-color: var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.aq-flag__badge:focus-visible,
+.aq-flag__link:focus-visible {
+  outline: var(--space-focus-ring-width) solid var(--color-focus-ring);
+  outline-offset: var(--space-focus-ring-offset);
+}
+
+.aq-flag__date {
+  margin: 0;
+  font-size: var(--type-meta-size);
+  color: var(--color-text-secondary);
+}
+
+.aq-flag__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.aq-flag__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--space-tap-target);
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: var(--type-body-size);
+  color: var(--color-link-on-sunken);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+/* Секция «Сигналы» в карточке. */
+.contract-card__signals {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.contract-card__signals-heading {
+  margin: 0 0 var(--space-1);
+  font-size: var(--type-subheading-size);
+  font-weight: var(--type-subheading-weight);
+}
+
+.contract-card__signals-note {
+  margin: 0 0 var(--space-3);
+  font-size: var(--type-meta-size);
+  color: var(--color-text-secondary);
+}
+
+.contract-card__report {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--space-tap-target);
+  margin-top: var(--space-4);
+  font-size: var(--type-body-size);
+  color: var(--color-link-on-sunken);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Экран методики — нижний/центральный лист (role=dialog). */
+.aq-meth-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(12, 26, 34, 0.4);
+}
+
+.aq-meth {
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: var(--space-gutter);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: 0 -4px 16px rgba(12, 26, 34, 0.25);
+}
+
+.aq-meth__overlabel {
+  margin: 0 0 var(--space-1);
+  font-size: var(--type-label-caps-size);
+  font-weight: var(--type-label-caps-weight);
+  letter-spacing: var(--type-label-caps-letter-spacing);
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.aq-meth__title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--type-heading-size);
+  font-weight: var(--type-heading-weight);
+}
+
+.aq-meth__frame {
+  margin: 0 0 var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-signal-attention-bg);
+  color: var(--color-signal-attention-fg);
+  border: 1px solid var(--color-signal-attention-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--type-body-size);
+}
+
+.aq-meth__simple,
+.aq-meth__note,
+.aq-meth__recalc {
+  margin: var(--space-2) 0;
+  font-size: var(--type-meta-size);
+  color: var(--color-text-secondary);
+}
+
+.aq-meth__formula {
+  margin: var(--space-3) 0;
+  padding: var(--space-3);
+  background: var(--color-surface-sunken);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family-mono);
+  font-size: var(--type-mono-size);
+}
+
+.aq-meth__rule {
+  margin: var(--space-3) 0;
+  padding: var(--space-3);
+  background: var(--color-surface-sunken);
+  border-radius: var(--radius-sm);
+  font-size: var(--type-body-size);
+}
+
+.aq-meth__key,
+.aq-meth__ev,
+.aq-meth__meta {
+  display: grid;
+  gap: var(--space-row-gap);
+  margin: var(--space-3) 0;
+}
+
+.aq-meth__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  font-size: var(--type-body-size);
+}
+
+.aq-meth__row dt {
+  color: var(--color-text-secondary);
+}
+
+.aq-meth__row--hl {
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-signal-attention-bg);
+  border-radius: var(--radius-sm);
+  font-weight: var(--type-body-strong-weight);
+}
+
+.aq-meth__insufficient {
+  margin: var(--space-3) 0;
+  padding: var(--space-3);
+  background: var(--color-muted-soft);
+  border-radius: var(--radius-sm);
+}
+
+.aq-meth__insufficient-title {
+  margin: 0 0 var(--space-2);
+  font-weight: var(--type-body-strong-weight);
+}
+
+.aq-meth__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: center;
+  margin-top: var(--space-4);
+}
+
+.aq-meth__link {
+  min-height: var(--space-tap-target);
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-link-on-sunken);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.aq-meth__close {
+  min-height: var(--space-tap-target);
+  padding: 0 var(--space-4);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--type-body-size);
+  cursor: pointer;
+}
+
+.aq-meth__link:focus-visible,
+.aq-meth__close:focus-visible {
+  outline: var(--space-focus-ring-width) solid var(--color-focus-ring);
+  outline-offset: var(--space-focus-ring-offset);
+}

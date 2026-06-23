@@ -1,0 +1,218 @@
+/* Скелет-карта (Story 1.8). Только семантические токены (Story 1.5), без hex-литералов (stylelint). */
+
+.aq-map-route {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-gutter);
+}
+
+.aq-map-route__title {
+  margin: 0;
+  font-size: var(--type-display-size);
+  font-weight: var(--type-display-weight);
+  line-height: var(--type-display-line-height);
+}
+
+.aq-map-wrap {
+  position: relative;
+}
+
+/* Контейнер MapLibre. Фон — surface-sunken (нейтральный, пока нет тайлов). */
+.aq-map {
+  width: 100%;
+  height: 60vh;
+  min-height: 320px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  background: var(--color-surface-sunken);
+}
+
+/* Прогрессивная загрузка (AC1): плашка-скелетон поверх канваса до события 'load', не спиннер.
+   .aq-map__unavailable — честное состояние, если карта не инициализировалась (нет WebGL и т.п.). */
+.aq-map__skeleton,
+.aq-map__unavailable {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  text-align: center;
+  background: var(--color-muted-soft);
+  border-radius: var(--radius-card);
+  color: var(--color-text-secondary);
+  font-size: var(--type-body-size);
+}
+
+/* Контролы зума/recenter в нижней зоне (зона большого пальца, mobile-first). */
+.aq-map__controls {
+  position: absolute;
+  right: var(--space-3);
+  bottom: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.aq-map__control {
+  width: var(--space-tap-target);
+  height: var(--space-tap-target);
+  display: grid;
+  place-items: center;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--type-amount-size);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.aq-map__control:focus-visible {
+  outline: var(--space-focus-ring-width) solid var(--color-focus-ring);
+  outline-offset: var(--space-focus-ring-offset);
+}
+
+/* Маркер-точка {map-marker-point} (DESIGN.md): DOM-кнопка с гарантированным хитбоксом ≥44px. */
+.aq-map-marker {
+  width: var(--space-tap-target);
+  height: var(--space-tap-target);
+  padding: 0;
+  border: none;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.aq-map-marker:focus-visible {
+  outline: var(--space-focus-ring-width) solid var(--color-focus-ring);
+  outline-offset: var(--space-focus-ring-offset);
+  border-radius: var(--radius-sm);
+}
+
+/* Каплевидный голубой пин: цвет — primary, обводка — surface (читаем поверх любой подложки).
+   Нейтральность: голубой обычный, без алого/«горячей точки». */
+.aq-map-marker__pin {
+  width: 18px;
+  height: 18px;
+  background: var(--color-primary);
+  border: 2px solid var(--color-surface);
+  border-radius: 50% 50% 50% 2px;
+  transform: rotate(45deg);
+  box-shadow: 0 3px 6px rgba(12, 26, 34, 0.3);
+  pointer-events: none;
+}
+
+/* Список «без точки на карте» (AC3): честное состояние, не дефект. */
+.aq-ungeocoded__heading {
+  margin: 0 0 var(--space-2);
+  font-size: var(--type-subheading-size);
+  font-weight: var(--type-subheading-weight);
+}
+
+.aq-ungeocoded {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.aq-ungeocoded__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--space-tap-target);
+  font-size: var(--type-body-size);
+  color: var(--color-text-secondary);
+}
+
+.aq-ungeocoded__link {
+  color: var(--color-link-on-sunken);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Нижний лист превью {preview-sheet} — минимальный (детенты/focus-trap — Epic 3, Story 3.5). */
+.aq-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(12, 26, 34, 0.4);
+}
+
+.aq-sheet {
+  width: 100%;
+  max-width: 640px;
+  padding: var(--space-gutter);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: 0 -4px 16px rgba(12, 26, 34, 0.25);
+}
+
+.aq-sheet__handle {
+  width: 36px;
+  height: 4px;
+  margin: 0 auto var(--space-3);
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+}
+
+.aq-sheet__title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--type-heading-size);
+  font-weight: var(--type-heading-weight);
+  line-height: var(--type-heading-line-height);
+}
+
+.aq-sheet__amount {
+  margin: 0 0 var(--space-4);
+  font-size: var(--type-amount-size);
+  font-weight: var(--type-amount-weight);
+}
+
+.aq-sheet__loading,
+.aq-sheet__error {
+  margin: 0 0 var(--space-4);
+  font-size: var(--type-body-size);
+  color: var(--color-text-secondary);
+}
+
+.aq-sheet__actions {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.aq-sheet__more {
+  min-height: var(--space-tap-target);
+  display: inline-flex;
+  align-items: center;
+  font-weight: var(--type-body-strong-weight);
+  color: var(--color-link-on-sunken);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.aq-sheet__close {
+  min-height: var(--space-tap-target);
+  padding: 0 var(--space-4);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--type-body-size);
+  cursor: pointer;
+}
+
+.aq-sheet__more:focus-visible,
+.aq-sheet__close:focus-visible {
+  outline: var(--space-focus-ring-width) solid var(--color-focus-ring);
+  outline-offset: var(--space-focus-ring-offset);
+}

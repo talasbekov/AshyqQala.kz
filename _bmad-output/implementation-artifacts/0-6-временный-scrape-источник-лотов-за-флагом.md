@@ -237,6 +237,12 @@ claude-opus-4-8[1m] (Claude Opus 4.8, 1M context) — dev-story workflow.
   - `server/internal/goszakup/` — только `doc.go` (заглушка). 🔴 интерфейс `Source` не определён (Story 2.1, backlog).
   - `server/internal/store/projection/` — только `doc.go` (заглушка). 🔴 store для `lots` нет.
   - `server/tools/scrape/` — только `.gitkeep` (ожидаемо: наполняет данная история).
+- Task 0 (повторная проверка фундамента, 2026-06-23): состояние БЕЗ ИЗМЕНЕНИЙ относительно 2026-06-22.
+  - `migrations/0002_projection.sql`: `CREATE TABLE contracts` (стр. 5); `lots` остаётся TODO-комментарием (стр. 23–25). 🔴 проекции `lots` нет.
+  - `server/internal/ingest/decode/doc.go` — 2 строки (заглушка). 🔴
+  - `server/internal/goszakup/doc.go` — заглушка; `grep "type Source"` по `server/internal/` → не найдено. 🔴 точка swap не существует.
+  - `server/internal/store/projection/doc.go` — заглушка. 🔴
+  - `server/tools/scrape/` — только `.gitkeep`. HEAD репо — `b5258b5`, рабочее дерево чистое.
 
 ### Completion Notes List
 
@@ -258,3 +264,4 @@ claude-opus-4-8[1m] (Claude Opus 4.8, 1M context) — dev-story workflow.
 |---|---|
 | 2026-06-21 | Создан context engine для Story 0.6 (трек «Парсер-мост»). Исчерпывающий анализ: epics 0.6–0.9, architecture (отклонение + целевое дерево + границы), модель данных `lots`, код `stage0-audit/scrape.go`+`source.go`, предыдущие истории 0.1/0.2 + Sprint Change Proposal. **Зафиксирован критичный блокер:** AC1–AC3 зависят от ещё не созданного монорепо (Story 1.1 скелет, 1.2 проекция `lots`+sqlc, 2.1 `ingest/decode`) — Task 0 = предусловие/HALT + эскалация владельцу по последовательности. Статус → ready-for-dev. |
 | 2026-06-22 | Запуск dev-story. **Task 0 (предусловие) — HALT.** Проверено фактическое состояние репо: скелет монорепо (Story 1.1, done) есть, но проекция `lots` (миграция + store), `internal/ingest/decode` и `internal/goszakup` `Source` — пустые заглушки/отсутствуют (1.2 сделала только `contracts`; `lots` → TODO Epic 2/B-3; `ingest/decode`+`Source` → скоуп Story 2.1, backlog). Историю нельзя реализовать поверх несуществующего фундамента; создавать его здесь запрещено (чужой скоуп 1.2/2.1, анти-churn). Эскалировано владельцу: решить последовательность (сначала проекция `lots` + Story 2.1, затем 0.6). Статус остаётся ready-for-dev (реализация не начата). |
+| 2026-06-23 | Повторный запуск dev-story (перенаправлен с заблокированной на токене Story 0-1). **Task 0 (предусловие) — HALT сохраняется.** Фактическое состояние перепроверено и БЕЗ ИЗМЕНЕНИЙ: `0002_projection.sql` — только `contracts` (`lots` = TODO стр. 23–25); `ingest/decode`, `goszakup` `Source`, `store/projection` — заглушки `doc.go`; `tools/scrape/` — только `.gitkeep`. Три из четырёх несущих компонентов AC1–AC3 отсутствуют. Создавать фундамент в этой истории запрещено (скоуп 1.2/Epic 2 B-3 и 2.1; анти-churn). Статус остаётся ready-for-dev (реализация не начата). Эскалация владельцу: блокер 0-6 — не токен, а ПОСЛЕДОВАТЕЛЬНОСТЬ — нужен фундамент (проекция `lots` + минимальные `ingest/decode` и `Source`) до старта парсер-моста. |
