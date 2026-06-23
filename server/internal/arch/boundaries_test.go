@@ -83,3 +83,60 @@ func TestIsForbidden(t *testing.T) {
 		}
 	}
 }
+
+// TestGoszakupImportedOnlyFromDecode — AR-27: внешний клиент `internal/goszakup` (точка swap) может
+// импортироваться ТОЛЬКО из `internal/ingest/decode`. Любой другой пакет (httpapi/store/median/…),
+// затянувший goszakup, создаёт обратную зависимость от источника → красный. (Тестовые импорты не в .Imports.)
+func TestGoszakupImportedOnlyFromDecode(t *testing.T) {
+	out, err := exec.Command("go", "list", "-f", "{{.ImportPath}}{{range .Imports}} {{.}}{{end}}", "ashyqqala/server/internal/...").CombinedOutput()
+	if err != nil {
+		t.Fatalf("go list internal/...: %v\n%s", err, out)
+	}
+	for line := range strings.SplitSeq(strings.TrimSpace(string(out)), "\n") {
+		fields := strings.Fields(line)
+		if len(fields) == 0 {
+			continue
+		}
+		pkg := fields[0]
+		for _, imp := range fields[1:] {
+			if violatesGoszakupBoundary(pkg, imp) {
+				t.Errorf("%s импортирует goszakup — запрещено (AR-27: только из ingest/decode)", pkg)
+			}
+		}
+	}
+}
+
+// violatesGoszakupBoundary — pkg импортирует goszakup, не будучи разрешённым (ingest/decode) и не самим
+// goszakup. Чистый предикат (вынесен из exec-теста), чтобы negative-control ловил регресс логики стража.
+func violatesGoszakupBoundary(pkg, imp string) bool {
+	const goszakup = "ashyqqala/server/internal/goszakup"
+	const allowed = "ashyqqala/server/internal/ingest/decode"
+	return imp == goszakup && pkg != allowed && pkg != goszakup
+}
+
+// TestViolatesGoszakupBoundary — negative/positive control: предикат стража AR-27 реально различает
+// нарушение и норму (способен покраснеть). Чист (без exec) → кэшируется, ловит регресс логики. См. [[guards-must-prove-red]].
+func TestViolatesGoszakupBoundary(t *testing.T) {
+	const gz = "ashyqqala/server/internal/goszakup"
+	const dec = "ashyqqala/server/internal/ingest/decode"
+	// должно краснеть (нарушение):
+	for _, pkg := range []string{
+		"ashyqqala/server/internal/median",
+		"ashyqqala/server/internal/httpapi",
+		"ashyqqala/server/internal/store/projection",
+	} {
+		if !violatesGoszakupBoundary(pkg, gz) {
+			t.Errorf("%s, импортирующий goszakup, должен нарушать границу", pkg)
+		}
+	}
+	// НЕ должно краснеть (норма):
+	if violatesGoszakupBoundary(dec, gz) {
+		t.Error("ingest/decode — разрешённый импортёр goszakup")
+	}
+	if violatesGoszakupBoundary(gz, gz) {
+		t.Error("сам goszakup не нарушает границу")
+	}
+	if violatesGoszakupBoundary("ashyqqala/server/internal/median", "context") {
+		t.Error("импорт не-goszakup не должен считаться нарушением")
+	}
+}

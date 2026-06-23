@@ -1,5 +1,11 @@
 # Deferred Work
 
+## Deferred from: code review of 2-0-фундамент-source-file-источник-и-проекция-lots (2026-06-23)
+
+- **decode value-robustness lots (живой ows_v2 → Story 2.1)** (`server/internal/ingest/decode/lots.go:298`) — то же, что для `Contract` (см. ниже, 1-10): `lotInt` берёт только `float64`/`int64`/`int`; живой ows часто отдаёт суммы строками (`"240000000"`) или под `UseNumber()` (`json.Number`) → `Amount` молча станет `nil` (тихая потеря, обходит «не тихий 0» на уровне значения); `float64` теряет точность >2^53. Кандидаты `summ`/`sum`/`total_sum` часто строковые в ows. Story 2.1 (живой декод) обязана принимать строковые/`json.Number` суммы и защищать точность.
+- **Дублирование pick-хелперов в decode** (`server/internal/ingest/decode/lots.go`) — `lotPick`/`lotString`/`lotInt` дословно повторяют `pick`/`pickString`/`pickInt` (различие — карта кандидатов). `SchemaHash`/`keysOf` переиспользованы, а эти — скопированы. Обобщить (предикат + карта параметром) при добавлении следующих доменных типов Epic 2, чтобы не плодить копии на каждый ресурс.
+- **UPSERT затирает quantity/unit/announcement_id в NULL при смешении источников** (`server/internal/store/queries/lots.sql`) — `ON CONFLICT DO UPDATE SET quantity = EXCLUDED.quantity …` безусловно ставит NULL, т.к. декод эти поля не заполняет. Для S-0 (единый импортёр) безопасно. При смешении источников/кураторских правок → потеря данных; учесть в Story 2.6 (идемпотентность + выживание курации).
+
 ## Deferred from: code review of 1-10-общие-контракты-ядра-... (2026-06-23)
 
 - **decode value-robustness (живой ows_v2 → Story 2.1)** (`server/internal/ingest/decode/decode.go`) — `schema_hash` ловит дрейф НАБОРА полей (AC2 ✓), но НЕ дрейф на уровне значения: поле present-но-`null` (`pick` пропускает nil) / число пришло строкой (`pickInt` падает в nil) / `float64→int64` усечение дроби и потеря точности >2^53 → сумма молча теряется (обходит «не тихий 0» на уровне значения). Синтетический golden чист, поэтому не проявляется. Story 2.1 (живой декод реального ows_v2) обязана: различать «поле отсутствует» vs «present-но-неинтерпретируемо» (→ ошибка/honest-state, не nil), принимать строковые числа, защищать точность сумм.

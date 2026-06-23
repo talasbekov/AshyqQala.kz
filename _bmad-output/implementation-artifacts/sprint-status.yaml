@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-06-19T18:38:34+0500
-last_updated: 2026-06-23T14:45:00+0500
+last_updated: 2026-06-23T16:00:00+0500
 project: AshyqQala.kz
 project_key: NOKEY
 tracking_system: file-system
@@ -71,7 +71,9 @@ development_status:
   epic-1-retrospective: done
 
   # Epic 2: Живые данные — импорт, нормализация, устойчивость
-  epic-2: backlog
+  epic-2: in-progress
+  # ⬇ Токен-независимый фундамент (Sprint Change Proposal 2026-06-20→ред. 2026-06-23): Source+file+lots
+  2-0-фундамент-source-file-источник-и-проекция-lots: done
   2-1-живая-граница-декодирования-ows_v2-schema_hash: backlog
   2-2-ежедневный-инкрементальный-импорт-через-v2-journal-идемпотентный: backlog
   2-3-нормализация-наименований-к-каноническому-бин: backlog

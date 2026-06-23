@@ -1048,7 +1048,34 @@ So that будущие потребители не приватизируют я
 дрейфу схемы, с идемпотентным импортом и атомарной публикацией снапшота. Реализует FR-1, FR-2, FR-3.
 **Entry-criterion:** вердикт Epic 0 = Go / Go-с-фолбэком.
 
+### Story 2.0: Токен-независимый фундамент — Source-интерфейс, file-источник, проекция lots
+
+> Добавлено Sprint Change Proposal 2026-06-23 (Direct Adjustment). Токен-независимый фундамент, вырезанный
+> из 2.1 / B-3: разблокирует живой импорт (2.1) и трек «Парсер-мост» (0.6) без `GOSZAKUP_TOKEN`.
+
+As a команда,
+I want зафиксировать `Source`-интерфейс (точка swap scrape→ows|file) + file-реализацию + проекцию `lots`,
+So that живой импорт (2.1) и «Парсер-мост» (0.6) разблокированы без токена.
+
+**Acceptance Criteria:**
+
+**Given** пустые заглушки `internal/goszakup` и `internal/store/projection`
+**When** определён `Source` (`Name()`, `Fetch(resource, scopeBINs, max, handle)`) — точка swap, сигнатура из `stage0-audit/source.go`
+**Then** go-list: `goszakup` импортируется только из `ingest/decode` (AR-27); токен не нужен
+
+**Given** локальные JSON-дампы `<data-dir>/<resource>.json`
+**When** запущена file-реализация `Source`
+**Then** ресурсы читаются из файлов (как `stage0-audit -source file`), без токена; ows-реализация — Story 2.1
+
+**Given** проекционная граница (AR-4)
+**When** добавлена миграция `lots` (id, announcement_id null, goszakup_lot_id, title_ru/kk, amount, quantity, unit, kato_code; БЕЗ flags/geo) + `internal/store/projection` + sqlc
+**Then** проекция `lots` доступна downstream; проекционная ⊥ кураторская; закрывает Task 0 истории 0.6
+
 ### Story 2.1: Живая граница декодирования ows_v2 + schema_hash
+
+> Сужено Sprint Change Proposal 2026-06-23: строит **ows-реализацию** `Source` (живую, нужен токен) ПОВЕРХ
+> интерфейса из Story 2.0 + `decode`/`schema_hash` из Story 1.10. Интерфейс `Source` и проекцию `lots`
+> заново НЕ определяет.
 
 As a команда,
 I want единый живой вход ows_v2→домен с детектом смены схемы,

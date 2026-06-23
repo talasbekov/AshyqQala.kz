@@ -11,6 +11,10 @@ import (
 type Querier interface {
 	// Читает контракт по публичному natural id (goszakup_contract_id); удалённые скрыты.
 	GetContractByID(ctx context.Context, goszakupContractID string) (Contract, error)
+	// Лот по публичному natural id; удалённые скрыты.
+	GetLotByID(ctx context.Context, goszakupLotID string) (Lot, error)
+	// Идемпотентный UPSERT лота по natural goszakup_lot_id (импортёр перестраивает проекцию; повтор не плодит дубли).
+	UpsertLot(ctx context.Context, arg UpsertLotParams) error
 }
 
 var _ Querier = (*Queries)(nil)

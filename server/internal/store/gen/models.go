@@ -25,3 +25,18 @@ type Contract struct {
 	ImportedAt         pgtype.Timestamptz `json:"imported_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 }
+
+type Lot struct {
+	ID             int64              `json:"id"`
+	GoszakupLotID  string             `json:"goszakup_lot_id"`
+	AnnouncementID pgtype.Int8        `json:"announcement_id"`
+	TitleRu        pgtype.Text        `json:"title_ru"`
+	TitleKk        pgtype.Text        `json:"title_kk"`
+	Amount         pgtype.Int8        `json:"amount"`
+	Quantity       pgtype.Int8        `json:"quantity"`
+	Unit           pgtype.Text        `json:"unit"`
+	KatoCode       pgtype.Text        `json:"kato_code"`
+	IsDeleted      bool               `json:"is_deleted"`
+	ImportedAt     pgtype.Timestamptz `json:"imported_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+}
