@@ -38,13 +38,23 @@ jobs:
         run: go test ./...
         # Story 1.10 добавила (гоняются этим же `go test ./...`): property (median insufficient),
         # golden + contract/schema_hash (decode на дрейф), АРХИТЕКТУРНЫЙ go-list-тест границ ядра
-        # (internal/arch: median/flags/normalize/benchmark не импортируют store/httpapi/goszakup/время).
-        # Остаётся: go test -tags=integration (testcontainers postgis); go-list для tools/scrape — AC2 Story 0.6.
+        # (internal/arch: median/flags/normalize/benchmark не импортируют store/httpapi/goszakup/время;
+        # + AC2 Story 0.6: cmd/api/importer не тянут tools/scrape — TestHotPathDoesNotImportScrape).
+        # Остаётся: go test -tags=integration (testcontainers postgis).
 
       - name: go-list архитектурный страж ядра (без кэша)
         # -count=1 обязателен: результат `exec go list` не входит в инпуты тест-кэша → без него
         # нарушение границы в median/flags/normalize маскируется кэшем (`ok (cached)`). Story 1.10.
         run: go test -count=1 ./internal/arch/...
+
+      - name: scrape build-tag (Story 0.6 — интерим парсер-мост вне дефолтного билда)
+        # Код tools/scrape за `//go:build scrape` → дефолтные build/vet/test/lint его НЕ трогают.
+        # Явно компилируем и гоняем его тесты под тегом, чтобы он не сгнил. Тег integration здесь НЕ
+        # включаем — он требует DATABASE_URL (testcontainers/реальная БД — отдельный прогон).
+        run: |
+          go build -tags scrape ./tools/scrape/...
+          go vet -tags scrape ./tools/scrape/...
+          go test -tags scrape ./tools/scrape/...
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v7 # v7+ требуется для golangci-lint v2.x (v6 = v1 only)

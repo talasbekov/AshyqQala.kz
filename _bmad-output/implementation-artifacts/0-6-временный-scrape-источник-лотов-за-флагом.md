@@ -1,6 +1,10 @@
+---
+baseline_commit: 7cdde03392c464954e4a86b29a14b8bfe9c9517c
+---
+
 # Story 0.6: ⏳ Временный scrape-источник лотов за флагом
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 <!-- ⏳ ВРЕМЕННАЯ история трека «Парсер-мост» (Sprint Change Proposal 2026-06-20). Удаляется/замещается при получении токена (Epic 2 живой импорт). -->
@@ -36,32 +40,32 @@ so that **можно двигаться без `GOSZAKUP_TOKEN`, не выбра
 
 ## Tasks / Subtasks
 
-- [ ] **Task 0 — Предусловие: подтвердить фундамент монорепо (БЛОКЕР, см. «Зависимости»)** *(AC1)*
-  - [ ] Убедиться, что существуют (созданы предыдущими историями): монорепо `server/` (модуль `ashyqqala/server`, Story 1.1), каталог `server/tools/` и `cmd/{api,importer}` (1.1), миграция с **проекцией `lots`** + `internal/store` (Story 1.2 / `migrations/0002_projection`), и пакет **`internal/ingest/decode`** (живая граница декодирования — Story 2.1)
-  - [ ] **Если любого из них нет — HALT** и эскалировать владельцу решение о последовательности (эту историю нельзя реализовать поверх несуществующего монорепо; см. раздел «Зависимости и предусловия»). Не создавать монорепо в рамках этой истории — это скоуп 1.1.
-- [ ] **Task 1 — Перенести парсер в `server/tools/scrape/` за build-tag (AC1, AC2)**
-  - [ ] Перенести логику `stage0-audit/scrape.go` (`scrapeSource`, `parseRows`, `parseMoney`, `astanaKatos`, round-robin по `terms`) в `server/tools/scrape/` как пакет вне продового бинаря
-  - [ ] Поставить **build-tag** (например `//go:build scrape`) + `doc.go` с пометкой «one-off, НЕ прод; §6.1/§6.4» — по образцу целевого дерева (`server/tools/scrape/`)
-  - [ ] Реализовать/переиспользовать `Source` для `scrape` так, чтобы интерфейс совпадал с боевым `internal/goszakup` (`Name()`, `Fetch(resource, scopeBINs, max, handle)`) — это и есть точка swap `scrape → ows`
-- [ ] **Task 2 — Интерим-команда `tools/` с флагом и громким warning (AC1)**
-  - [ ] Создать `tools/`-команду интерим-импорта (отдельный `main` за тем же build-tag, **вне** `cmd/api`/`cmd/importer`)
-  - [ ] Гейт по `ASHYQQALA_INTERIM_SCRAPE=1`: **без флага команда отказывает** (ненулевой exit + сообщение); с флагом — печатает **громкий warning** о временном отклонении §6.1/§6.4 и критерии удаления
-  - [ ] Параметры запуска (КАТО Астаны, `max`, delay для вежливости Nominatim/портала) — переиспользовать дефолты `stage0-audit` (delay вежливости, viewbox)
-- [ ] **Task 3 — Запись scraped-лотов в проекцию `lots` через `ingest/decode` (AC1)**
-  - [ ] Прогнать scraped-записи через `internal/ingest/decode` (тот же вход, что у будущего `ows`), а не писать в БД напрямую — это сохраняет downstream при swap
-  - [ ] Маппинг полей scrape → `lots` (модель данных): `name_ru → title_ru`, `amount → amount`, `ref_kato → kato_code`, `trd_buy_number_anno` → связь с объявлением (объявления нет в парсере → `announcement_id = null`); **отсутствующие поля (`title_kk`, `quantity`, `unit`) = NULL, НЕ выдумывать**
-  - [ ] Идемпотентность записи (UPSERT по натуральному ключу лота) — повторный прогон не плодит дубли
-- [ ] **Task 4 — CI-страж изоляции `tools/scrape` от прода (AC2)**
-  - [ ] Добавить архитектурный go-list-тест (по образцу `ci-server.yml` «АРХИТЕКТУРНЫЙ go-list-тест» / границы `internal/goszakup` импортируется только из `ingest/decode`): проверить, что `cmd/api` и `cmd/importer` НЕ имеют `tools/scrape` в транзитивном графе импортов
-  - [ ] Страж должен быть **red при нарушении** (тест/CI-шаг падает, если импорт появится) — это исполняемая граница, не комментарий
-- [ ] **Task 5 — Обратимость и критерий удаления (AC3)**
-  - [ ] Зафиксировать в `doc.go`/доке: swap `scrape → ows` = один флаг `Source`; downstream неизменен; **критерий удаления** интерим-команды = «получен `GOSZAKUP_TOKEN`»; путь восстановления §6.1/§6.4 — ссылка на Sprint Change Proposal 2026-06-20
-  - [ ] Обновить `docs/ops/` (раздел про интерим-источник) — согласовать с `docs/ops/stage0-access.md` §6
-- [ ] **Task 6 — Тесты и финализация**
-  - [ ] Юнит-тест парсера на **записанной фикстуре HTML** (НЕ живой запрос в тесте): `parseRows`/`parseMoney`/маппинг → `lots` детерминированы
-  - [ ] Тест гейта флага: без `ASHYQQALA_INTERIM_SCRAPE` команда отказывает; с флагом — warning
-  - [ ] Тест идемпотентности декода в `lots` (повторный прогон = без дублей)
-  - [ ] `go build ./...` + go-list-страж зелёные; обновить File List, Change Log, Completion Notes
+- [x] **Task 0 — Предусловие: подтвердить фундамент монорепо (БЛОКЕР, см. «Зависимости»)** *(AC1)* — ✅ **ПРОЙДЕН на HEAD `7cdde03` (Story 2.0)**; прежний HALT (2026-06-22/23 на `b5258b5`) был ДО Story 2.0 и устарел.
+  - [x] Подтверждено на `7cdde03`: монорепо `server/` (`ashyqqala/server`) ✓; `server/tools/scrape/` (`.gitkeep`) ✓; `cmd/{api,importer}` ✓; **проекция `lots`** — `migrations/0003_projection_lots.sql` + `internal/store/projection/lots.go` (`UpsertLot`/`GetLotByID`) + sqlc `gen.UpsertLotParams` ✓; пакет **`internal/ingest/decode`** — `DecodeLot`/`DecodeLotsFrom`/`type Lot` + `SchemaHash` ✓; **`internal/goszakup`** — `type Source` (точка swap) + `FileSource` ✓.
+  - [x] HALT снят: все 4 несущих компонента AC1–AC3 существуют (построены Story 2.0, коммит `7cdde03`). Фундамент в этой истории НЕ создаётся (соблюдён запрет анти-churn).
+- [x] **Task 1 — Перенести парсер в `server/tools/scrape/` за build-tag (AC1, AC2)** — ✅ `scrape.go`
+  - [x] Перенесён `scrapeSource`→`scrape.Source` (`parseRows`/`parseMoney`/round-robin по `terms`) в `server/tools/scrape/` вне продового бинаря. `astanaKatos` НЕ перенесён (в исходном Fetch не использовался — единый код КАТО; убран, чтобы не плодить unused-код/lint).
+  - [x] Build-tag `//go:build scrape` на всех исполняемых файлах + `doc.go` (без тега, «one-off, НЕ прод; §6.1/§6.4», критерий удаления).
+  - [x] `scrape.Source` СТРУКТУРНО удовлетворяет `internal/goszakup.Source` (`Name()`+`Fetch(resource, scopeBINs, max, handle)`) **без импорта goszakup** — точка swap `scrape→ows`.
+- [x] **Task 2 — Интерим-команда `tools/` с флагом и громким warning (AC1)** — ✅ `cmd/interim-import/main.go`
+  - [x] Отдельный `main` за build-tag `scrape`, **вне** `cmd/api`/`cmd/importer`.
+  - [x] Гейт `ASHYQQALA_INTERIM_SCRAPE=1` (строгий «=1»): без флага — отказ (exit 2); с флагом — громкий warning §6.1/§6.4 + критерий удаления. Логика вынесена в `interimEnabled`/`loudWarning` (тестируемо, без сети/БД).
+  - [x] Параметры: `-max`, дефолты вежливости (`politeDelayDefault` 1100мс), `AstanaKATO` — перенос дефолтов `stage0-audit`.
+- [x] **Task 3 — Запись scraped-лотов в проекцию `lots` через `ingest/decode` (AC1)** — ✅
+  - [x] `decode.DecodeLotsFrom(scrapeSrc, hash, max)` → ТОТ ЖЕ decode, что у будущего `ows` (не пишем в БД напрямую) → `projection.LotStore.UpsertLot`.
+  - [x] Маппинг: `name_ru→title_ru`, `amount→amount`, `ref_kato→kato_code`; объявления в парсере нет → `announcement_id=NULL`; отсутствующие `title_kk`/`quantity`/`unit` = NULL (не выдуманы). **Синтетический стабильный `id`** (`scrape-<sha256-16>` из `anno|name`) — портал реального `lot_id` не отдаёт, а `goszakup_lot_id` — `NOT NULL UNIQUE` ключ UPSERT.
+  - [x] Идемпотентность: натуральный ключ детерминирован → повтор не плодит дубли (юнит `TestSyntheticLotID_Stable` + интеграционный `TestScrapeIdempotency_Integration`).
+- [x] **Task 4 — CI-страж изоляции `tools/scrape` от прода (AC2)** — ✅ `internal/arch/boundaries_test.go`
+  - [x] `TestHotPathDoesNotImportScrape`: `go list -deps` cmd/api & cmd/importer НЕ содержат `tools/scrape` (транзитивно). Гоняется существующим CI-шагом `go test -count=1 ./internal/arch/...`.
+  - [x] Red при нарушении ДОКАЗАН: временный `import _ tools/scrape` в `cmd/importer` → FAIL; восстановлено → green. Чистый предикат `importsScrape` + negative-control `TestImportsScrape` (см. [[guards-must-prove-red]]).
+- [x] **Task 5 — Обратимость и критерий удаления (AC3)** — ✅
+  - [x] Зафиксировано в `doc.go` + `docs/ops/interim-scrape-bridge.md`: swap `scrape→ows` = один флаг `Source`; downstream неизменен; критерий удаления = «получен `GOSZAKUP_TOKEN`»; путь восстановления §6.1/§6.4 → Sprint Change Proposal 2026-06-20.
+  - [x] `docs/ops/interim-scrape-bridge.md` создан, согласован с `docs/ops/stage0-access.md` §6 (потолок: lots-only, keyword-bias).
+- [x] **Task 6 — Тесты и финализация** — ✅
+  - [x] Юнит-тесты парсера на **записанной HTML-фикстуре** (`testdata/search-result.html`, без сети): `parseRows`/`parseMoney`/маппинг/дедуп детерминированы; `schema_hash`-golden (контракт scrape→decode).
+  - [x] Тест гейта флага (`TestInterimEnabled_GateRequiresFlag`) + warning (`TestLoudWarning_…`).
+  - [x] Тест идемпотентности в `lots` (`//go:build scrape && integration`, skip без `DATABASE_URL`).
+  - [x] `go build/vet/test/gofmt` (дефолт + `-tags scrape`) зелёные; go-list-страж зелёный; CI-шаг `-tags scrape` добавлен; File List/Change Log/Completion Notes обновлены.
 
 ## Dev Notes
 
@@ -243,20 +247,37 @@ claude-opus-4-8[1m] (Claude Opus 4.8, 1M context) — dev-story workflow.
   - `server/internal/goszakup/doc.go` — заглушка; `grep "type Source"` по `server/internal/` → не найдено. 🔴 точка swap не существует.
   - `server/internal/store/projection/doc.go` — заглушка. 🔴
   - `server/tools/scrape/` — только `.gitkeep`. HEAD репо — `b5258b5`, рабочее дерево чистое.
+- Task 0 (третья проверка, 2026-06-23 ПОСЛЕ Story 2.0, HEAD `7cdde03`): ✅ ВСЁ НА МЕСТЕ.
+  - `migrations/0003_projection_lots.sql` — `CREATE TABLE lots` (`goszakup_lot_id NOT NULL UNIQUE`, ключ UPSERT). ✓
+  - `server/internal/store/projection/lots.go` — `LotStore.UpsertLot`/`GetLotByID` (+ sqlc `gen.UpsertLotParams`, `queries/lots.sql`). ✓
+  - `server/internal/ingest/decode/{decode,lots}.go` — `SchemaHash`/`DecodeLot`/`DecodeLotsFrom`/`type Lot`. ✓
+  - `server/internal/goszakup/{source,file_source}.go` — `type Source` + `FileSource`. ✓
+  - Реализация: `go build/vet/test/gofmt` (дефолт) зелёные; `-tags scrape` build/vet/test зелёные; `go test -count=1 ./internal/arch/...` зелёный; red-способность AR-27-стража scrape доказана (внедрён импорт в `cmd/importer` → FAIL → откат → green). `schema_hash` scrape = `548e4755…3af5ca9` (golden).
 
 ### Completion Notes List
 
-- **⛔ HALT на Task 0 (предусловие).** Скелет монорепо (Story 1.1, done) есть, но три из четырёх несущих компонентов AC1–AC3 — пустые заглушки/отсутствуют:
-  - проекция `lots` (миграция + `internal/store`) — НЕ создана (Story 1.2 сделала только `contracts`; `lots` отложена в Epic 2 / B-3);
-  - `internal/ingest/decode` — пустой `doc.go` (Story 2.1, backlog);
-  - `internal/goszakup` `Source` (точка swap `scrape → ows`) — пустой `doc.go` (Story 2.1, backlog).
-- Реализовать перенос парсера + интерим-импорт + маппинг в `lots` через `ingest/decode` НЕВОЗМОЖНО, пока нет проекции `lots`, decode-границы и интерфейса `Source`. История подтверждённо сидит downstream фундамента Epic 1 (1.2) и Epic 2 (2.1).
-- **Гардрейл соблюдён:** проекцию `lots`/миграции (скоуп 1.2/Epic 2) и `ingest/decode`+`Source` (скоуп 2.1) в рамках этой истории НЕ создаю — это прямой запрет Task 0 и раздела «Зависимости» (дублирование сломало бы анти-churn структуру). Честность над домыслом: не имитирую несуществующие пакеты.
-- **Эскалация владельцу — решение о последовательности.** Реалистичный путь (как и предсказывала сама история): сначала проекция `lots` (расширение Story 1.2 / Epic 2 B-3) + минимальные `internal/ingest/decode` и интерфейс `Source` (Story 2.1), затем 0.6.
+- **РЕАЛИЗОВАНО (AC1–AC3 закрыты; HALT снят).** Прежний Task-0-HALT (2026-06-22/23 на `b5258b5`) был ДО Story 2.0. На HEAD `7cdde03` (Story 2.0) фундамент существует: проекция `lots` (миграция 0003 + `projection.LotStore`/sqlc), `internal/ingest/decode` (`DecodeLot`/`DecodeLotsFrom`/`SchemaHash`), `internal/goszakup.Source`+`FileSource`. Предусловие перепроверено фактически и пройдено. Юр-блокер §6.1/§6.4 снят владельцем 2026-06-23.
+- **AC1** — интерим-команда `cmd/interim-import` за флагом `ASHYQQALA_INTERIM_SCRAPE=1` (без флага exit 2) + громкий warning §6.1/§6.4; пишет scraped-лоты в `lots` через **тот же** `ingest/decode`, что и боевой ows. Логика гейта/варнинга тестируема (`interimEnabled`/`loudWarning`).
+- **AC2** — изоляция парсера НЕСУЩАЯ: весь `tools/scrape` за `//go:build scrape` (вне дефолтного билда). `internal/arch.TestHotPathDoesNotImportScrape` доказывает машинно, что `cmd/api`/`cmd/importer` не тянут `tools/scrape` (`.Deps`, транзитивно); **red-способность доказана** (внедрил импорт в importer → FAIL → восстановил). CI-шаг `go test -count=1 ./internal/arch/...` уже это гоняет.
+- **AC3** — обратимость: `scrape.Source` структурно совместим с `goszakup.Source` (swap = один флаг, downstream `decode→lots→geo→map` неизменен); критерий удаления (`получен GOSZAKUP_TOKEN`) и путь восстановления §6.1/§6.4 — в `doc.go` + `docs/ops/interim-scrape-bridge.md`.
+- **Решения дева (латитюд):** (1) **синтетический стабильный `id`** (`scrape-<sha256(anno|name)[:16]>`) — портал не отдаёт `lot_id`, а `goszakup_lot_id` = `NOT NULL UNIQUE` ключ UPSERT; стабильность ключа = идемпотентность. (2) scrape эмитит decode-совместимые записи (+синтет.`id`) → `schema_hash` зафиксирован golden-тестом (дрейф полей → `ErrSchemaDrift`). (3) `astanaKatos` не перенесён (в исходном `Fetch` не использовался; убран ради чистого lint). (4) CI гоняет `tools/scrape` явным `-tags scrape`-шагом (иначе тег-код не компилируется в дефолтном CI).
+- **Гардрейлы:** честность — отсутствующие поля (`title_kk`/`quantity`/`unit`/договор) → NULL, не выдуманы; keyword-bias выборки задокументирован («предв.»); только лоты (иные ресурсы → честная ошибка). Фундамент (1.2/2.1) НЕ дублировался.
+- **Не выполнено в этой среде (требует внешних ресурсов):** живой прогон парсера против портала (сеть + вежливость) и интеграционный тест в реальной БД (`-tags 'scrape integration'`, нужен `DATABASE_URL`+миграции). Оба компилируются/скипаются чисто; идемпотентность ключа покрыта детерминированным юнит-тестом.
 
 ### File List
 
-- (изменений кода нет) `_bmad-output/implementation-artifacts/0-6-временный-scrape-источник-лотов-за-флагом.md` — заполнены Dev Agent Record (Task 0 HALT) и Change Log.
+- `server/tools/scrape/doc.go` — **новый.** Пакетная док-строка (без build-tag): §6.1/§6.4, изоляция, обратимость, критерий удаления, потолок.
+- `server/tools/scrape/scrape.go` — **новый** (`//go:build scrape`). Перенос парсера: `Source` (структурно = `goszakup.Source`), `parseRows`/`parseMoney`/`cellText`/`get`, синтетический `syntheticLotID`, `RecordKeys`, `AstanaKATO`.
+- `server/tools/scrape/scrape_test.go` — **новый** (`//go:build scrape`). Парсер на HTML-фикстуре, стабильность ключа, `parseMoney`, `schema_hash`-golden, scrape→`DecodeLot` round-trip.
+- `server/tools/scrape/testdata/search-result.html` — **новый.** Записанная фикстура страницы `/search/lots` (детерминизм, без сети).
+- `server/tools/scrape/cmd/interim-import/main.go` — **новый** (`//go:build scrape`). Интерим-команда: гейт-флаг + warning + scrape→decode→`UpsertLot`; `interimEnabled`/`loudWarning`/`toParams`.
+- `server/tools/scrape/cmd/interim-import/main_test.go` — **новый** (`//go:build scrape`). Тест гейта флага + содержимого warning.
+- `server/tools/scrape/idempotency_integration_test.go` — **новый** (`//go:build scrape && integration`). Идемпотентность в БД (skip без `DATABASE_URL`).
+- `server/internal/arch/boundaries_test.go` — изменён: `TestHotPathDoesNotImportScrape` (AC2) + чистый предикат `importsScrape` + negative-control `TestImportsScrape`.
+- `.github/workflows/ci-server.yml` — изменён: шаг `scrape build-tag` (`go build/vet/test -tags scrape ./tools/scrape/...`); обновлён комментарий go-list-стража (AC2).
+- `docs/ops/interim-scrape-bridge.md` — **новый.** Операционная инструкция: флаг, warning, запуск, тесты, критерий удаления, обратимость; согласован со `stage0-access.md` §6.
+- `_bmad-output/implementation-artifacts/0-6-…md` — изменён: frontmatter `baseline_commit`, Task 0–6 чекбоксы, Dev Agent Record, File List, Change Log, Status → review.
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` — изменён: статус `ready-for-dev → in-progress → review`.
 
 ## Change Log
 
@@ -265,3 +286,36 @@ claude-opus-4-8[1m] (Claude Opus 4.8, 1M context) — dev-story workflow.
 | 2026-06-21 | Создан context engine для Story 0.6 (трек «Парсер-мост»). Исчерпывающий анализ: epics 0.6–0.9, architecture (отклонение + целевое дерево + границы), модель данных `lots`, код `stage0-audit/scrape.go`+`source.go`, предыдущие истории 0.1/0.2 + Sprint Change Proposal. **Зафиксирован критичный блокер:** AC1–AC3 зависят от ещё не созданного монорепо (Story 1.1 скелет, 1.2 проекция `lots`+sqlc, 2.1 `ingest/decode`) — Task 0 = предусловие/HALT + эскалация владельцу по последовательности. Статус → ready-for-dev. |
 | 2026-06-22 | Запуск dev-story. **Task 0 (предусловие) — HALT.** Проверено фактическое состояние репо: скелет монорепо (Story 1.1, done) есть, но проекция `lots` (миграция + store), `internal/ingest/decode` и `internal/goszakup` `Source` — пустые заглушки/отсутствуют (1.2 сделала только `contracts`; `lots` → TODO Epic 2/B-3; `ingest/decode`+`Source` → скоуп Story 2.1, backlog). Историю нельзя реализовать поверх несуществующего фундамента; создавать его здесь запрещено (чужой скоуп 1.2/2.1, анти-churn). Эскалировано владельцу: решить последовательность (сначала проекция `lots` + Story 2.1, затем 0.6). Статус остаётся ready-for-dev (реализация не начата). |
 | 2026-06-23 | Повторный запуск dev-story (перенаправлен с заблокированной на токене Story 0-1). **Task 0 (предусловие) — HALT сохраняется.** Фактическое состояние перепроверено и БЕЗ ИЗМЕНЕНИЙ: `0002_projection.sql` — только `contracts` (`lots` = TODO стр. 23–25); `ingest/decode`, `goszakup` `Source`, `store/projection` — заглушки `doc.go`; `tools/scrape/` — только `.gitkeep`. Три из четырёх несущих компонентов AC1–AC3 отсутствуют. Создавать фундамент в этой истории запрещено (скоуп 1.2/Epic 2 B-3 и 2.1; анти-churn). Статус остаётся ready-for-dev (реализация не начата). Эскалация владельцу: блокер 0-6 — не токен, а ПОСЛЕДОВАТЕЛЬНОСТЬ — нужен фундамент (проекция `lots` + минимальные `ingest/decode` и `Source`) до старта парсер-моста. |
+| 2026-06-23 | **dev-story (после Story 2.0): HALT снят, реализовано.** `baseline_commit=7cdde03`. Task 0 перепроверен фактически: фундамент построен Story 2.0 (проекция `lots`+`LotStore`, `decode.DecodeLot`/`SchemaHash`, `goszakup.Source`+`FileSource`) → предусловие пройдено. Юр-блокер §6.1/§6.4 снят владельцем. Реализованы Task 1–6: перенос парсера в `server/tools/scrape/` за `//go:build scrape` (структурно = `goszakup.Source`, синтетический стабильный `id`); интерим-команда `cmd/interim-import` (гейт `ASHYQQALA_INTERIM_SCRAPE=1` + warning §6.1/§6.4); scrape→ЕДИНЫЙ `ingest/decode`→`UpsertLot` (schema_hash-golden); CI-страж изоляции `TestHotPathDoesNotImportScrape` (red-способность доказана) + negative-control; doc.go + `docs/ops/interim-scrape-bridge.md` (обратимость/критерий удаления); HTML-фикстура + юнит-тесты + интеграционный (skip без `DATABASE_URL`); CI-шаг `-tags scrape`. Дефолт `go build/vet/test/gofmt` + `-tags scrape` + `-count=1 ./internal/arch/...` — зелёные. AC1–AC3 закрыты. Статус → review. |
+
+### Change Log (доп.)
+
+| Дата | Изменение |
+|---|---|
+| 2026-06-23 | Code review (3 слоя). Все AC1–AC3 MET (Acceptance Auditor: accept). Применены 6 patch: честность `parseMoney`→nil/NULL (не 0); `io.ReadAll`-ошибка не глотается; fail-fast `Ping` БД; синтет.`id` 64→128 бит; regex-якорь `\sid=`; golden negative-control + comma-ok. 4 defer → `deferred-work.md` (слабый ключ при пустом anno, regex-хрупкость, точность amount→2.1, неатомарный импорт). ~6 dismissed (AC2-«vacuity» — false-positive: страж краснеет правильно). Все проверки зелёные. **Статус → done.** |
+
+## Review Findings (Code Review — 2026-06-23)
+
+> Адверсариальное ревью (3 слоя). Все AC (AC1–AC3) и гардрейлы — **MET** (Acceptance Auditor подтвердил, red-способность AC2-стража перепроверена). 6 patch, 4 defer, ~6 dismissed.
+
+### Patch (все 6 применены 2026-06-23 — build/vet/test/gofmt дефолт + `-tags scrape` + `-count=1 arch` зелёные)
+
+- [x] [Review][Patch] **Честность:** `parseMoney→(float64,bool)`; `parseRows` эмитит `"amount": nil` при `!ok` (ключ остаётся → schema_hash стабилен; `decode`→NULL, не 0). Тест `TestParseRows_UnparseableAmount_NULL` доказывает: `"-"`→NULL, не 0 ✅ [server/tools/scrape/scrape.go]
+- [x] [Review][Patch] `io.ReadAll` ошибка больше не проглочена — возвращается `fmt.Errorf("чтение тела…")` ✅ [server/tools/scrape/scrape.go]
+- [x] [Review][Patch] fail-fast `pool.Ping` (5s) ДО scrape — коннект-фейл БД не дёргает портал зря (зеркалит `cmd/api`) ✅ [server/tools/scrape/cmd/interim-import/main.go]
+- [x] [Review][Patch] синтетический `id` расширен 16→32 hex (64→128 бит) — birthday-коллизия исчезающе мала ✅ [server/tools/scrape/scrape.go]
+- [x] [Review][Patch] regex привязан `\sid="search-result"` — не матчит `data-id="search-result"` (фикстура по-прежнему парсится) ✅ [server/tools/scrape/scrape.go]
+- [x] [Review][Patch] golden `schema_hash` negative-control `TestScrapeSchemaHash_RedOnDrift` (±1 поле → иной хеш) + `comma-ok` type-assert в тесте ✅ [server/tools/scrape/scrape_test.go]
+
+### Defer
+
+- [x] [Review][Defer] слабый synthetic key при пустом `anno` (две разные строки с одинаковым `name` → коллизия/тихий drop) — присущая tokenless-ограниченность; `ows` `lot_id` решает при swap (критерий удаления) [server/tools/scrape/scrape.go] — deferred → Story 2.1/ows-swap
+- [x] [Review][Defer] regex-HTML хрупкость (вложенная `</table>` усекает захват; преждевременный `exhausted` при странице из дублей) — присуще regex-скрейпингу; ows API решает [server/tools/scrape/scrape.go] — deferred → ows-swap
+- [x] [Review][Defer] точность `amount` (`int64(float64)`-усечение копеек / `>2^53`) — сворачивается в существующий defer «decode value-robustness → Story 2.1» [server/tools/scrape/scrape.go] — deferred → Story 2.1
+- [x] [Review][Defer] неатомарный импорт в БД (UpsertLot в цикле без транзакции; повтор идемпотентен по ключу) — приемлемо для интерим-тула [server/tools/scrape/cmd/interim-import/main.go] — deferred, документировано
+
+### Dismissed (false-positive / by-design / out-of-scope)
+
+- AC2-страж «vacuity / go list error» — **FALSE POSITIVE**: `doc.go` без build-tag → страж краснеет ПРАВИЛЬНЫМ сообщением (доказано: внедрён импорт в importer → boundary-FAIL, не go-list-ошибка).
+- `strings.FieldsSeq` Go-floor — `go 1.25` (go.mod), уже используется в репо (Story 1.10).
+- `maxPages` кап «unlimited» — намеренная защитная граница. · дубль `toParams`/`toScrapeParams` — кросс-пакетный, test-only. · `announcement_id` NULL — по спеке (таблицы объявлений нет). · stdout русская проза не JSON — интерим-тул без потребителя; stderr/stdout split корректен.
