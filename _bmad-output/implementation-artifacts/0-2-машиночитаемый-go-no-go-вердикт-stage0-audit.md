@@ -4,7 +4,7 @@ baseline_commit: 796bd548f2f033d33b2de3c6870b7e4a100eeca6
 
 # Story 0.2: Машиночитаемый Go/No-Go-вердикт stage0-audit
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -406,3 +406,26 @@ claude-opus-4-8[1m] (Claude Opus 4.8, 1M context) — dev-story workflow.
 | Дата | Изменение |
 |---|---|
 | 2026-06-20 | Старт dev-story: история in-progress, зафиксирован `baseline_commit` (`796bd54`). TDD: написан `verdict_test.go` (red) → реализован `verdict.go` (green). Добавлен JSON-вердикт (`-format json`), exit-код для CI (`-gate`/json-авто), baseline-артефакт (`-verdict-out`/`-verdict-date`). 11/11 тестов PASS; `go build/vet/test/gofmt` зелёные. AC1–AC3 закрыты на фикстурах. README дополнен CI-контрактом; закоммичен пример-артефакт `docs/ops/stage0-verdict-20260620.json`. Открытые вопросы Q1–Q6 приняты по рекомендациям. Статус → review. |
+| 2026-06-23 | Code review (адверсариальный, 3 слоя: Blind / Edge Case / Acceptance). AC1–AC3 и гардрейлы подтверждены **MET**; `go build/vet/test/gofmt` перепроверены — зелёные; `GeoGate=0.70` дефолт подтверждён. Найдено: 1 decision-needed (`generated_at` vs «байт-в-байт»), 5 patch, 1 defer (провенанс fallback → Story 0.4), ~11 dismissed (false-positive / by-design / out-of-scope). См. «Review Findings». |
+| 2026-06-23 | Применены все 6 патчей ревью: D1 → пин `generated_at` через `-verdict-date` (вариант b, решение владельца); валидация `-verdict-date` (anti-traversal); warning при `-verdict-out` в text; защитный клэмп `0≤successes≤n`; `writeVerdictArtifact` возвращает путь; `const DefaultGeoGate` + 2 новых теста (`TestDefaultGeoGate`, `TestDeriveVerdict_geoMeasuredCompound`). README синхронизирован. 7 тест-функций PASS; build/vet/gofmt зелёные; поведение проверено e2e. Defer (провенанс fallback) → `deferred-work.md` / Story 0.4. **Статус → done.** |
+
+## Review Findings (Code Review — 2026-06-23)
+
+> Источник диффа: `796bd54..HEAD`, scoped к File List (изменения 0.2 закоммичены в `cedd1ce`). Слои: Blind Hunter (только дифф), Edge Case Hunter (дифф + проект), Acceptance Auditor (дифф + спека). Все AC (AC1–AC3) и несущие гардрейлы — **MET**; `go build/vet/test/gofmt` — зелёные.
+
+### Decision-needed
+
+- [x] [Review][Decision] `generated_at` ломает «байт-в-байт» baseline (`stage0-audit/verdict.go:45`, `stage0-audit/main.go:181`). **РЕШЕНО владельцем 2026-06-23: вариант (b)** — пинить `generated_at` через `-verdict-date` (override управляет и именем, и временем; без override = `time.Now()`). → переведено в Patch (P6).
+
+### Patch (все применены 2026-06-23 — `go build/vet/test/gofmt` зелёные, поведение проверено e2e)
+
+- [x] [Review][Patch] (из D1) `generated_at` пинится через `-verdict-date` — добавлена `generatedAtFor()` (полночь Астаны +05:00 для заданной даты); проверено: два прогона `-verdict-date 20260620` байт-идентичны, пример-артефакт обновлён на `2026-06-20T00:00:00+05:00` ✅ [stage0-audit/main.go]
+- [x] [Review][Patch] `-verdict-out` в text-режиме → предупреждение в stderr, артефакт не пишется (проверено e2e) ✅ [stage0-audit/main.go]
+- [x] [Review][Patch] `-verdict-date` валидируется строго `time.Parse("20060102")` — режет `../` traversal и битые даты (`20261332`) → exit 2 (проверено e2e) ✅ [stage0-audit/main.go]
+- [x] [Review][Patch] защитный клэмп `0≤successes≤n` в `wilsonInterval` + ветке coverage `deriveVerdict` (нет NaN→exit 2, нет `cov>1`-ложного-go); тест `wilsonInterval(10,5)` без NaN ✅ [stage0-audit/verdict.go]
+- [x] [Review][Patch] `writeVerdictArtifact` теперь возвращает итоговый путь — убран второй `resolveVerdictPath`/`os.Stat` в лог-строке ✅ [stage0-audit/main.go]
+- [x] [Review][Patch] тест-хардненинг: `const DefaultGeoGate=0.70` (единый источник, `main()`+тесты ссылаются на него); `TestDefaultGeoGate` (дефолт + связь с фикстурами); `TestDeriveVerdict_geoMeasuredCompound` (обе ветки `geoMeasured` + граница n=3) ✅ [stage0-audit/verdict.go, verdict_test.go]
+
+### Defer
+
+- [x] [Review][Defer] `-allow-fallback`: артефакт `go_with_fallback` без поля провенанса владельца/sign-off [stage0-audit/verdict.go:175-180] — deferred, по спеке (Q1) владелец+дата фиксируются в Story 0.4

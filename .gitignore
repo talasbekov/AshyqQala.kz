@@ -8,6 +8,9 @@
 *.so
 *.dylib
 
+# Compiled stage0-audit CLI (Go default output name == dir name; ELF, no extension)
+stage0-audit/stage0-audit
+
 # Test binary, built with `go test -c`
 *.test
 

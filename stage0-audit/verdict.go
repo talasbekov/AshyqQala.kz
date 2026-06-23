@@ -11,6 +11,13 @@ import (
 // [Source: data_model §0/§2 — methodology_params версионируем-иммутабелен; architecture.md:108,124–127]
 const MethodologyVersion = "stage0-1.0"
 
+// DefaultGeoGate — дефолтный порог Go/No-Go автопокрытия гео (coverage ≥ 0.70 → go).
+// Пинится methodology_version (см. выше): смена значения = смена методики → ОБЯЗАН расти
+// MethodologyVersion. Единственный источник дефолта — main() и тесты ссылаются сюда, а не
+// дублируют литерал 0.70 (иначе дрейф дефолта пройдёт мимо тестов).
+// [Source: runbook ≥70%; architecture.md:170]
+const DefaultGeoGate = 0.70
+
 // wilsonZ95 — z-квантиль нормального распределения для 95% доверительного интервала.
 const wilsonZ95 = 1.96
 
@@ -101,6 +108,15 @@ func wilsonInterval(successes, n int, z float64) (lo, hi float64) {
 	if n <= 0 {
 		return 0, 1
 	}
+	// Защитный клэмп инварианта 0 ≤ successes ≤ n. При нарушении (баг счётчика выше по стеку)
+	// phat>1 → отрицательная дисперсия → math.Sqrt(NaN) → ci=NaN → json.Marshal ПАДАЕТ (exit 2).
+	// Клэмпим, чтобы не ронять машинный контракт; инвариант в норме держится (success ≤ attempted).
+	if successes < 0 {
+		successes = 0
+	}
+	if successes > n {
+		successes = n
+	}
 	nf := float64(n)
 	phat := float64(successes) / nf
 	z2 := z * z
@@ -149,8 +165,17 @@ func deriveVerdict(r Report, cfg Config, opts verdictOpts) (Verdict, int) {
 	}
 	geoMeasured := r.geocodeEnabled && r.geocodeAttempted >= minGeoSample
 	if geoMeasured {
-		cov := round4(float64(r.geocodeSuccess) / float64(r.geocodeAttempted))
-		lo, hi := wilsonInterval(r.geocodeSuccess, r.geocodeAttempted, wilsonZ95)
+		// Тот же защитный клэмп 0 ≤ successes ≤ attempted, что и в wilsonInterval: иначе
+		// cov>1 прошёл бы гейт как ложный «go». В норме инвариант держится.
+		succ := r.geocodeSuccess
+		if succ < 0 {
+			succ = 0
+		}
+		if succ > r.geocodeAttempted {
+			succ = r.geocodeAttempted
+		}
+		cov := round4(float64(succ) / float64(r.geocodeAttempted))
+		lo, hi := wilsonInterval(succ, r.geocodeAttempted, wilsonZ95)
 		oq4.Coverage = ptr(cov)
 		oq4.CILower = ptr(round4(lo))
 		oq4.CIUpper = ptr(round4(hi))

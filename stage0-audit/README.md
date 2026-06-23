@@ -70,8 +70,10 @@ go run . -geocoder nominatim -format json -verdict-out ../docs/ops/ || echo "No-
   Directus; доступно ТОЛЬКО через `-allow-fallback`, не выдаётся автоматически.
 - `methodology_version` пинит формулу+пороги: внешний пересчёт по тем же входам даёт тот же вердикт.
 
-Флаги вердикта: `-format` (`text|json`), `-verdict-out` (файл/каталог), `-verdict-date`
-(override `YYYYMMDD` для имени), `-allow-fallback`, `-gate`.
+Флаги вердикта: `-format` (`text|json`), `-verdict-out` (файл/каталог; артефакт пишется
+**только в `-format json`** — в text-режиме флаг игнорируется с предупреждением), `-verdict-date`
+(override `YYYYMMDD` — задаёт и имя файла, и `generated_at` для **байт-стабильного**
+регенерируемого baseline; валидируется строго как `YYYYMMDD`), `-allow-fallback`, `-gate`.
 
 > Авторитетный **живой** baseline (на токене ows_v2) коммитит **Story 0.3**. Пример-артефакт на
 > синтетических фикстурах — `docs/ops/stage0-verdict-20260620.json` (честный `data_source: file`).

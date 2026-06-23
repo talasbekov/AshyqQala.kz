@@ -60,7 +60,7 @@ func main() {
 		RequestDelay:      time.Duration(*delayMs) * time.Millisecond,
 		MinSample:         5,
 		MinGroupContracts: 5,
-		GeoGate:           0.70,
+		GeoGate:           DefaultGeoGate,
 		MonopolyShare:     0.5,
 		DeviationFactor:   1.5,
 		GeocoderKind:      *geocoder,
@@ -103,6 +103,15 @@ func main() {
 		diag = os.Stderr
 	}
 
+	// Валидируем -verdict-date (если задан) как строго YYYYMMDD — режет битое имя артефакта
+	// и обход каталога (../) в имени. time.Parse проверяет 8 цифр + диапазоны месяца/дня.
+	if *verdictDate != "" {
+		if _, err := time.Parse("20060102", *verdictDate); err != nil {
+			fmt.Fprintf(os.Stderr, "ОШИБКА: -verdict-date %q не в формате YYYYMMDD\n", *verdictDate)
+			os.Exit(2)
+		}
+	}
+
 	bins := splitBins(*custBins)
 	fmt.Fprintln(diag, "AshyqQala.kz — аудит данных goszakup (Этап 0)")
 	fmt.Fprintf(diag, "source=%s  окно=%dмес  sample=%d  customerBins=%d\n\n", src.Name(), cfg.WindowMonths, cfg.Sample, len(bins))
@@ -127,7 +136,7 @@ func main() {
 	opts := verdictOpts{
 		allowFallback: *allowFallback,
 		dataSource:    src.Name(),
-		generatedAt:   time.Now().Format(time.RFC3339),
+		generatedAt:   generatedAtFor(*verdictDate),
 	}
 	v, code := deriveVerdict(rep, cfg, opts)
 
@@ -140,19 +149,37 @@ func main() {
 		out := string(b) + "\n"
 		fmt.Print(out) // чистый JSON на stdout
 		if *verdictOut != "" {
-			if err := writeVerdictArtifact(*verdictOut, *verdictDate, out); err != nil {
+			path, err := writeVerdictArtifact(*verdictOut, *verdictDate, out)
+			if err != nil {
 				fmt.Fprintln(os.Stderr, "ОШИБКА записи артефакта:", err)
 				os.Exit(2)
 			}
-			fmt.Fprintf(diag, "baseline-артефакт записан: %s\n", resolveVerdictPath(*verdictOut, artifactDate(*verdictDate)))
+			fmt.Fprintf(diag, "baseline-артефакт записан: %s\n", path)
 		}
 		os.Exit(code) // json гейтит всегда (AC2): no_go → exit 1
 	}
 
+	// В text-режиме артефакт не пишется (он JSON) — не молчать, если -verdict-out всё же задан.
+	if *verdictOut != "" {
+		fmt.Fprintln(os.Stderr, "[warn] -verdict-out игнорируется в text-режиме: baseline-артефакт пишется только при -format json")
+	}
 	rep.print(cfg)
 	if *gate {
 		os.Exit(code) // text-режим гейтит только по явному -gate (обратная совместимость)
 	}
+}
+
+// generatedAtFor — метка времени для артефакта. Если задан -verdict-date (YYYYMMDD, уже
+// провалидирован) → ДЕТЕРМИНИРОВАННАЯ полночь Астаны (+05:00) этой даты, чтобы регенерируемый
+// baseline был байт-стабилен (чистый git-diff). Без override — текущее время (провенанс прогона).
+func generatedAtFor(verdictDate string) string {
+	if verdictDate != "" {
+		if t, err := time.Parse("20060102", verdictDate); err == nil {
+			astana := time.FixedZone("UTC+5", 5*60*60)
+			return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, astana).Format(time.RFC3339)
+		}
+	}
+	return time.Now().Format(time.RFC3339)
 }
 
 // artifactDate — дата для имени артефакта: override или сегодня (YYYYMMDD).
@@ -165,9 +192,13 @@ func artifactDate(override string) string {
 
 // writeVerdictArtifact пишет JSON вердикта БАЙТ-в-байт идентично stdout (тот же
 // MarshalIndent + финальный \n) — пригодно для коммита как baseline под docs/ops/.
-func writeVerdictArtifact(out, dateOverride, content string) error {
+// Возвращает итоговый путь, чтобы вызывающий не пере-резолвил его повторно (один os.Stat).
+func writeVerdictArtifact(out, dateOverride, content string) (string, error) {
 	path := resolveVerdictPath(out, artifactDate(dateOverride))
-	return os.WriteFile(path, []byte(content), 0o644)
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		return "", err
+	}
+	return path, nil
 }
 
 // resolveVerdictPath: если out — существующий каталог / оканчивается разделителем /

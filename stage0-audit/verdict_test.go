@@ -7,13 +7,52 @@ import (
 	"testing"
 )
 
-// baseCfg — пороги, как в main() (config.go дефолты). GeoGate — несущий гейт (AC2).
+// baseCfg — пороги, как в main(). GeoGate берётся из DefaultGeoGate (единый источник), а НЕ из
+// дубля-литерала 0.70, иначе тесты остались бы зелёными при дрейфе продакшн-дефолта.
 func baseCfg() Config {
-	return Config{GeoGate: 0.70, MinSample: 5, MinGroupContracts: 5, WindowMonths: 24}
+	return Config{GeoGate: DefaultGeoGate, MinSample: 5, MinGroupContracts: 5, WindowMonths: 24}
 }
 
 func baseOpts() verdictOpts {
 	return verdictOpts{generatedAt: "2026-06-20T00:00:00+05:00", dataSource: "file:test"}
+}
+
+// TestDefaultGeoGate — регресс-страж дефолта гейта (B3): порог 0.70 пинится methodology_version;
+// смена значения = смена методики. Также проверяем, что фикстуры тестов совпадают с дефолтом —
+// чтобы изменение продакшн-дефолта НЕ прошло мимо зелёных тестов.
+func TestDefaultGeoGate(t *testing.T) {
+	if DefaultGeoGate != 0.70 {
+		t.Fatalf("DefaultGeoGate = %v, методика пинит 0.70 (сменил порог? обнови MethodologyVersion)", DefaultGeoGate)
+	}
+	if baseCfg().GeoGate != DefaultGeoGate {
+		t.Fatalf("baseCfg().GeoGate=%v ≠ DefaultGeoGate=%v — фикстуры тестов разошлись с дефолтом", baseCfg().GeoGate, DefaultGeoGate)
+	}
+}
+
+// TestDeriveVerdict_geoMeasuredCompound — обе ветки составного условия geoMeasured
+// (geocodeEnabled И attempted ≥ minGeoSample) проверяются НЕЗАВИСИМО (в table-тесте enabled
+// выводится из attempted>0, поэтому ветки там не разделены). Плюс граница n == minGeoSample.
+func TestDeriveVerdict_geoMeasuredCompound(t *testing.T) {
+	cfg := baseCfg()
+	// enabled=false, но attempted≥3 → НЕ measured (честный insufficient, не выдаём долю за замер).
+	r1 := Report{geocodeEnabled: false, geocodeAttempted: 50, geocodeSuccess: 45}
+	v1, exit1 := deriveVerdict(r1, cfg, baseOpts())
+	if v1.OQ4GeoCoverage.State != stateInsufficient || v1.OQ4GeoCoverage.Coverage != nil || exit1 != 1 {
+		t.Errorf("enabled=false,attempted=50: хотим insufficient/null/exit1, got state=%q cov=%v exit=%d",
+			v1.OQ4GeoCoverage.State, v1.OQ4GeoCoverage.Coverage, exit1)
+	}
+	// enabled=true, attempted=2 (< minGeoSample) → НЕ measured.
+	r2 := Report{geocodeEnabled: true, geocodeAttempted: 2, geocodeSuccess: 2}
+	v2, exit2 := deriveVerdict(r2, cfg, baseOpts())
+	if v2.OQ4GeoCoverage.State != stateInsufficient || exit2 != 1 {
+		t.Errorf("enabled=true,attempted=2: хотим insufficient/exit1, got state=%q exit=%d", v2.OQ4GeoCoverage.State, exit2)
+	}
+	// enabled=true, attempted=3 (== minGeoSample, граница) → measured, coverage не null.
+	r3 := Report{geocodeEnabled: true, geocodeAttempted: 3, geocodeSuccess: 3}
+	v3, _ := deriveVerdict(r3, cfg, baseOpts())
+	if v3.OQ4GeoCoverage.State != stateOK || v3.OQ4GeoCoverage.Coverage == nil {
+		t.Errorf("enabled=true,attempted=3: хотим ok/число, got state=%q cov=%v", v3.OQ4GeoCoverage.State, v3.OQ4GeoCoverage.Coverage)
+	}
 }
 
 // TestDeriveVerdict — table-driven: гео-гейт определяет verdict+exit (AC1, AC2).
@@ -135,6 +174,11 @@ func TestWilsonInterval(t *testing.T) {
 	lo0, hi0 := wilsonInterval(0, 0, 1.96)
 	if lo0 != 0 || hi0 != 1 {
 		t.Errorf("n=0 → хотим [0,1], получили [%.4f,%.4f]", lo0, hi0)
+	}
+	// Защитный клэмп инварианта: successes>n не должен давать NaN (phat>1 → отрицат. дисперсия).
+	loC, hiC := wilsonInterval(10, 5, 1.96)
+	if math.IsNaN(loC) || math.IsNaN(hiC) || loC < 0 || hiC > 1 || loC > hiC {
+		t.Errorf("successes>n должен клэмпиться без NaN и в [0,1], получили [%.4f,%.4f]", loC, hiC)
 	}
 }
 

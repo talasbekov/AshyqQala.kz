@@ -1,6 +1,6 @@
 {
   "methodology_version": "stage0-1.0",
-  "generated_at": "2026-06-20T12:13:28+05:00",
+  "generated_at": "2026-06-20T00:00:00+05:00",
   "data_source": "file:./data",
   "window_months": 24,
   "geo_gate_threshold": 0.7,
