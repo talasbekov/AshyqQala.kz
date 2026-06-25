@@ -1,0 +1,13 @@
+{
+  "_comment": "Golden-фикстура флага «наличие в РНУ» (FR-22, Story 4.5). ПЕРЕСЧИТЫВАЕТСЯ ВРУЧНУЮ относительно params.now: raised iff enabled И start <= now И (end пуст ИЛИ end > now); start > now (ещё не активна) → not_raised; end <= now (истекла, авто-снятие) → not_raised; нет start (битая запись) → insufficient_data. Даты — ISO YYYY-MM-DD (человекочитаемо). enabled=false (kill-switch) → not_published — параметр-уровень, в юнит-тесте. Живой источник = /v2/rnu-импорт (Epic 2).",
+  "params": { "enabled": true, "methodology_version": "v1.0", "now": "2026-06-25" },
+  "cases": [
+    { "name": "активна (start прошлое, end пуст) → raised", "start": "2026-01-01", "end": null, "expected": "raised" },
+    { "name": "активна (start прошлое, end будущее) → raised", "start": "2026-01-01", "end": "2027-01-01", "expected": "raised" },
+    { "name": "истекла (end в прошлом) → not_raised (авто-снятие)", "start": "2026-01-01", "end": "2026-03-01", "expected": "not_raised" },
+    { "name": "ещё не активна (start в будущем) → not_raised", "start": "2026-12-01", "end": null, "expected": "not_raised" },
+    { "name": "граница: end == now → not_raised (end > now строго)", "start": "2026-01-01", "end": "2026-06-25", "expected": "not_raised" },
+    { "name": "граница: start == now → raised (start <= now)", "start": "2026-06-25", "end": null, "expected": "raised" },
+    { "name": "битая запись (нет start) → insufficient_data", "start": null, "end": null, "expected": "insufficient_data" }
+  ]
+}

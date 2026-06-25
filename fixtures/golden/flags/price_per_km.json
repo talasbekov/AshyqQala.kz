@@ -1,0 +1,12 @@
+{
+  "_comment": "Golden-фикстура флага «аномальная цена за км» (FR-20, Story 4.3). ПЕРЕСЧИТЫВАЕТСЯ ВРУЧНУЮ: raised iff price_per_km > median × deviation_factor (1.5) при sample_size ≥ min_sample (5); nil цена/медиана ИЛИ sample<min → insufficient_data; ровно ×1.5 → not_raised (строгое >). Цена/км и медиана даны напрямую (реальная цена/км = amount/length_km, length_km — Epic 3).",
+  "params": { "deviation_factor": 1.5, "min_sample": 5, "methodology_version": "v1.0" },
+  "cases": [
+    { "name": "2M > median 1M × 1.5 = 1.5M → raised", "price_per_km": 2000000, "median": 1000000, "sample_size": 5, "expected": "raised" },
+    { "name": "ровно порог 1.5M → not_raised", "price_per_km": 1500000, "median": 1000000, "sample_size": 5, "expected": "not_raised" },
+    { "name": "цена ниже медианы → not_raised", "price_per_km": 900000, "median": 1000000, "sample_size": 8, "expected": "not_raised" },
+    { "name": "sample 4 < min → insufficient_data", "price_per_km": 2000000, "median": 1000000, "sample_size": 4, "expected": "insufficient_data" },
+    { "name": "нет медианы → insufficient_data", "price_per_km": 2000000, "median": null, "sample_size": 5, "expected": "insufficient_data" },
+    { "name": "нет цены/км (нет длины) → insufficient_data", "price_per_km": null, "median": 1000000, "sample_size": 5, "expected": "insufficient_data" }
+  ]
+}

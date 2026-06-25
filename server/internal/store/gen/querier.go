@@ -9,14 +9,68 @@ import (
 )
 
 type Querier interface {
+	// Авто-снятие: гасит АКТИВНЫЙ contract-флаг (is_active=false + cleared_at). Идемпотентно (WHERE is_active —
+	// повтор на уже снятом = no-op). История строки сохраняется (не DELETE).
+	ClearContractFlag(ctx context.Context, arg ClearContractFlagParams) error
+	// Авто-снятие: гасит АКТИВНЫЙ contractor-флаг (is_active=false + cleared_at). Идемпотентно (WHERE is_active —
+	// повтор на уже снятом = no-op). История строки сохраняется (не DELETE).
+	ClearContractorFlag(ctx context.Context, arg ClearContractorFlagParams) error
+	// Число активных флагов данного типа (диагностика/тесты).
+	CountActiveContractFlags(ctx context.Context, flagType string) (int64, error)
+	// Число диспутов заданного статуса (питает SM-C1: confirmed|withdrawn — знаменатель, withdrawn — числитель).
+	CountFlagDisputesByStatus(ctx context.Context, status string) (int64, error)
+	CountPriceBenchmarks(ctx context.Context) (int64, error)
+	// Очистка кэша перед публикацией нового снапшота. В ОДНОЙ транзакции с InsertPriceBenchmark = атомарный
+	// swap (читатель видит старый ИЛИ новый снапшот целиком — MVCC; полупересчёт невидим).
+	DeleteAllPriceBenchmarks(ctx context.Context) error
 	// Читает контракт по публичному natural id (goszakup_contract_id); удалённые скрыты.
 	GetContractByID(ctx context.Context, goszakupContractID string) (Contract, error)
+	// Флаг данного типа по контракту (активный или снятый) — для чтения/тестов. Не найдено → pgx.ErrNoRows.
+	GetContractFlag(ctx context.Context, arg GetContractFlagParams) (RiskFlag, error)
+	// Флаг данного типа по подрядчику (активный или снятый) — для чтения/тестов. Не найдено → pgx.ErrNoRows.
+	GetContractorFlag(ctx context.Context, arg GetContractorFlagParams) (RiskFlag, error)
+	// Диспут по флагу (для чтения/тестов). Не найдено → pgx.ErrNoRows.
+	GetFlagDispute(ctx context.Context, riskFlagID int64) (FlagDispute, error)
 	// Гео-результат по natural goszakup_lot_id (для тестов/проверки).
 	GetGeoLotByLotID(ctx context.Context, goszakupLotID string) (InterimGeoLot, error)
 	// Лот по публичному natural id; удалённые скрыты.
 	GetLotByID(ctx context.Context, goszakupLotID string) (Lot, error)
+	// Все пороги заданной версии (для evidence/пересчёта); порядок по ключу стабилен.
+	GetMethodologyParamsByVersion(ctx context.Context, version string) ([]MethodologyParam, error)
+	// Медиана группы по ключу сопоставимости. Отсутствие строки → читатель отдаёт not_comparable (нечего сравнивать).
+	GetPriceBenchmark(ctx context.Context, comparabilityKey string) (PriceBenchmark, error)
+	// Append-only вставка строки версии порога. UPDATE/DELETE запрещены триггером (иммутабельность B-4):
+	// правка порога = НОВАЯ версия. Источник ручной правки — registry/values/methodology_params.vN.yaml.
+	InsertMethodologyParam(ctx context.Context, arg InsertMethodologyParamParams) error
+	// Вставка строки кэша медиан (часть пересчёта «в сторону»). median_price_per_km NULL = honest insufficient.
+	InsertPriceBenchmark(ctx context.Context, arg InsertPriceBenchmarkParams) error
+	// детерминированный порядок: агрегация per-org берёт последнюю активную (наибольший start_date)
+	// Вставка записи РНУ (seed-тесты / живой импорт Epic 2).
+	InsertRNUEntry(ctx context.Context, arg InsertRNUEntryParams) error
 	// Перечисление лотов для batch-обработки (геокодинг — Story 0.7); удалённые скрыты, порядок стабилен.
 	ListLots(ctx context.Context) ([]Lot, error)
+	// ⏳ ИНТЕРИМ (Story 0.8, трек «Парсер-мост»): лоты Астаны с интерим-гео для ранней карты.
+	// LEFT JOIN — лот БЕЗ строки в interim_geo_lots тоже попадает в выборку (g.* = NULL → честный
+	// geocode_pending у потребителя); matched (auto + координата) → точка; unmatched → без точки (НЕ 0,0).
+	// Удалённые скрыты; порядок стабилен. Канонический geo_objects/кластеры/bbox — Epic 3 (3.1/3.4).
+	ListLotsWithGeo(ctx context.Context) ([]ListLotsWithGeoRow, error)
+	// Весь снапшот кэша; порядок по ключу стабилен (детерминизм чтения).
+	ListPriceBenchmarks(ctx context.Context) ([]PriceBenchmark, error)
+	// Все записи РНУ для пересчёта флага FR-22 (Story 4.5). Источник наполнения — живой /v2/rnu-импорт (Epic 2);
+	// на синтетике — seed. Пересчёт читает ВСЕ записи: активные → raised, истёкшие/будущие → not_raised (clock).
+	ListRNUEntries(ctx context.Context) ([]RnuEntry, error)
+	// Идемпотентно ставит/обновляет АКТИВНЫЙ contract-флаг (повтор не плодит дубли — UPSERT по (flag_type,
+	// contract_id)). Снятый ранее флаг ре-активируется (is_active=true, cleared_at=NULL); detected_at сохраняется
+	// (первое обнаружение). evidence/methodology_version обновляются (актуальный снапшот входов).
+	RaiseContractFlag(ctx context.Context, arg RaiseContractFlagParams) error
+	// FR-21 (Story 4.4): идемпотентно ставит/обновляет АКТИВНЫЙ contractor-флаг (повтор не плодит дубли — UPSERT
+	// по (flag_type, organization_id)). Снятый ранее флаг ре-активируется (is_active=true, cleared_at=NULL);
+	// detected_at сохраняется (первое обнаружение). evidence/methodology_version обновляются (актуальный снапшот).
+	RaiseContractorFlag(ctx context.Context, arg RaiseContractorFlagParams) error
+	// Идемпотентно фиксирует/обновляет диспут флага (один на risk_flag_id, AR-28). resolved_at вычисляется из
+	// статуса: NULL для raised/disputed, now() для confirmed/withdrawn (CHECK flag_disputes_resolved_chk). Повтор
+	// того же risk_flag_id → UPDATE статуса/заметки (не дубль).
+	UpsertFlagDispute(ctx context.Context, arg UpsertFlagDisputeParams) error
 	// Идемпотентный UPSERT гео-результата лота по goszakup_lot_id (повтор batch-Nominatim не плодит дубли).
 	// unmatched → lat/lon NULL (честность: «без точки на карте», НЕ 0,0). ⏳ интерим (Story 0.7).
 	UpsertGeoLot(ctx context.Context, arg UpsertGeoLotParams) error

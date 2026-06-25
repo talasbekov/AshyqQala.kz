@@ -1,0 +1,15 @@
+{
+  "_comment": "Golden-фикстура флага «монополия в регионе» (FR-21, Story 4.4). ПЕРЕСЧИТЫВАЕТСЯ ВРУЧНУЮ: raised iff supplier_sum / group_total_sum >= concentration_share (0.5) при group_contracts >= min_group_contracts (5), знаменателе group_total_sum > 0 и разрешённом БИН (resolved=true); group_contracts < 5 ИЛИ знаменатель <= 0 ИЛИ !resolved → insufficient_data; доля < 0.5 → not_raised; доля ровно 0.5 → raised (инклюзивно >=). Суммы ₸ даны напрямую (реальные = SUM(amount) по БИН/группе — Epic 2; нормализация resolve_status — Epic 2).",
+  "params": { "concentration_share": 0.5, "min_group_contracts": 5, "methodology_version": "v1.0" },
+  "cases": [
+    { "name": "0.6 >= 0.5, 5 контрактов, resolved → raised", "supplier_sum": 600000, "group_total_sum": 1000000, "group_contracts": 5, "resolved": true, "expected": "raised" },
+    { "name": "ровно 0.5 → raised (инклюзивно >=)", "supplier_sum": 500000, "group_total_sum": 1000000, "group_contracts": 5, "resolved": true, "expected": "raised" },
+    { "name": "0.4999 < 0.5 → not_raised", "supplier_sum": 499900, "group_total_sum": 1000000, "group_contracts": 6, "resolved": true, "expected": "not_raised" },
+    { "name": "4 < 5 контрактов → insufficient_data", "supplier_sum": 900000, "group_total_sum": 1000000, "group_contracts": 4, "resolved": true, "expected": "insufficient_data" },
+    { "name": "знаменатель 0 → insufficient_data", "supplier_sum": 600000, "group_total_sum": 0, "group_contracts": 5, "resolved": true, "expected": "insufficient_data" },
+    { "name": "нет знаменателя → insufficient_data", "supplier_sum": 600000, "group_total_sum": null, "group_contracts": 5, "resolved": true, "expected": "insufficient_data" },
+    { "name": "БИН не разрешён (manual/conflict) → insufficient_data", "supplier_sum": 600000, "group_total_sum": 1000000, "group_contracts": 5, "resolved": false, "expected": "insufficient_data" },
+    { "name": "отрицательная сумма поставщика (грязные данные) → insufficient_data", "supplier_sum": -100, "group_total_sum": 1000000, "group_contracts": 5, "resolved": true, "expected": "insufficient_data" },
+    { "name": "отрицательный знаменатель (грязные данные) → insufficient_data", "supplier_sum": 600000, "group_total_sum": -1000000, "group_contracts": 5, "resolved": true, "expected": "insufficient_data" }
+  ]
+}

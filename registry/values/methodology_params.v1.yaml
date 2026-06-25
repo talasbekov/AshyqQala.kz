@@ -1,0 +1,46 @@
+# methodology_params — ВЕРСИОНИРУЕМЫЙ ИММУТАБЕЛЬНЫЙ конфиг порогов методики (Story 4.1, AC1).
+#
+# Несущие принципы (architecture.md B-4; prd.md FR-23, §7.4):
+#   • ИСТОЧНИК ИСТИНЫ. Человек правит пороги ТОЛЬКО здесь; Go читает их В РАНТАЙМЕ (НЕ codegen),
+#     через internal/methodology.Load. DB-таблица methodology_params (миграция 0005) — append-only
+#     версия-реестр для evidence/пересчёта; этот YAML — единственное место ручной правки.
+#   • ИММУТАБЕЛЬНОСТЬ. Правка порога = НОВАЯ версия (methodology_params.v2.yaml + новая строка версии),
+#     история НЕ переписывается. methodology_version пинит формулу+пороги; версия в evidence обязана
+#     совпадать с версией здесь (перекрёстный инвариант AC5б).
+#   • ПЕРЕСЧИТЫВАЕМОСТЬ. Пороги намеренно простые (×1.5, НЕ MAD) — третье лицо пересчитывает вручную.
+#   • ЧЕСТНОСТЬ. min_sample задаёт границу «недостаточно сопоставимых данных»; он ОБЯЗАН совпадать с
+#     median.MinSample (чистое ядро) — рассинхрон ловит перекрёстный тест (make check-registry).
+#
+# Дефолты ниже — из data-model v1 §2 (калибруются по OQ-6 на живых данных позже, через НОВУЮ версию).
+
+methodology_version: v1.0
+
+median:
+  # Минимальная сопоставимая выборка для показа медианы. < min_sample → insufficient_sample (не 0/NaN).
+  # ДОЛЖЕН == median.MinSample в коде ядра (единый источник; рассинхрон = honest-fail загрузчика).
+  min_sample: 5
+  # Группа сопоставимости: direction × kato (строится в коде benchmark.Group.Key).
+  # Скользящее окно выборки относительно опорного «сейчас», месяцев.
+  comparability_window_months: 24
+
+flag:
+  # FR-19 «единственный участник»: флаг при числе участников объявления == 1 и способе закупки НЕ из
+  # exclude_methods (потребитель 4.2). enabled — kill-switch. exclude_methods — где единственный участник
+  # ЗАКОНЕН (напр. закупка из одного источника). Дефолты data-model §2 (калибруются на этапе 0).
+  single_participant:
+    enabled: true
+    exclude_methods:
+      - из_одного_источника
+  # FR-20 «аномальная цена за км»: цена/км контракта > deviation_factor × медиана группы (потребитель 4.3).
+  price_per_km:
+    deviation_factor: 1.5
+  # FR-21 «монополия в регионе»: доля топ-поставщика по сумме ≥ concentration_share при ≥ min_group_contracts
+  # контрактах в группе (потребитель 4.4).
+  monopoly:
+    concentration_share: 0.5
+    min_group_contracts: 5
+  # FR-22 «наличие в РНУ»: БИН активен в /v2/rnu (start_date ≤ today, end_date пуст/в будущем); авто-снятие по
+  # end_date (потребитель 4.5). enabled — kill-switch (явный true/false; отсутствие = honest-fail загрузчика, как
+  # single_participant). Источник записей — живой /v2/rnu-импорт (Epic 2); на синтетике — seed rnu_entries.
+  rnu:
+    enabled: true

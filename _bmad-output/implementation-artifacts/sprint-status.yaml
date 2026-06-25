@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-06-19T18:38:34+0500
-last_updated: 2026-06-24T00:30:00+0500
+last_updated: 2026-06-25T08:00:00+0500
 project: AshyqQala.kz
 project_key: NOKEY
 tracking_system: file-system
@@ -47,12 +47,12 @@ development_status:
   0-1-токен-ows_v2-и-подтверждение-доступа-к-эндпоинтам: in-progress
   0-2-машиночитаемый-go-no-go-вердикт-stage0-audit: done
   0-3-прогон-гейта-на-живых-данных-распределение-пропусков: backlog
-  0-4-предполётные-решения-идемпотентность-частичный-go-демо-схема: backlog
+  0-4-предполётные-решения-идемпотентность-частичный-go-демо-схема: done
   0-5-юридическая-предполётная-проверка-параллельно: backlog
   # ⏳ Трек «Парсер-мост» (ВРЕМЕННЫЙ, до получения токена) — Sprint Change Proposal 2026-06-20
   0-6-временный-scrape-источник-лотов-за-флагом: done
   0-7-гео-привязка-scraped-лотов-batch-nominatim: done
-  0-8-ранняя-карта-астаны-на-реальных-лотах: backlog
+  0-8-ранняя-карта-астаны-на-реальных-лотах: done
   0-9-эскалация-юридической-проверки-парсинга: backlog
   epic-0-retrospective: optional
 
@@ -96,14 +96,14 @@ development_status:
   epic-3-retrospective: optional
 
   # Epic 4: Расчётное ядро — 4 флага риска и пересчитываемая методика (compute)
-  epic-4: backlog
-  4-1-methodology_params-иммутабельный-median-benchmark-движок: backlog
-  4-2-флаг-единственный-участник-fr-19: backlog
-  4-3-флаг-аномальная-цена-за-км-fr-20: backlog
-  4-4-флаг-монополия-в-регионе-fr-21: backlog
-  4-5-флаг-наличие-в-рну-fr-22: backlog
-  4-6-пересчитываемость-методика-данные-и-измеримость-sm-c1: backlog
-  epic-4-retrospective: optional
+  epic-4: done
+  4-1-methodology_params-иммутабельный-median-benchmark-движок: done
+  4-2-флаг-единственный-участник-fr-19: done
+  4-3-флаг-аномальная-цена-за-км-fr-20: done
+  4-4-флаг-монополия-в-регионе-fr-21: done
+  4-5-флаг-наличие-в-рну-fr-22: done
+  4-6-пересчитываемость-методика-данные-и-измеримость-sm-c1: done
+  epic-4-retrospective: done
 
   # Epic 5: Карточки, методика-экран, шаринг и канал об ошибке (presentation)
   epic-5: backlog

@@ -26,6 +26,19 @@ type Contract struct {
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 }
 
+type FlagDispute struct {
+	ID          int64              `json:"id"`
+	RiskFlagID  int64              `json:"risk_flag_id"`
+	FlagType    string             `json:"flag_type"`
+	SubjectType string             `json:"subject_type"`
+	SubjectID   int64              `json:"subject_id"`
+	Status      string             `json:"status"`
+	Note        pgtype.Text        `json:"note"`
+	SourceUrl   pgtype.Text        `json:"source_url"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	ResolvedAt  pgtype.Timestamptz `json:"resolved_at"`
+}
+
 type InterimGeoLot struct {
 	ID            int64              `json:"id"`
 	GoszakupLotID string             `json:"goszakup_lot_id"`
@@ -51,4 +64,46 @@ type Lot struct {
 	IsDeleted      bool               `json:"is_deleted"`
 	ImportedAt     pgtype.Timestamptz `json:"imported_at"`
 	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+}
+
+type MethodologyParam struct {
+	ID            int64              `json:"id"`
+	Version       string             `json:"version"`
+	Key           string             `json:"key"`
+	Value         string             `json:"value"`
+	Description   pgtype.Text        `json:"description"`
+	EffectiveFrom pgtype.Timestamptz `json:"effective_from"`
+}
+
+type PriceBenchmark struct {
+	ID                 int64              `json:"id"`
+	ComparabilityKey   string             `json:"comparability_key"`
+	MedianPricePerKm   pgtype.Int8        `json:"median_price_per_km"`
+	SampleSize         int32              `json:"sample_size"`
+	MethodologyVersion string             `json:"methodology_version"`
+	ComputedAt         pgtype.Timestamptz `json:"computed_at"`
+}
+
+type RiskFlag struct {
+	ID                 int64              `json:"id"`
+	FlagType           string             `json:"flag_type"`
+	SubjectType        string             `json:"subject_type"`
+	ContractID         pgtype.Int8        `json:"contract_id"`
+	OrganizationID     pgtype.Int8        `json:"organization_id"`
+	Severity           pgtype.Text        `json:"severity"`
+	Evidence           []byte             `json:"evidence"`
+	IsActive           bool               `json:"is_active"`
+	DetectedAt         pgtype.Timestamptz `json:"detected_at"`
+	ClearedAt          pgtype.Timestamptz `json:"cleared_at"`
+	MethodologyVersion string             `json:"methodology_version"`
+}
+
+type RnuEntry struct {
+	ID             int64       `json:"id"`
+	OrganizationID int64       `json:"organization_id"`
+	GoszakupRnuID  pgtype.Text `json:"goszakup_rnu_id"`
+	StartDate      pgtype.Date `json:"start_date"`
+	EndDate        pgtype.Date `json:"end_date"`
+	ReasonRef      pgtype.Text `json:"reason_ref"`
+	SourceUrl      pgtype.Text `json:"source_url"`
 }

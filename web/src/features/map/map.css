@@ -216,3 +216,57 @@
   outline: var(--space-focus-ring-width) solid var(--color-focus-ring);
   outline-offset: var(--space-focus-ring-offset);
 }
+
+/* ⏳ Плашка честного состояния контейнера (Story 0.8, AC1): временные/частичные данные + «предв.».
+   Видна отдельной строкой (AR-17) — частичный/пустой экран не читается как «всё чисто». Нейтрально
+   (не алый/«горячая точка»). Только семантические токены. */
+.aq-map-plaque {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-muted-soft);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  display: grid;
+  gap: var(--space-2);
+}
+
+.aq-map-plaque__line {
+  margin: 0;
+  font-size: var(--type-body-size);
+  color: var(--color-text-primary);
+}
+
+.aq-map-plaque__line--muted {
+  color: var(--color-text-secondary);
+}
+
+/* Честное примечание загрузки лотов (пусто/ошибка) — не «всё чисто». */
+.aq-map-note {
+  margin: 0;
+  font-size: var(--type-body-size);
+  color: var(--color-text-secondary);
+}
+
+/* Пункт «без точки» как кнопка (открывает превью лота) — визуально ссылка, семантически кнопка. */
+.aq-ungeocoded__btn {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-link-on-sunken);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.aq-ungeocoded__btn:focus-visible {
+  outline: var(--space-focus-ring-width) solid var(--color-focus-ring);
+  outline-offset: var(--space-focus-ring-offset);
+}
+
+/* Честная плашка «ожидает официального источника» в превью лота (AC2). */
+.aq-sheet__awaiting {
+  margin: 0 0 var(--space-4);
+  font-size: var(--type-body-size);
+  color: var(--color-text-secondary);
+}

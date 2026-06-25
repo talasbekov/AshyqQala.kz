@@ -15,8 +15,10 @@ import (
 
 	"ashyqqala/server/internal/config"
 	"ashyqqala/server/internal/httpapi"
+	"ashyqqala/server/internal/methodology"
 	"ashyqqala/server/internal/metrics"
 	"ashyqqala/server/internal/store/gen"
+	"ashyqqala/server/internal/store/projection"
 )
 
 func main() {
@@ -43,6 +45,32 @@ func main() {
 	}
 	pingCancel()
 
+	// Story 4.6 (D2): seed methodology_params на старте + fail-fast при дрейфе YAML↔DB (несущий инвариант
+	// пересчитываемости FR-23 — пороги в evidence воспроизводимы по публичному YAML == DB-реестру).
+	params, err := methodology.Load(cfg.RegistryRoot)
+	if err != nil {
+		log.Error("methodology_load_failed", "error", err.Error())
+		os.Exit(1)
+	}
+	kvs := methodology.Flatten(params)
+	seedCtx, seedCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	seeded, err := projection.SeedMethodologyParams(seedCtx, pool, params.MethodologyVersion, kvs)
+	if err != nil {
+		seedCancel()
+		log.Error("methodology_seed_failed", "error", err.Error())
+		os.Exit(1)
+	}
+	if err := projection.VerifyMethodologyParams(seedCtx, pool, params.MethodologyVersion, kvs); err != nil {
+		seedCancel()
+		log.Error("methodology_drift", "error", err.Error())
+		os.Exit(1)
+	}
+	seedCancel()
+	log.Info("methodology_seed", "version", params.MethodologyVersion, "seeded", seeded)
+
+	// Story 4.6 (D1): SM-C1 — DB-derived из flag_disputes (restart-safe/race-free), экспонируется через /metrics.
+	metrics.RegisterSMC1(projection.NewFlagDisputeStore(pool).SMC1Counts, log)
+
 	r := chi.NewRouter()
 	r.Use(middleware.Recoverer)
 
@@ -63,6 +91,11 @@ func main() {
 
 	h := httpapi.ContractsHandler{Store: gen.New(pool), Log: log}
 	r.Get("/api/contracts/{goszakup_id}", h.Get)
+
+	// ⏳ ИНТЕРИМ (Story 0.8, трек «Парсер-мост»): ранняя карта лотов Астаны. Читает interim_geo_lots
+	// через store (НЕ tools/scrape — изоляция); замещается живым импортом при swap scrape→ows.
+	mapH := httpapi.MapLotsHandler{Store: gen.New(pool), Log: log}
+	r.Get("/api/lots", mapH.List)
 
 	srv := &http.Server{
 		Addr:              cfg.Addr,

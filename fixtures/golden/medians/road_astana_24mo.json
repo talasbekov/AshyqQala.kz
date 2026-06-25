@@ -1,0 +1,15 @@
+{
+  "_comment": "Golden-фикстура OK-пути медианы цены/км (Story 4.1, Q4). ПЕРЕСЧИТЫВАЕТСЯ ВРУЧНУЮ (несущий гардрейл): группа road×Astana(710000000), окно 24 мес от reference_now=2026-06-01 → cutoff 2024-06-01. В окне 5 выборок (отсортированные ₸/км: 1200000,1500000,1800000,2100000,2400000) → медиана = средняя = 1800000, state ok, sample_size 5. Выборка 2023-01-01 СТАРШЕ окна → отброшена (не влияет). DEMO-контракты (1.9) остаются insufficient-кейсом (<5).",
+  "group": { "direction": "road", "kato": "710000000" },
+  "reference_now": "2026-06-01T00:00:00Z",
+  "window_months": 24,
+  "samples": [
+    { "price_per_km": 1800000, "sign_date": "2025-06-20" },
+    { "price_per_km": 1200000, "sign_date": "2025-01-10" },
+    { "price_per_km": 2400000, "sign_date": "2025-12-25" },
+    { "price_per_km": 1500000, "sign_date": "2025-03-15" },
+    { "price_per_km": 2100000, "sign_date": "2025-09-05" },
+    { "price_per_km": 9000000, "sign_date": "2023-01-01" }
+  ],
+  "expected": { "median_price_per_km": 1800000, "state": "ok", "sample_size": 5 }
+}

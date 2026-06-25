@@ -49,6 +49,27 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
 
+  /api/lots:
+    get:
+      summary: ⏳ Лоты Астаны с интерим-гео для ранней карты (Story 0.8, трек «Парсер-мост»)
+      description: >
+        Временный read-only список scraped-лотов (проекция lots + интерим-гео interim_geo_lots) для
+        ранней карты. ТОЛЬКО лоты — карточки контрактов, флаги, медианы ждут токен ows_v2. Координаты —
+        bare [lon,lat] (nullable; null ⇒ нет точки, НЕ 0,0). Замещается живым импортом при swap scrape→ows.
+      responses:
+        '200':
+          description: список лотов (точки + честные состояния геопривязки)
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/MapLot' }
+        '500':
+          description: внутренняя ошибка
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
 components:
   schemas:
     StringField:
@@ -104,6 +125,36 @@ components:
         source_url: { $ref: '#/components/schemas/StringField' }
         imported_at: { $ref: '#/components/schemas/StringField' } # ISO8601 Z в value; единый конверт + честный no_data
         updated_at: { $ref: '#/components/schemas/StringField' }
+    MapLot:
+      type: object
+      additionalProperties: false
+      # ⏳ ИНТЕРИМ (Story 0.8, трек «Парсер-мост»). Лот на ранней карте: наименование/сумма — честный
+      # конверт {value,state}; координаты — bare [lon,lat] (null ⇒ нет точки, НЕ 0,0).
+      description: >-
+        Инвариант координат (OpenAPI 3.0 не выражает условную required-зависимость декларативно,
+        поэтому он задан здесь как контракт): geocode_state = ok ГАРАНТИРУЕТ, что lon и lat
+        не null (точка на карте есть); при ЛЮБОМ другом состоянии (geocode_pending, geocode_failed)
+        lon и lat равны null. Координаты НИКОГДА не равны 0,0.
+      required:
+        - goszakup_lot_id
+        - subject_ru
+        - subject_kk
+        - amount_tng
+        - lon
+        - lat
+        - geocode_state
+      properties:
+        goszakup_lot_id: { type: string }
+        subject_ru: { $ref: '#/components/schemas/StringField' }
+        subject_kk: { $ref: '#/components/schemas/StringField' }
+        amount_tng: { $ref: '#/components/schemas/StringField' } # целые тенге СТРОКОЙ
+        lon: { type: number, nullable: true } # GeoJSON [lon,lat]; null когда нет точки (НЕ 0,0)
+        lat: { type: number, nullable: true }
+        geocode_state:
+          type: string
+          # Подмножество value_state (ось 1): почему лот на карте/вне карты. ok = есть точка;
+          # geocode_pending = ещё не геокодирован (нет гео-строки); geocode_failed = unmatched (без точки).
+          enum: [ok, geocode_pending, geocode_failed]
     Error:
       type: object
       additionalProperties: false

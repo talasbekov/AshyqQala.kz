@@ -42,9 +42,20 @@ func main() {
 		verdictOut    = flag.String("verdict-out", "", "путь baseline-артефакта (файл или каталог; пусто = только stdout)")
 		verdictDate   = flag.String("verdict-date", "", "дата для имени stage0-verdict-YYYYMMDD.json (override; пусто = сегодня)")
 		allowFallback = flag.Bool("allow-fallback", false, "разрешить частичный Go (go_with_fallback) при гео<гейта — требует sign-off владельца (Story 0.4)")
+		fbOwner       = flag.String("fallback-owner", "", "владелец риска частичного Go (sign-off; ОБЯЗАТЕЛЕН при -allow-fallback, Story 0.4)")
+		fbReason      = flag.String("fallback-reason", "", "причина частичного Go / известная стоимость (ОБЯЗАТЕЛЬНА при -allow-fallback)")
+		fbDate        = flag.String("fallback-date", "", "РЕАЛЬНАЯ дата sign-off частичного Go (YYYYMMDD; ОБЯЗАТЕЛЬНА при -allow-fallback) — НЕ generated_at")
+		fbCheckpoint  = flag.String("fallback-checkpoint", "", "дата контрольной точки пересмотра частичного Go (опц.)")
 		gate          = flag.Bool("gate", false, "применять exit-код вердикта и в text-режиме (json гейтит всегда; по умолчанию text exit не меняет)")
 	)
 	flag.Parse()
+
+	// AC2 (Story 0.4, закрывает defer 0.2): неподписанный частичный Go недопустим. -allow-fallback без
+	// owner+reason+date → fail-fast ДО аудита (не выпускаем go_with_fallback без полного sign-off в провенансе).
+	if err := requireFallbackSignoff(*allowFallback, *fbOwner, *fbReason, *fbDate); err != nil {
+		fmt.Fprintln(os.Stderr, "ОШИБКА:", err)
+		os.Exit(2)
+	}
 
 	if *genFix {
 		if err := genFixtures(*dataDir, *fixN); err != nil {
@@ -112,6 +123,16 @@ func main() {
 		}
 	}
 
+	// Валидируем -fallback-date той же проверкой YYYYMMDD (наличие уже гарантировано
+	// requireFallbackSignoff при -allow-fallback). Битый формат подписи → fail-fast exit 2,
+	// как у прочих гейт-флагов: реальная дата sign-off должна быть корректной.
+	if *allowFallback {
+		if _, err := time.Parse("20060102", *fbDate); err != nil {
+			fmt.Fprintf(os.Stderr, "ОШИБКА: -fallback-date %q не в формате YYYYMMDD\n", *fbDate)
+			os.Exit(2)
+		}
+	}
+
 	bins := splitBins(*custBins)
 	fmt.Fprintln(diag, "AshyqQala.kz — аудит данных goszakup (Этап 0)")
 	fmt.Fprintf(diag, "source=%s  окно=%dмес  sample=%d  customerBins=%d\n\n", src.Name(), cfg.WindowMonths, cfg.Sample, len(bins))
@@ -134,9 +155,16 @@ func main() {
 	rep := runAudit(src, cfg, bins, cutoff, geo)
 
 	opts := verdictOpts{
-		allowFallback: *allowFallback,
-		dataSource:    src.Name(),
-		generatedAt:   generatedAtFor(*verdictDate),
+		allowFallback:  *allowFallback,
+		fallbackOwner:  *fbOwner,
+		fallbackReason: *fbReason,
+		// fallbackDate — РЕАЛЬНАЯ дата sign-off, парсится тем же стилем (Astana-midnight RFC3339),
+		// что и -verdict-date/generatedAt, но из ОТДЕЛЬНОГО -fallback-date. Пусто без -allow-fallback
+		// (тогда provenance не несётся, omitempty).
+		fallbackDate:       generatedAtFor(*fbDate),
+		fallbackCheckpoint: *fbCheckpoint,
+		dataSource:         src.Name(),
+		generatedAt:        generatedAtFor(*verdictDate),
 	}
 	v, code := deriveVerdict(rep, cfg, opts)
 
@@ -167,6 +195,19 @@ func main() {
 	if *gate {
 		os.Exit(code) // text-режим гейтит только по явному -gate (обратная совместимость)
 	}
+}
+
+// requireFallbackSignoff — частичный Go (go_with_fallback) требует ПОЛНОГО sign-off владельца:
+// owner+reason+date. Возвращает ошибку, если -allow-fallback передан без подписи (неподписанный
+// частичный Go недопустим, Story 0.4, закрывает defer ревью 0.2). Date — реальная дата подписи
+// (-fallback-date), отделена от generated_at (генерация артефакта). Checkpoint остаётся опц.
+// Вынесен из main() для тестируемости; main() делает fail-fast exit 2 на ошибку. deriveVerdict при
+// этом остаётся ЧИСТОЙ (enforcement — не в формуле вердикта).
+func requireFallbackSignoff(allowFallback bool, owner, reason, date string) error {
+	if allowFallback && (strings.TrimSpace(owner) == "" || strings.TrimSpace(reason) == "" || strings.TrimSpace(date) == "") {
+		return fmt.Errorf("неподписанный частичный Go: требуется -fallback-owner, -fallback-reason, -fallback-date (sign-off владельца; недопустим без полной подписи, Story 0.4)")
+	}
+	return nil
 }
 
 // generatedAtFor — метка времени для артефакта. Если задан -verdict-date (YYYYMMDD, уже

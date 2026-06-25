@@ -106,6 +106,55 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/lots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * ⏳ Лоты Астаны с интерим-гео для ранней карты (Story 0.8, трек «Парсер-мост»)
+         * @description Временный read-only список scraped-лотов (проекция lots + интерим-гео interim_geo_lots) для ранней карты. ТОЛЬКО лоты — карточки контрактов, флаги, медианы ждут токен ows_v2. Координаты — bare [lon,lat] (nullable; null ⇒ нет точки, НЕ 0,0). Замещается живым импортом при swap scrape→ows.
+         *
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description список лотов (точки + честные состояния геопривязки) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MapLot"][];
+                    };
+                };
+                /** @description внутренняя ошибка */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -133,6 +182,16 @@ export interface components {
             source_url: components["schemas"]["StringField"];
             imported_at: components["schemas"]["StringField"];
             updated_at: components["schemas"]["StringField"];
+        };
+        MapLot: {
+            goszakup_lot_id: string;
+            subject_ru: components["schemas"]["StringField"];
+            subject_kk: components["schemas"]["StringField"];
+            amount_tng: components["schemas"]["StringField"];
+            lon: number | null;
+            lat: number | null;
+            /** @enum {string} */
+            geocode_state: "ok" | "geocode_pending" | "geocode_failed";
         };
         Error: {
             error: {

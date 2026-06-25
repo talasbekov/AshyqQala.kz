@@ -69,6 +69,26 @@ ASHYQQALA_INTERIM_SCRAPE=1 DATABASE_URL=postgres://... [NOMINATIM_URL=http://loc
   (гейт, warning, честность unmatched→NULL, покрытие), `DATABASE_URL=… go test -tags 'scrape integration' …`
   (идемпотентность UPSERT).
 
+## Карта-стадия: ранняя карта лотов (Story 0.8)
+
+Стадия `map` конвейера `decode → lots → geo → map`: отдаёт scraped-лоты с интерим-гео на публичную карту.
+**В отличие от 0.6/0.7, код карты НЕ за build-tag `scrape`** — это обычный read-only путь прод-бинаря
+`cmd/api`, читающий `interim_geo_lots` через `internal/store` (НЕ импортируя `tools/scrape`; страж
+изоляции остаётся зелёным). Реализация:
+
+- **Сервер:** `GET /api/lots` (`server/internal/httpapi/map.go`, `MapLotsHandler`) — sqlc-запрос
+  `ListLotsWithGeo` (`queries/map.sql`, **LEFT JOIN** `lots↔interim_geo_lots` по `goszakup_lot_id`).
+  Координаты на проводе — bare `[lon,lat]` (nullable; `null` ⇒ нет точки, НЕ `0,0`). Маппинг честных
+  состояний: `auto`+координата → `geocode_state=ok`; `unmatched`/NULL → `geocode_failed`; нет гео-строки
+  (LEFT JOIN NULL) → `geocode_pending`. Только лоты — контракты/флаги/медианы ждут токен.
+- **Фронт:** `web/src/features/map/` — `useLots`/`splitLots` (точки ⊥ негео), DOM-маркеры реальных лотов,
+  `MapStatePlaque` (`container_state=no_contracts`: «временные/частичные данные» + «предв., keyword-bias»),
+  `LotPreviewSheet` (данные лота + «ожидает официального источника» — БЕЗ фетча несуществующего контракта).
+- **Честность:** негеокодированный лот → честно в списке «без точки на карте» (`Icon ungeocoded`), координата
+  не выдумывается; пустой `/api/lots` → честная плашка контейнера (не «всё чисто»).
+- **Тесты:** `go test ./internal/httpapi/...` (httptest + OpenAPI-валидация), web `vitest`/Playwright
+  (`route.fulfill` мок `/api/lots`).
+
 ## 🔚 Критерий удаления и обратимость (AC3)
 
 - **Критерий удаления:** получен `GOSZAKUP_TOKEN` (закрытие Story 0.1).
@@ -77,10 +97,14 @@ ASHYQQALA_INTERIM_SCRAPE=1 DATABASE_URL=postgres://... [NOMINATIM_URL=http://loc
 - **Удаляется:** пакет `server/tools/scrape/`, команды `cmd/interim-import` (0.6) и `cmd/interim-geocode`
   (0.7), таблица `interim_geo_lots` (вместе с build-tag `scrape`). **Сохраняется:** `internal/geo`
   (механизм геокодинга переиспользует Epic 3); данные мигрируют в канонический `geo_objects`.
+- **Карта (0.8):** эндпоинт `/api/lots` и фронт `features/map/` **переживают swap** (читают те же `lots`,
+  наполняемые уже из `ows`); снимаются лишь плашки «временные/частичные данные»/«предв.», а интерим-таблица
+  `interim_geo_lots` замещается каноническим `geo_objects` (Epic 3 — кластеры/bbox/гейт покрытия).
 - **Путь восстановления §6.1/§6.4:** удаление интерим-кода возвращает «официальный канал, не парсинг»
   в исходную силу. См. Sprint Change Proposal 2026-06-20 и `docs/ops/stage0-access.md` §6.
 
 ---
 
 *Сосед по каталогу:* `docs/ops/stage0-access.md` (Story 0.1, §6 — потолок парсера),
-`docs/ops/stage0-verdict-20260620.json` (Story 0.2, пример вердикта гейта №0).
+`docs/ops/stage0-verdict-20260620.json` (Story 0.2, пример вердикта гейта №0),
+`docs/ops/preflight-decisions.md` (Story 0.4 — ключ идемпотентности, частичный Go, демо, снапшот ows_v2).

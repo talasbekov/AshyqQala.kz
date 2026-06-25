@@ -1,0 +1,16 @@
+{
+  "_comment": "Golden-фикстура флага «единственный участник» (FR-19, Story 4.2). ПЕРЕСЧИТЫВАЕТСЯ ВРУЧНУЮ по правилу: enabled && participant_count==1 && procurement_method ∉ exclude_methods → raised; participant_count nil/<1 → insufficient_data; иначе → not_raised. Источник участников на этапе 4.2 синтетический; живой /v2/trd-buy — Epic 2.",
+  "params": {
+    "enabled": true,
+    "exclude_methods": ["из_одного_источника"],
+    "methodology_version": "v1.0"
+  },
+  "cases": [
+    { "name": "1 участник, открытый конкурс → raised", "participant_count": 1, "procurement_method": "открытый_конкурс", "expected": "raised" },
+    { "name": "1 участник, из одного источника (исключён) → not_raised", "participant_count": 1, "procurement_method": "из_одного_источника", "expected": "not_raised" },
+    { "name": "1 участник, исключён (регистр/пробелы) → not_raised", "participant_count": 1, "procurement_method": "  Из_Одного_Источника ", "expected": "not_raised" },
+    { "name": "3 участника → not_raised", "participant_count": 3, "procurement_method": "открытый_конкурс", "expected": "not_raised" },
+    { "name": "0 участников → insufficient_data", "participant_count": 0, "procurement_method": "открытый_конкурс", "expected": "insufficient_data" },
+    { "name": "нет данных об участниках → insufficient_data", "participant_count": null, "procurement_method": "открытый_конкурс", "expected": "insufficient_data" }
+  ]
+}

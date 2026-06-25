@@ -8,6 +8,8 @@ import (
 // MethodologyVersion пинит ФОРМУЛУ вердикта + значения порогов (GeoGate, MinSample,
 // MonopolyShare, DeviationFactor). Иммутабелен: менять при ЛЮБОМ изменении логики/порогов,
 // чтобы внешний пересчёт по тем же входам давал тот же вердикт.
+// Sign-off частичного Go (owner/date/reason/checkpoint в provenance) — операционная
+// предусловие + аддитивная метаданность, НЕ часть формулы/порогов → версия не растёт.
 // [Source: data_model §0/§2 — methodology_params версионируем-иммутабелен; architecture.md:108,124–127]
 const MethodologyVersion = "stage0-1.0"
 
@@ -58,6 +60,9 @@ type Verdict struct {
 	OQ6Sample          OQ6Sample      `json:"oq6_sample"`
 	Verdict            string         `json:"verdict"`
 	VerdictReason      string         `json:"verdict_reason"`
+	// Provenance — sign-off частичного Go; присутствует ТОЛЬКО у go_with_fallback (omitempty). Добавлен
+	// последним полем → порядок ключей go/no_go-артефакта не меняется (стабильный git-diff baseline).
+	Provenance *Provenance `json:"provenance,omitempty"`
 }
 
 // OQ1Volume — объём и полнота (Шаг A). Репортится, авто-гейт на него НЕ вешается
@@ -93,11 +98,29 @@ type OQ6Sample struct {
 }
 
 // verdictOpts — внешний контекст, не выводимый из Report/Config (источник данных, время,
-// owner-override fallback). Вынесен в opts, чтобы deriveVerdict оставалась чистой/тестируемой.
+// owner-override fallback + провенанс sign-off). Вынесен в opts, чтобы deriveVerdict оставалась
+// чистой/тестируемой.
 type verdictOpts struct {
-	allowFallback bool   // -allow-fallback: частичный Go (owner sign-off, Story 0.4)
-	dataSource    string // src.Name(): ows | file:<dir> | scrape:...
-	generatedAt   string // RFC3339; в тестах фиксируется для детерминизма
+	allowFallback      bool   // -allow-fallback: частичный Go (owner sign-off, Story 0.4)
+	fallbackOwner      string // -fallback-owner: владелец риска частичного Go (sign-off; обязателен при allowFallback)
+	fallbackReason     string // -fallback-reason: причина/известная стоимость (обязателен при allowFallback)
+	fallbackDate       string // -fallback-date: РЕАЛЬНАЯ дата подписи (RFC3339; обязателен при allowFallback) — НЕ generatedAt
+	fallbackCheckpoint string // -fallback-checkpoint: дата контрольной точки пересмотра (опц.)
+	dataSource         string // src.Name(): ows | file:<dir> | scrape:...
+	generatedAt        string // RFC3339; в тестах фиксируется для детерминизма
+}
+
+// Provenance — доказательная метаданность подписи частичного Go (Story 0.4, закрывает defer ревью 0.2).
+// Несётся ТОЛЬКО артефактом go_with_fallback (omitempty у go/no_go): кто/когда/почему подписал осознанный
+// частичный Go + дата контрольной точки. Делает baseline машинно-доказуемым, а не «на факте флага».
+// Date — РЕАЛЬНАЯ дата sign-off (-fallback-date), отделена от generatedAt (генерация артефакта).
+// Метаданность (НЕ часть формулы вердикта) → methodology_version не растёт; enforcement подписи — fail-fast
+// в main() (deriveVerdict остаётся чистой). [Source: deferred-work.md (defer 0.2); architecture.md:170]
+type Provenance struct {
+	Owner      string `json:"owner"`
+	Date       string `json:"date"`
+	Reason     string `json:"reason"`
+	Checkpoint string `json:"checkpoint,omitempty"`
 }
 
 // wilsonInterval — доверительный интервал Уилсона для доли successes/n (биномиальная
@@ -198,10 +221,19 @@ func deriveVerdict(r Report, cfg Config, opts verdictOpts) (Verdict, int) {
 		v.VerdictReason = fmt.Sprintf("oq4_geo_coverage %.4f ≥ gate %.2f", *oq4.Coverage, cfg.GeoGate)
 		return v, 0
 	case opts.allowFallback:
-		// Частичный Go — осознанное решение владельца (Story 0.4 фиксирует владельца+дату),
-		// доступен ТОЛЬКО через явный -allow-fallback, не выдаётся автоматически.
+		// Частичный Go — осознанное решение владельца, доступен ТОЛЬКО через явный -allow-fallback.
+		// Sign-off (owner+reason) обязателен и проверяется fail-fast в main() (requireFallbackSignoff)
+		// ДО аудита; сюда opts приходят уже подписанными. Провенанс фиксируется в артефакте (Story 0.4).
 		v.Verdict = verdictGoFallback
-		v.VerdictReason = fmt.Sprintf("oq4_geo_coverage %.4f < gate %.2f; частичный Go через -allow-fallback (требует sign-off владельца, Story 0.4)", *oq4.Coverage, cfg.GeoGate)
+		v.VerdictReason = fmt.Sprintf("oq4_geo_coverage %.4f < gate %.2f; частичный Go через -allow-fallback (sign-off владельца, Story 0.4)", *oq4.Coverage, cfg.GeoGate)
+		v.Provenance = &Provenance{
+			Owner: opts.fallbackOwner,
+			// Date — РЕАЛЬНАЯ дата sign-off (-fallback-date), а НЕ generatedAt: последнее
+			// управляется -verdict-date и отражает генерацию артефакта, не подпись владельца.
+			Date:       opts.fallbackDate,
+			Reason:     opts.fallbackReason,
+			Checkpoint: opts.fallbackCheckpoint,
+		}
 		return v, 0
 	default:
 		v.Verdict = verdictNoGo
