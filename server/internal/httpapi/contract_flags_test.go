@@ -104,14 +104,34 @@ func TestResolveContractFlags_MissingRowIsInsufficientNotClean(t *testing.T) {
 }
 
 // TestResolveContractFlags_DeterministicOrder — порядок дескрипторов стабилен (стабильность wire/golden).
+// Вход подан в ОБРАТНОМ порядке, а ожидание ПИНУЕТСЯ ЛИТЕРАЛОМ (НЕ против contractFlagTypes — иначе
+// тавтология, страж не покраснел бы): реордер contractFlagTypes ИЛИ сортировка по входу обязаны упасть.
+// См. [[guards-must-prove-red]].
 func TestResolveContractFlags_DeterministicOrder(t *testing.T) {
 	got := resolveContractFlags([]gen.RiskFlag{
 		activeFlag("price_per_km", "v1.0", `{}`),
 		activeFlag("single_participant", "v1.0", `{}`),
 	})
-	for i, ft := range contractFlagTypes {
+	want := []string{"single_participant", "price_per_km"} // литерал — единственный источник ожидания
+	if len(got) != len(want) {
+		t.Fatalf("ожидалось %d дескрипторов, got %d", len(want), len(got))
+	}
+	for i, ft := range want {
 		if got[i].FlagID != ft {
-			t.Fatalf("порядок дескрипторов нестабилен: [%d] = %q, ожидалось %q", i, got[i].FlagID, ft)
+			t.Fatalf("порядок дескрипторов: [%d] = %q, ожидалось %q (вход подан в обратном порядке)", i, got[i].FlagID, ft)
 		}
+	}
+}
+
+// TestResolveContractFlags_EmptyVersionIsNoData — review-фикс 5.1 (honesty): активная строка с пустой
+// methodology_version → честный no_data, а НЕ «ok» с пустым значением (NEGATIVE-control дыры «ok+пусто»).
+func TestResolveContractFlags_EmptyVersionIsNoData(t *testing.T) {
+	got := resolveContractFlags([]gen.RiskFlag{activeFlag("single_participant", "  ", `{"participant_count":1}`)})
+	sp, ok := flagByID(got, "single_participant")
+	if !ok || sp.State != registry.FlagRaised {
+		t.Fatalf("ожидался raised single_participant, got %+v", sp)
+	}
+	if sp.MethodologyVersion.State != registry.StateNoData || sp.MethodologyVersion.Value != nil {
+		t.Fatalf("пустая methodology_version → no_data (не ok+пусто), got %+v", sp.MethodologyVersion)
 	}
 }

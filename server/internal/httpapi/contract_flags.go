@@ -2,10 +2,21 @@ package httpapi
 
 import (
 	"encoding/json"
+	"strings"
 
 	"ashyqqala/server/internal/registry"
 	"ashyqqala/server/internal/store/gen"
 )
+
+// versionField — честный конверт methodology_version: ПУСТАЯ версия → no_data, а НЕ «ok» с пустым
+// значением (та же дыра «ok+пусто», что закрыта в honesty-обёртке Value; review-фикс 5.1). Колонка
+// methodology_version — NOT NULL TEXT, но может хранить "" → не выдаём фабрикованный «версия есть».
+func versionField(v string) Field[string] {
+	if strings.TrimSpace(v) == "" {
+		return noData[string]()
+	}
+	return okField(v)
+}
 
 // contractFlagTypes — flag_type'ы, применимые к КАРТОЧКЕ КОНТРАКТА (контракт-субъект: FR-19 «единственный
 // участник», FR-20 «цена за км»). Монополия (FR-21) и РНУ (FR-22) — contractor-субъект (organization_id) и
@@ -55,12 +66,12 @@ func resolveContractFlags(rows []gen.RiskFlag) []ContractFlagDTO {
 			dto.State = registry.FlagInsufficientData // нет строки → НЕТ доказательства оценки (честно)
 		case r.IsActive:
 			dto.State = registry.FlagRaised
-			dto.MethodologyVersion = okField(r.MethodologyVersion)
+			dto.MethodologyVersion = versionField(r.MethodologyVersion)
 			dto.DetectedAt = fromTimestamptz(r.DetectedAt)
 			dto.Evidence = json.RawMessage(r.Evidence) // пересчитываемость FR-23
 		default:
 			dto.State = registry.FlagNotRaised // снятая строка → оценивалось, сигнал не выставлен
-			dto.MethodologyVersion = okField(r.MethodologyVersion)
+			dto.MethodologyVersion = versionField(r.MethodologyVersion)
 			dto.DetectedAt = fromTimestamptz(r.DetectedAt)
 		}
 		out = append(out, dto)
