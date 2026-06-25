@@ -4,7 +4,14 @@ import type { components } from '../../shared/api/schema.gen';
 import type { Lang } from '../../shared/i18n';
 import { formatMoney, formatDate } from '../../shared/i18n/format';
 import { DataState, dataStateFromValueState } from '../../shared/state/DataState';
-import { FlagBadge, MethodologyDialog, apiToViewFlag, type ContractFlag } from '../flag';
+import {
+  FlagBadge,
+  MethodologyDialog,
+  apiToViewFlag,
+  apiToMethodologyTarget,
+  type MethodologyTarget,
+} from '../flag';
+import { ErrorBoundary } from '../../shared/ui/ErrorBoundary';
 import { ReportError, reportErrorMailto } from '../share';
 import '../flag/flag.css';
 import './contract-card.css';
@@ -33,12 +40,10 @@ export function ContractCard({ contract, lang }: { contract: Contract; lang: Lan
   // Story 5.1: флаги из РЕАЛЬНОГО compute Epic 4 через API (НЕ захардкоженный contractStories.ts). Честная
   // реконструкция состояний уже на бэке (resolveContractFlags, AC4): raised → бейдж под gate нейтральности;
   // not_raised / insufficient_data → видимая строка статуса (а не молчание = «всё чисто»).
-  const raisedFlags = contract.flags
-    .map(apiToViewFlag)
-    .filter((f): f is ContractFlag => f !== null);
+  const raisedApiFlags = contract.flags.filter((f) => f.state === 'raised');
   const nonRaised = contract.flags.filter((f) => f.state !== 'raised');
 
-  const [methFlag, setMethFlag] = useState<ContractFlag | null>(null);
+  const [methTarget, setMethTarget] = useState<MethodologyTarget | null>(null);
   const reportHref = reportErrorMailto(
     t('report_error.subject', { id: contract.goszakup_contract_id }),
   );
@@ -155,32 +160,43 @@ export function ContractCard({ contract, lang }: { contract: Contract; lang: Lan
 
       <section className="contract-card__signals">
         <h3 className="contract-card__signals-heading">
-          {raisedFlags.length > 0
-            ? t('contract.signals_heading', { count: raisedFlags.length })
+          {raisedApiFlags.length > 0
+            ? t('contract.signals_heading', { count: raisedApiFlags.length })
             : t('contract.signals_none_heading')}
         </h3>
         <p className="contract-card__signals-note">{t('contract.signals_note')}</p>
 
-        {raisedFlags.map((f) => (
-          <FlagBadge
-            key={f.flagId}
-            flag={f}
-            lang={lang}
-            onOpenMethodology={() => setMethFlag(f)}
-            reportErrorHref={reportHref}
-          />
-        ))}
+        {raisedApiFlags.map((f) => {
+          const view = apiToViewFlag(f);
+          if (view === null) return null;
+          return (
+            <FlagBadge
+              key={f.flag_id}
+              flag={view}
+              lang={lang}
+              onOpenMethodology={() => setMethTarget(apiToMethodologyTarget(f))}
+              reportErrorHref={reportHref}
+            />
+          );
+        })}
 
-        {/* Честная реконструкция видимой строкой (AC4): «проверено, сигнала нет» ≠ «недостаточно данных». */}
+        {/* Честная реконструкция видимой строкой (AC4): «проверено, сигнала нет» ≠ «недостаточно данных».
+            Story 5.3 (AC-2): строка кликабельна → открывает методику (формула/пороги + какого порога не хватило). */}
         {nonRaised.length > 0 ? (
-          <dl className="contract-card__flag-status" aria-label={t('contract.signals_status_heading')}>
+          <ul className="contract-card__flag-status" aria-label={t('contract.signals_status_heading')}>
             {nonRaised.map((f) => (
-              <div className="contract-card__row" key={f.flag_id}>
-                <dt>{t(`flag.${f.flag_id}.name`)}</dt>
-                <dd className="contract-card__flag-state">{t(`flag_state.${f.state}`)}</dd>
-              </div>
+              <li key={f.flag_id}>
+                <button
+                  type="button"
+                  className="contract-card__flag-status-row"
+                  onClick={() => setMethTarget(apiToMethodologyTarget(f))}
+                >
+                  <span>{t(`flag.${f.flag_id}.name`)}</span>
+                  <span className="contract-card__flag-state">{t(`flag_state.${f.state}`)}</span>
+                </button>
+              </li>
             ))}
-          </dl>
+          </ul>
         ) : null}
 
         {/* AC5: монополия/РНУ — contractor-субъект → карточка подрядчика (здесь вне охвата, честно). */}
@@ -192,14 +208,36 @@ export function ContractCard({ contract, lang }: { contract: Contract; lang: Lan
         />
       </section>
 
-      {methFlag && (
-        <MethodologyDialog
-          flag={methFlag}
-          lang={lang}
-          sourceUrl={sourceUrl}
-          reportErrorHref={reportHref}
-          onClose={() => setMethFlag(null)}
-        />
+      {methTarget && (
+        <ErrorBoundary
+          fallback={
+            <div
+              className="aq-meth-backdrop"
+              role="alertdialog"
+              aria-label={t('error.title')}
+              onClick={() => setMethTarget(null)}
+            >
+              <div className="aq-meth" onClick={(e) => e.stopPropagation()}>
+                <p>{t('error.body')}</p>
+                <button
+                  type="button"
+                  className="aq-meth__close"
+                  onClick={() => setMethTarget(null)}
+                >
+                  {t('methodology.close')}
+                </button>
+              </div>
+            </div>
+          }
+        >
+          <MethodologyDialog
+            target={methTarget}
+            lang={lang}
+            sourceUrl={sourceUrl}
+            reportErrorHref={reportHref}
+            onClose={() => setMethTarget(null)}
+          />
+        </ErrorBoundary>
       )}
     </article>
   );

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { apiToViewFlag, type ApiContractFlag } from './apiFlag';
+import { apiToViewFlag, apiToMethodologyTarget, type ApiContractFlag } from './apiFlag';
 
 function apiFlag(
   partial: Partial<ApiContractFlag> & Pick<ApiContractFlag, 'flag_id' | 'state'>,
@@ -61,6 +61,25 @@ describe('apiToViewFlag (Story 5.1: API-флаг → view-модель)', () => 
     expect(f.evidence.thresholdPerKm).toBeUndefined();
   });
 
+  it('review-фикс: число вне безопасного диапазона (>2^53) скрывается, не публикуется кривым', () => {
+    // Number.MAX_SAFE_INTEGER + N — небезопасное целое (через выражение, без неточного литерала).
+    const unsafe = Number.MAX_SAFE_INTEGER + 2;
+    const f = apiToViewFlag(
+      apiFlag({ flag_id: 'price_per_km', state: 'raised', evidence: { median: unsafe, price_per_km: unsafe } }),
+    )!;
+    expect(f.evidence.medianPerKm).toBeUndefined();
+    expect(f.evidence.thisPerKm).toBeUndefined();
+    expect(f.evidence.thresholdPerKm).toBeUndefined();
+  });
+
+  it('review-фикс: evidence-массив (не объект) → поля честно отсутствуют, бейдж не падает', () => {
+    const f = apiToViewFlag(
+      apiFlag({ flag_id: 'single_participant', state: 'raised', evidence: [1, 2, 3] as unknown as ApiContractFlag['evidence'] }),
+    )!;
+    expect(f.flagState).toBe('raised');
+    expect(f.evidence.participants).toBeUndefined();
+  });
+
   it('raised без detected_at → пустая дата (FlagBadge/диалог честно её скрывают, не падают)', () => {
     const f = apiToViewFlag(
       apiFlag({
@@ -71,5 +90,38 @@ describe('apiToViewFlag (Story 5.1: API-флаг → view-модель)', () => 
       }),
     )!;
     expect(f.detectedAt).toBe('');
+  });
+});
+
+describe('apiToMethodologyTarget (Story 5.3: методика достижима при любом состоянии)', () => {
+  it('raised → target с evidence + версия/дата', () => {
+    const t = apiToMethodologyTarget(
+      apiFlag({
+        flag_id: 'price_per_km',
+        state: 'raised',
+        evidence: { median: 38400000, sample_size: 9, deviation_factor: 1.5, price_per_km: 71000000 },
+      }),
+    );
+    expect(t.state).toBe('raised');
+    expect(t.evidence.medianPerKm).toBe('38400000');
+    expect(t.evidence.thresholdPerKm).toBe('57600000');
+    expect(t.methodologyVersion).toBe('v1.0');
+    expect(t.detectedAt).toBe('2026-05-12T10:00:00Z');
+  });
+
+  it('НЕ-raised → target БЕЗ evidence (формула/пороги придут из /api/methodology, AC-2)', () => {
+    const t = apiToMethodologyTarget(
+      apiFlag({
+        flag_id: 'price_per_km',
+        state: 'insufficient_data',
+        methodology_version: { value: null, state: 'no_data' },
+        detected_at: { value: null, state: 'no_data' },
+        evidence: null,
+      }),
+    );
+    expect(t.state).toBe('insufficient_data');
+    expect(t.evidence).toEqual({});
+    expect(t.methodologyVersion).toBe('');
+    expect(t.detectedAt).toBe('');
   });
 });

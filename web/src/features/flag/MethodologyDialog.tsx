@@ -3,19 +3,21 @@ import { useTranslation } from 'react-i18next';
 import type { Lang } from '../../shared/i18n';
 import { formatMoney, formatDate } from '../../shared/i18n/format';
 import { Icon } from '../../shared/ui/Icon';
-import type { ContractFlag } from './contractStories';
+import type { MethodologyTarget } from './apiFlag';
+import { useMethodology } from './useMethodology';
 
-// Экран методики флага (Story 1.9, AC1). role=dialog, базовый фокус + Escape (полный focus-trap —
-// Epic 3 Story 3.5). Показывает формулу ×1.5, ключ сопоставимости, evidence (raised) ИЛИ честное
-// «недостаточно данных» (<5) с формулой/порогами ВСЕГДА. Числа — данные, не проза. [UX key-flag-methodology]
+// Экран методики флага (Story 5.3, FR-23/NFR-5). role=dialog, базовый фокус + Escape (полный focus-trap —
+// Epic 3 Story 3.5). Формула (×factor) и ПОРОГИ показываются ВСЕГДА из ЕДИНОГО источника /api/methodology
+// (не литералы, не только evidence raised-флагов) — работает и для не-raised меток (AC-2). При raised — числа
+// из evidence (воркшит, AC-3); при не-raised — «сигнал не выставлен» + какого порога не хватило, без выдумки.
 export function MethodologyDialog({
-  flag,
+  target,
   lang,
   sourceUrl,
   reportErrorHref,
   onClose,
 }: {
-  flag: ContractFlag;
+  target: MethodologyTarget;
   lang: Lang;
   sourceUrl: string | null;
   reportErrorHref: string;
@@ -27,9 +29,17 @@ export function MethodologyDialog({
     ref.current?.focus();
   }, []);
 
-  const ev = flag.evidence;
-  const raised = flag.flagState === 'raised';
-  const factor = ev.deviationFactor ?? '1.5';
+  const { data: meth } = useMethodology();
+  const th = meth?.thresholds;
+  const ev = target.evidence;
+  const raised = target.state === 'raised';
+  const isPrice = target.flagId === 'price_per_km';
+
+  // Пороги — ТОЛЬКО из methodology_params (th); НЕ дефолтим (review-фикс 5-1: без фабрикации). Пока не
+  // загружено — соответствующий блок не рендерим (кэш Infinity → практически мгновенно).
+  const factor = th !== undefined ? String(th.price_per_km_deviation_factor) : undefined;
+  const minSample = th?.min_sample;
+  const months = th?.comparability_window_months;
 
   return (
     <div className="aq-meth-backdrop" onClick={onClose}>
@@ -47,20 +57,20 @@ export function MethodologyDialog({
       >
         <p className="aq-meth__overlabel">{t('methodology.overlabel')}</p>
         <h2 id="aq-meth-title" className="aq-meth__title">
-          {t(`flag.${flag.flagId}.summary`)}
+          {t(`flag.${target.flagId}.summary`)}
         </h2>
         <p className="aq-meth__frame">
           <Icon name="flag" /> {t('methodology.frame_note')}
         </p>
         <p className="aq-meth__simple">{t('methodology.simple_note')}</p>
 
-        {flag.flagId === 'price_per_km' && (
+        {/* Формула — ВСЕГДА (пороги из params). */}
+        {isPrice && factor !== undefined && (
           <p className="aq-meth__formula">{t('methodology.formula_price', { factor })}</p>
         )}
-        {flag.flagId === 'single_participant' && (
-          <p className="aq-meth__rule">{t('methodology.single_participant_rule')}</p>
-        )}
+        {!isPrice && <p className="aq-meth__rule">{t('methodology.single_participant_rule')}</p>}
 
+        {/* Ключ сопоставимости + пороги — ВСЕГДА из methodology_params. */}
         <dl className="aq-meth__key">
           {ev.direction && (
             <div className="aq-meth__row">
@@ -74,45 +84,36 @@ export function MethodologyDialog({
               <dd>{ev.katoCode}</dd>
             </div>
           )}
-          {ev.windowMonths !== undefined && (
+          {isPrice && months !== undefined && (
             <div className="aq-meth__row">
               <dt>{t('methodology.key_window')}</dt>
-              <dd>{t('methodology.key_window_value', { months: ev.windowMonths })}</dd>
+              <dd>{t('methodology.key_window_value', { months })}</dd>
             </div>
           )}
-          {ev.minSample !== undefined && (
+          {isPrice && minSample !== undefined && (
             <div className="aq-meth__row">
               <dt>{t('methodology.key_min_sample')}</dt>
-              <dd>{ev.minSample}</dd>
+              <dd>{minSample}</dd>
             </div>
           )}
         </dl>
 
-        {!raised ? (
-          <div className="aq-meth__insufficient">
-            <p className="aq-meth__insufficient-title">
-              <Icon name="insufficient" /> {t('methodology.insufficient_title')}
-            </p>
-            <p>
-              {t('methodology.insufficient_body', {
-                sample: ev.sampleSize ?? 0,
-                min: ev.minSample ?? 5,
-              })}
-            </p>
-            <p className="aq-meth__note">{t('methodology.insufficient_note')}</p>
-            <p className="aq-meth__note">{t('methodology.always_shown')}</p>
-          </div>
-        ) : flag.flagId === 'single_participant' ? (
-          <dl className="aq-meth__ev">
+        {/* Критерий «похожести» (AC-3) — для цены/км. */}
+        {isPrice && months !== undefined && minSample !== undefined && (
+          <p className="aq-meth__similarity">
+            {t('methodology.similarity_criterion', { months, min: minSample })}
+          </p>
+        )}
+
+        {/* Состояние сигнала. */}
+        {raised ? (
+          <dl className="aq-meth__ev" aria-label={t('methodology.worksheet_heading')}>
             {ev.participants !== undefined && (
               <div className="aq-meth__row aq-meth__row--hl">
                 <dt>{t('methodology.ev_participants')}</dt>
                 <dd>{ev.participants}</dd>
               </div>
             )}
-          </dl>
-        ) : (
-          <dl className="aq-meth__ev">
             {ev.sampleSize !== undefined && (
               <div className="aq-meth__row">
                 <dt>{t('methodology.ev_sample')}</dt>
@@ -125,7 +126,7 @@ export function MethodologyDialog({
                 <dd>{formatMoney(ev.medianPerKm, lang)}</dd>
               </div>
             )}
-            {ev.thresholdPerKm && (
+            {ev.thresholdPerKm && factor !== undefined && (
               <div className="aq-meth__row">
                 <dt>{t('methodology.ev_threshold', { factor })}</dt>
                 <dd>{formatMoney(ev.thresholdPerKm, lang)}</dd>
@@ -138,24 +139,31 @@ export function MethodologyDialog({
               </div>
             )}
           </dl>
-        )}
-
-        <dl className="aq-meth__meta">
-          <div className="aq-meth__row">
-            <dt>{t('methodology.version')}</dt>
-            <dd>{flag.methodologyVersion}</dd>
+        ) : (
+          // Не-raised: сигнал не выставлен. Формула/пороги показаны ВЫШЕ; здесь — честно, какого порога не хватило.
+          <div className="aq-meth__insufficient">
+            <p className="aq-meth__insufficient-title">
+              <Icon name="insufficient" /> {t('methodology.not_raised_title')}
+            </p>
+            {isPrice && minSample !== undefined && months !== undefined && (
+              <p>{t('methodology.insufficient_price', { min: minSample, months })}</p>
+            )}
+            <p className="aq-meth__note">{t('methodology.insufficient_note')}</p>
+            <p className="aq-meth__note">{t('methodology.always_shown')}</p>
           </div>
-          {flag.detectedAt ? (
-            <div className="aq-meth__row">
-              <dt>{t('methodology.computed_at')}</dt>
-              <dd>{formatDate(flag.detectedAt, lang)}</dd>
-            </div>
-          ) : null}
-        </dl>
-
-        {raised && flag.flagId === 'price_per_km' && (
-          <p className="aq-meth__recalc">{t('methodology.recalc_note')}</p>
         )}
+
+        {/* as_of: версия методики + дата расчёта (snapshot_id/permalink — Story 5.6). */}
+        <p className="aq-meth__as-of">
+          {target.detectedAt
+            ? t('methodology.as_of', {
+                version: target.methodologyVersion || '—',
+                date: formatDate(target.detectedAt, lang),
+              })
+            : t('methodology.as_of_no_date', { version: target.methodologyVersion || '—' })}
+        </p>
+
+        {raised && isPrice && <p className="aq-meth__recalc">{t('methodology.recalc_note')}</p>}
 
         <div className="aq-meth__actions">
           {sourceUrl && (

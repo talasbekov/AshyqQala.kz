@@ -35,6 +35,14 @@ const CARD_KEYS = [
   'contract.contractor_signals_note',
   'flag.single_participant.name',
   'flag.price_per_km.name',
+  // Story 5.3 — экран методики:
+  'methodology.not_raised_title',
+  'methodology.insufficient_price',
+  'methodology.insufficient_monopoly',
+  'methodology.similarity_criterion',
+  'methodology.worksheet_heading',
+  'methodology.as_of',
+  'methodology.as_of_no_date',
 ];
 
 describe('ContractCard строки (Story 5.1)', () => {

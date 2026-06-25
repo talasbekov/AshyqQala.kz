@@ -49,6 +49,24 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
 
+  /api/methodology:
+    get:
+      summary: Пороги методики (Story 5.3, FR-23) — единый источник для экрана методики
+      description: >
+        Read-only пороги из methodology_params (registry). Экран методики показывает формулу/пороги ВСЕГДА
+        (в т.ч. когда сигнал не выставлен), без литералов на фронте. Иммутабельно в рантайме.
+      responses:
+        '200':
+          description: версия + пороги методики
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Methodology' }
+        '500':
+          description: внутренняя ошибка
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
   /api/lots:
     get:
       summary: ⏳ Лоты Астаны с интерим-гео для ранней карты (Story 0.8, трек «Парсер-мост»)
@@ -197,6 +215,33 @@ components:
           # Подмножество value_state (ось 1): почему лот на карте/вне карты. ok = есть точка;
           # geocode_pending = ещё не геокодирован (нет гео-строки); geocode_failed = unmatched (без точки).
           enum: [ok, geocode_pending, geocode_failed]
+    MethodologyThresholds:
+      type: object
+      additionalProperties: false
+      # Пороги синхронны с methodology_params.v1.yaml (FR-23). Доли/факторы — числа (малые десятичные).
+      required:
+        - min_sample
+        - comparability_window_months
+        - price_per_km_deviation_factor
+        - monopoly_concentration_share
+        - monopoly_min_group_contracts
+        - single_participant_exclude_methods
+      properties:
+        min_sample: { type: integer }
+        comparability_window_months: { type: integer }
+        price_per_km_deviation_factor: { type: number }
+        monopoly_concentration_share: { type: number }
+        monopoly_min_group_contracts: { type: integer }
+        single_participant_exclude_methods:
+          type: array
+          items: { type: string }
+    Methodology:
+      type: object
+      additionalProperties: false
+      required: [version, thresholds]
+      properties:
+        version: { type: string } # каноническая methodology_version (^v\d+\.\d+$)
+        thresholds: { $ref: '#/components/schemas/MethodologyThresholds' }
     Error:
       type: object
       additionalProperties: false

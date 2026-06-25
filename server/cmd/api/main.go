@@ -92,6 +92,10 @@ func main() {
 	h := httpapi.ContractsHandler{Store: gen.New(pool), Log: log}
 	r.Get("/api/contracts/{goszakup_id}", h.Get)
 
+	// Story 5.3: пороги методики (FR-23) — единый источник для экрана методики (формула/пороги ВСЕГДА).
+	methH := httpapi.MethodologyHandler{Params: params}
+	r.Get("/api/methodology", methH.Get)
+
 	// ⏳ ИНТЕРИМ (Story 0.8, трек «Парсер-мост»): ранняя карта лотов Астаны. Читает interim_geo_lots
 	// через store (НЕ tools/scrape — изоляция); замещается живым импортом при swap scrape→ows.
 	mapH := httpapi.MapLotsHandler{Store: gen.New(pool), Log: log}

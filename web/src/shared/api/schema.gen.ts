@@ -106,6 +106,55 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/methodology": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Пороги методики (Story 5.3, FR-23) — единый источник для экрана методики
+         * @description Read-only пороги из methodology_params (registry). Экран методики показывает формулу/пороги ВСЕГДА (в т.ч. когда сигнал не выставлен), без литералов на фронте. Иммутабельно в рантайме.
+         *
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description версия + пороги методики */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Methodology"];
+                    };
+                };
+                /** @description внутренняя ошибка */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/lots": {
         parameters: {
             query?: never;
@@ -214,6 +263,18 @@ export interface components {
             lat: number | null;
             /** @enum {string} */
             geocode_state: "ok" | "geocode_pending" | "geocode_failed";
+        };
+        MethodologyThresholds: {
+            min_sample: number;
+            comparability_window_months: number;
+            price_per_km_deviation_factor: number;
+            monopoly_concentration_share: number;
+            monopoly_min_group_contracts: number;
+            single_participant_exclude_methods: string[];
+        };
+        Methodology: {
+            version: string;
+            thresholds: components["schemas"]["MethodologyThresholds"];
         };
         Error: {
             error: {

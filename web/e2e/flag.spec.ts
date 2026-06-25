@@ -1,5 +1,18 @@
 import { test, expect } from '@playwright/test';
 
+// Story 5.3: пороги методики из /api/methodology (единый источник; формула/пороги ВСЕГДА).
+const METHODOLOGY = {
+  version: 'v1.0',
+  thresholds: {
+    min_sample: 5,
+    comparability_window_months: 24,
+    price_per_km_deviation_factor: 1.5,
+    monopoly_concentration_share: 0.5,
+    monopoly_min_group_contracts: 5,
+    single_participant_exclude_methods: ['из_одного_источника'],
+  },
+};
+
 // Smoke вертикального среза (Story 1.9): карточка → бейдж нейтрального флага → экран методики →
 // дверь «Сообщить об ошибке» + первоисточник. Ответ /api замокан (route.fulfill). Язык по умолчанию kk.
 const DEMO2 = {
@@ -55,6 +68,7 @@ const DEMO2 = {
 
 test('карточка 1.9: нейтральный флаг → методика → дверь + первоисточник', async ({ page }) => {
   await page.route('**/api/contracts/DEMO-0002', (route) => route.fulfill({ json: DEMO2 }));
+  await page.route('**/api/methodology', (route) => route.fulfill({ json: METHODOLOGY }));
   await page.goto('/contracts/DEMO-0002');
 
   // Бейдж нейтрального флага (role=button, текст «… — сигнал, требующий проверки»). AC1/AC2.
@@ -133,6 +147,7 @@ test('карточка 5.1: честное «нет данных» + видим�
   page,
 }) => {
   await page.route('**/api/contracts/DEMO-0003', (route) => route.fulfill({ json: DEMO3 }));
+  await page.route('**/api/methodology', (route) => route.fulfill({ json: METHODOLOGY }));
   await page.goto('/contracts/DEMO-0003');
 
   // Поле plan_end = NULL → честное «нет данных» (AC1), не пустота.
@@ -146,5 +161,18 @@ test('карточка 5.1: честное «нет данных» + видим�
   // AC4: реконструкция видна строкой статуса — «недостаточно данных для оценки» (НЕ молчание = «чисто»).
   await expect(
     page.getByText(/недостаточно данных для оценки|бағалауға дерек жеткіліксіз/i).first(),
+  ).toBeVisible();
+
+  // Story 5.3 (AC-2): строка статуса кликабельна → методика для НЕ-raised: формула/пороги ВСЕГДА +
+  // «сигнал не выставлен» + какого порога не хватило (без выдуманных чисел).
+  await page
+    .getByRole('button', { name: /Шақырым құны|Цена за км/ })
+    .first()
+    .click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText('1.5'); // формула из /api/methodology, не из evidence
+  await expect(
+    dialog.getByText(/Сигнал не выставлен|Сигнал қойылмады/).first(),
   ).toBeVisible();
 });

@@ -1,17 +1,27 @@
-// Адаптер API-флага (Story 5.1) → view-модель карточки (FlagBadge/MethodologyDialog). Карточка больше НЕ
-// берёт флаги из захардкоженного contractStories.ts — источник реальный compute Epic 4 через /api/contracts.
-// Честная реконструкция состояний УЖЕ сделана на бэке (resolveContractFlags): каждый contract-флаг приходит
-// со state ∈ {raised, not_raised, insufficient_data}. Здесь — ЗАЩИТНЫЙ маппинг сырого snake_case evidence
-// (FR-23) в FlagEvidence: ставим ТОЛЬКО присутствующие поля, НЕ фабрикуем (honesty §7.4). Числа → каноничные
-// строки целых для formatMoney (строгий парсер; кормим валидным входом, а не ослабляем его).
+// Адаптер API-флага (Story 5.1/5.3) → view-модели. Карточка берёт флаги из реального compute Эпика 4 через
+// /api/contracts (НЕ захардкожено). ЗАЩИТНЫЙ маппинг сырого snake_case evidence (FR-23): только присутствующие
+// поля, НЕ фабрикуем (honesty §7.4). Числа → каноничные строки целых для formatMoney (строгий парсер).
 import type { components } from '../../shared/api/schema.gen';
 import type { ContractFlag, FlagId, FlagEvidence, ManualFlagState } from './contractStories';
 
 export type ApiContractFlag = components['schemas']['ContractFlag'];
 
+// MethodologyTarget — вход экрана методики (Story 5.3) для ЛЮБОГО состояния флага (raised → с evidence;
+// not_raised/insufficient → пустой evidence, формула/пороги берутся из /api/methodology). Делает методику
+// достижимой и для не-raised меток (AC-2).
+export interface MethodologyTarget {
+  flagId: FlagId;
+  state: ApiContractFlag['state'];
+  evidence: FlagEvidence; // {} для не-raised (нет данных — не выдумываем)
+  methodologyVersion: string; // '' если no_data
+  detectedAt: string; // '' если no_data
+}
+
 // intString — число/целочисленная строка → каноничная строка целых (^-?\d+$); иначе undefined (не выдумываем).
+// Число ВНЕ безопасного целого диапазона (|v| > 2^53) уже потеряло точность при JSON.parse → честно
+// СКРЫВАЕМ (undefined), а НЕ публикуем кривое значение (FR-23: пересчитываемость по точным числам).
 function intString(v: unknown): string | undefined {
-  if (typeof v === 'number' && Number.isFinite(v)) return String(Math.trunc(v));
+  if (typeof v === 'number' && Number.isSafeInteger(v)) return String(v);
   if (typeof v === 'string' && /^-?\d+$/.test(v)) return v;
   return undefined;
 }
@@ -29,13 +39,13 @@ function thresholdPerKm(medianStr: string | undefined, factor: number | undefine
   return ((BigInt(medianStr) * BigInt(scaled)) / 1000n).toString();
 }
 
-// apiToViewFlag — RAISED API-флаг → ContractFlag (для бейджа + методики). Возвращает null для НЕ-raised
-// (not_raised/insufficient_data/not_published не публикуются бейджем — их рисует честная строка статуса).
-export function apiToViewFlag(f: ApiContractFlag): ContractFlag | null {
-  if (f.state !== 'raised') return null;
-  const ev = (f.evidence ?? {}) as Record<string, unknown>;
+// mapEvidence — сырой jsonb evidence → FlagEvidence (защитно). evidence ДОЛЖЕН быть простым объектом;
+// массив/скаляр/null → пустой объект (поля честно отсутствуют). Общий для бейджа и экрана методики.
+function mapEvidence(f: ApiContractFlag): FlagEvidence {
+  const raw = f.evidence;
+  const ev: Record<string, unknown> =
+    raw !== null && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
   const out: FlagEvidence = {};
-
   if (f.flag_id === 'single_participant') {
     const pc = intNum(ev.participant_count);
     if (pc !== undefined) out.participants = pc;
@@ -51,12 +61,29 @@ export function apiToViewFlag(f: ApiContractFlag): ContractFlag | null {
     const thr = thresholdPerKm(median, factor);
     if (thr !== undefined) out.thresholdPerKm = thr;
   }
+  return out;
+}
 
+// apiToViewFlag — RAISED API-флаг → ContractFlag (для бейджа). null для НЕ-raised (бейдж не публикуется).
+export function apiToViewFlag(f: ApiContractFlag): ContractFlag | null {
+  if (f.state !== 'raised') return null;
   return {
     flagId: f.flag_id as FlagId,
     flagState: 'raised' as ManualFlagState,
-    detectedAt: f.detected_at.value ?? '', // ISO8601; пусто → FlagBadge/диалог честно скрывают дату
+    detectedAt: f.detected_at.value ?? '',
     methodologyVersion: f.methodology_version.value ?? '',
-    evidence: out,
+    evidence: mapEvidence(f),
+  };
+}
+
+// apiToMethodologyTarget — API-флаг ЛЮБОГО состояния → вход экрана методики (Story 5.3). evidence только для
+// raised; для не-raised пустой (формула/пороги придут из /api/methodology, AC-2).
+export function apiToMethodologyTarget(f: ApiContractFlag): MethodologyTarget {
+  return {
+    flagId: f.flag_id as FlagId,
+    state: f.state,
+    evidence: f.state === 'raised' ? mapEvidence(f) : {},
+    methodologyVersion: f.methodology_version.value ?? '',
+    detectedAt: f.detected_at.value ?? '',
   };
 }

@@ -241,3 +241,11 @@
   outline: var(--space-focus-ring-width) solid var(--color-focus-ring);
   outline-offset: var(--space-focus-ring-offset);
 }
+
+/* Story 5.3: критерий «похожести» (AC-3) и срез методики (as_of) — приглушённо, вторичный текст. */
+.aq-meth__similarity,
+.aq-meth__as-of {
+  margin: var(--space-2) 0 0;
+  font-size: var(--type-body-size);
+  color: var(--color-text-secondary);
+}

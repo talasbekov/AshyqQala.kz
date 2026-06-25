@@ -77,11 +77,30 @@
   color: var(--color-text-secondary);
 }
 
-/* Story 5.1: честная строка статуса флагов (реконструкция AC4) — приглушённо, НЕ тревога/амбер. */
+/* Story 5.1: честная строка статуса флагов (реконструкция AC4) — приглушённо, НЕ тревога/амбер.
+   Story 5.3: строка кликабельна (button) → открывает методику (AC-2); ≥44px, focus-ring глобальный. */
 .contract-card__flag-status {
   display: grid;
   gap: var(--space-row-gap);
   margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.contract-card__flag-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+  min-height: var(--space-tap-target);
+  padding: 0;
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .contract-card__flag-state {
