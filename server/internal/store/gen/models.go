@@ -8,6 +8,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Act struct {
+	ID            int64              `json:"id"`
+	ContractID    int64              `json:"contract_id"`
+	GoszakupActID string             `json:"goszakup_act_id"`
+	ActDate       pgtype.Date        `json:"act_date"`
+	SignerInfo    pgtype.Text        `json:"signer_info"`
+	SourceUrl     pgtype.Text        `json:"source_url"`
+	ImportedAt    pgtype.Timestamptz `json:"imported_at"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Contract struct {
 	ID                 int64              `json:"id"`
 	GoszakupContractID string             `json:"goszakup_contract_id"`

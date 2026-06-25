@@ -16,7 +16,32 @@ const DEMO = {
   status: { value: 'active', state: 'ok' },
   direction: { value: 'road', state: 'ok' },
   kato_code: { value: '710000000', state: 'ok' },
+  customer: { value: null, state: 'no_data' },
+  supplier: { value: null, state: 'no_data' },
   source_url: { value: 'https://goszakup.gov.kz/ru/contract/DEMO-0001', state: 'ok' },
+  // Story 5.1: акт отсутствует (синтетика без акта) + флаги из API (single_participant raised).
+  act: {
+    present: false,
+    act_date: { value: null, state: 'no_data' },
+    signer: { value: null, state: 'no_data' },
+    source_url: { value: null, state: 'no_data' },
+  },
+  flags: [
+    {
+      flag_id: 'single_participant',
+      state: 'raised',
+      methodology_version: { value: 'v1.0', state: 'ok' },
+      detected_at: { value: '2026-05-12T10:00:00Z', state: 'ok' },
+      evidence: { participant_count: 1 },
+    },
+    {
+      flag_id: 'price_per_km',
+      state: 'insufficient_data',
+      methodology_version: { value: null, state: 'no_data' },
+      detected_at: { value: null, state: 'no_data' },
+      evidence: null,
+    },
+  ],
   imported_at: { value: '2026-03-15T10:00:00Z', state: 'ok' },
   updated_at: { value: '2026-03-15T10:00:00Z', state: 'ok' },
 };

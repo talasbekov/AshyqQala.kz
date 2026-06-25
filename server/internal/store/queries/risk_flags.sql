@@ -29,6 +29,16 @@ WHERE flag_type = $1 AND contract_id = $2;
 -- Число активных флагов данного типа (диагностика/тесты).
 SELECT count(*) AS n FROM risk_flags WHERE flag_type = $1 AND is_active;
 
+-- name: ListContractFlags :many
+-- ВСЕ contract-флаги (активные И снятые) по contract_id — для ЧЕСТНОЙ реконструкции состояния на ЧТЕНИИ
+-- (Story 5.1, AC4). Стор хранит только raised (is_active) и снятые (is_active=false) строки; «нет строки» НЕ
+-- значит «всё чисто» → читающий слой выводит insufficient_data при отсутствии строки (см. resolveContractFlags).
+-- Детерминированный порядок (flag_type) — стабильность wire/golden.
+SELECT id, flag_type, subject_type, contract_id, organization_id, severity, evidence, is_active, detected_at, cleared_at, methodology_version
+FROM risk_flags
+WHERE contract_id = $1
+ORDER BY flag_type;
+
 -- name: RaiseContractorFlag :exec
 -- FR-21 (Story 4.4): идемпотентно ставит/обновляет АКТИВНЫЙ contractor-флаг (повтор не плодит дубли — UPSERT
 -- по (flag_type, organization_id)). Снятый ранее флаг ре-активируется (is_active=true, cleared_at=NULL);

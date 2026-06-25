@@ -145,10 +145,12 @@ export function MethodologyDialog({
             <dt>{t('methodology.version')}</dt>
             <dd>{flag.methodologyVersion}</dd>
           </div>
-          <div className="aq-meth__row">
-            <dt>{t('methodology.computed_at')}</dt>
-            <dd>{formatDate(flag.detectedAt, lang)}</dd>
-          </div>
+          {flag.detectedAt ? (
+            <div className="aq-meth__row">
+              <dt>{t('methodology.computed_at')}</dt>
+              <dd>{formatDate(flag.detectedAt, lang)}</dd>
+            </div>
+          ) : null}
         </dl>
 
         {raised && flag.flagId === 'price_per_km' && (

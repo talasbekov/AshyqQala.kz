@@ -4,7 +4,7 @@ import type { components } from '../../shared/api/schema.gen';
 import type { Lang } from '../../shared/i18n';
 import { formatMoney, formatDate } from '../../shared/i18n/format';
 import { DataState, dataStateFromValueState } from '../../shared/state/DataState';
-import { FlagBadge, MethodologyDialog, flagsFor, type ContractFlag } from '../flag';
+import { FlagBadge, MethodologyDialog, apiToViewFlag, type ContractFlag } from '../flag';
 import { ReportError, reportErrorMailto } from '../share';
 import '../flag/flag.css';
 import './contract-card.css';
@@ -30,13 +30,22 @@ export function ContractCard({ contract, lang }: { contract: Contract; lang: Lan
   const src = contract.source_url;
   const sourceUrl = src.state === 'ok' && src.value !== null ? src.value : null;
 
-  // Ручные флаги-истории (Story 1.9). Gate нейтральности: бейдж публикуется только с путём к методике
-  // (onOpenMethodology) И дверью «Сообщить об ошибке» (reportErrorHref) — оба обязательны.
-  const flags = flagsFor(contract.goszakup_contract_id);
+  // Story 5.1: флаги из РЕАЛЬНОГО compute Epic 4 через API (НЕ захардкоженный contractStories.ts). Честная
+  // реконструкция состояний уже на бэке (resolveContractFlags, AC4): raised → бейдж под gate нейтральности;
+  // not_raised / insufficient_data → видимая строка статуса (а не молчание = «всё чисто»).
+  const raisedFlags = contract.flags
+    .map(apiToViewFlag)
+    .filter((f): f is ContractFlag => f !== null);
+  const nonRaised = contract.flags.filter((f) => f.state !== 'raised');
+
   const [methFlag, setMethFlag] = useState<ContractFlag | null>(null);
   const reportHref = reportErrorMailto(
     t('report_error.subject', { id: contract.goszakup_contract_id }),
   );
+
+  const act = contract.act;
+  const actSourceUrl =
+    act.source_url.state === 'ok' && act.source_url.value !== null ? act.source_url.value : null;
 
   return (
     <article className="contract-card" aria-labelledby="contract-subject">
@@ -81,6 +90,19 @@ export function ContractCard({ contract, lang }: { contract: Contract; lang: Lan
             <Value field={contract.plan_end} format={(v) => formatDate(v, lang)} />
           </dd>
         </div>
+        {/* Заказчик/Подрядчик (FR-10) — данные орг ждут Epic 2; пока честный no_data, не выдумываем. */}
+        <div className="contract-card__row">
+          <dt>{t('contract.field.customer')}</dt>
+          <dd lang="ru">
+            <Value field={contract.customer} />
+          </dd>
+        </div>
+        <div className="contract-card__row">
+          <dt>{t('contract.field.supplier')}</dt>
+          <dd lang="ru">
+            <Value field={contract.supplier} />
+          </dd>
+        </div>
         <div className="contract-card__row">
           <dt>{t('contract.field.kato_code')}</dt>
           <dd>
@@ -88,6 +110,37 @@ export function ContractCard({ contract, lang }: { contract: Contract; lang: Lan
           </dd>
         </div>
       </dl>
+
+      {/* Акт приёмки (FR-11): только при наличии; иначе ничего (источник доверия — ссылка на первоисточник). */}
+      {act.present ? (
+        <section className="contract-card__act" aria-label={t('contract.act.heading')}>
+          <h3 className="contract-card__act-heading">{t('contract.act.heading')}</h3>
+          <dl className="contract-card__meta">
+            <div className="contract-card__row">
+              <dt>{t('contract.act.date')}</dt>
+              <dd>
+                <Value field={act.act_date} format={(v) => formatDate(v, lang)} />
+              </dd>
+            </div>
+            <div className="contract-card__row">
+              <dt>{t('contract.act.signer')}</dt>
+              <dd lang="ru">
+                <Value field={act.signer} />
+              </dd>
+            </div>
+          </dl>
+          {actSourceUrl !== null ? (
+            <a
+              className="contract-card__source"
+              href={actSourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {t('contract.act.source')} ↗
+            </a>
+          ) : null}
+        </section>
+      ) : null}
 
       {sourceUrl !== null ? (
         <a
@@ -100,27 +153,44 @@ export function ContractCard({ contract, lang }: { contract: Contract; lang: Lan
         </a>
       ) : null}
 
-      {flags.length > 0 && (
-        <section className="contract-card__signals">
-          <h3 className="contract-card__signals-heading">
-            {t('contract.signals_heading', { count: flags.length })}
-          </h3>
-          <p className="contract-card__signals-note">{t('contract.signals_note')}</p>
-          {flags.map((f) => (
-            <FlagBadge
-              key={f.flagId}
-              flag={f}
-              lang={lang}
-              onOpenMethodology={() => setMethFlag(f)}
-              reportErrorHref={reportHref}
-            />
-          ))}
-          <ReportError
-            contractId={contract.goszakup_contract_id}
-            className="contract-card__report"
+      <section className="contract-card__signals">
+        <h3 className="contract-card__signals-heading">
+          {raisedFlags.length > 0
+            ? t('contract.signals_heading', { count: raisedFlags.length })
+            : t('contract.signals_none_heading')}
+        </h3>
+        <p className="contract-card__signals-note">{t('contract.signals_note')}</p>
+
+        {raisedFlags.map((f) => (
+          <FlagBadge
+            key={f.flagId}
+            flag={f}
+            lang={lang}
+            onOpenMethodology={() => setMethFlag(f)}
+            reportErrorHref={reportHref}
           />
-        </section>
-      )}
+        ))}
+
+        {/* Честная реконструкция видимой строкой (AC4): «проверено, сигнала нет» ≠ «недостаточно данных». */}
+        {nonRaised.length > 0 ? (
+          <dl className="contract-card__flag-status" aria-label={t('contract.signals_status_heading')}>
+            {nonRaised.map((f) => (
+              <div className="contract-card__row" key={f.flag_id}>
+                <dt>{t(`flag.${f.flag_id}.name`)}</dt>
+                <dd className="contract-card__flag-state">{t(`flag_state.${f.state}`)}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : null}
+
+        {/* AC5: монополия/РНУ — contractor-субъект → карточка подрядчика (здесь вне охвата, честно). */}
+        <p className="contract-card__contractor-note">{t('contract.contractor_signals_note')}</p>
+
+        <ReportError
+          contractId={contract.goszakup_contract_id}
+          className="contract-card__report"
+        />
+      </section>
 
       {methFlag && (
         <MethodologyDialog

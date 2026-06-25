@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-06-19T18:38:34+0500
-last_updated: 2026-06-25T08:00:00+0500
+last_updated: 2026-06-25T18:00:00+0500
 project: AshyqQala.kz
 project_key: NOKEY
 tracking_system: file-system
@@ -106,8 +106,8 @@ development_status:
   epic-4-retrospective: done
 
   # Epic 5: Карточки, методика-экран, шаринг и канал об ошибке (presentation)
-  epic-5: backlog
-  5-1-полная-карточка-контракта-первоисточник-акт-активные-флаги: backlog
+  epic-5: in-progress
+  5-1-полная-карточка-контракта-первоисточник-акт-активные-флаги: review
   5-2-карточка-подрядчика-агрегаты-рну: backlog
   5-3-экран-методики-флага: backlog
   5-4-канал-сообщить-об-ошибке-полный-fr-28: backlog

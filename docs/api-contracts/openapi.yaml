@@ -94,6 +94,38 @@ components:
           type: string
           # flag_state — синхронно с registry/values/honest_states.json (перекрёстный тест, Story 1.4 AC4)
           enum: [raised, not_raised, insufficient_data, not_published]
+    Act:
+      type: object
+      additionalProperties: false
+      # Акт приёмки на карточке (FR-11, Story 5.1). present — есть ли акт; при отсутствии поля no_data
+      # (карточка не выдумывает дату/подписанта). signer — служебная информация должностного лица (§6.2.4).
+      required: [present, act_date, signer, source_url]
+      properties:
+        present: { type: boolean }
+        act_date: { $ref: '#/components/schemas/StringField' }
+        signer: { $ref: '#/components/schemas/StringField' }
+        source_url: { $ref: '#/components/schemas/StringField' }
+    ContractFlag:
+      type: object
+      additionalProperties: false
+      # Флаг на карточке контракта (FR-12/FR-23, Story 5.1). Контракт-субъектные флаги (FR-19/FR-20).
+      # state — ось flag_state honest-enum, реконструированная на чтении (AC4): нет строки → insufficient_data.
+      # evidence — СЫРОЙ jsonb пересчитываемости, непусто ТОЛЬКО при raised (иначе null). methodology_version —
+      # value лишь когда флаг оценивался (есть строка), иначе no_data.
+      required: [flag_id, state, methodology_version, detected_at, evidence]
+      properties:
+        flag_id:
+          type: string
+          enum: [single_participant, price_per_km]
+        state:
+          type: string
+          enum: [raised, not_raised, insufficient_data, not_published]
+        methodology_version: { $ref: '#/components/schemas/StringField' }
+        detected_at: { $ref: '#/components/schemas/StringField' } # когда оценён (ISO8601 Z); no_data если строки нет
+        evidence:
+          type: object
+          nullable: true
+          additionalProperties: true
     Contract:
       type: object
       additionalProperties: false
@@ -108,7 +140,11 @@ components:
         - status
         - direction
         - kato_code
+        - customer
+        - supplier
         - source_url
+        - act
+        - flags
         - imported_at
         - updated_at
       properties:
@@ -122,7 +158,13 @@ components:
         status: { $ref: '#/components/schemas/StringField' }
         direction: { $ref: '#/components/schemas/StringField' }
         kato_code: { $ref: '#/components/schemas/StringField' }
+        customer: { $ref: '#/components/schemas/StringField' } # Заказчик — no_data до Epic 2 (organizations)
+        supplier: { $ref: '#/components/schemas/StringField' } # Подрядчик — no_data до Epic 2
         source_url: { $ref: '#/components/schemas/StringField' }
+        act: { $ref: '#/components/schemas/Act' }                  # FR-11: акт приёмки (всегда объект; present=false если нет)
+        flags:                                                    # FR-12/FR-23: контракт-флаги + честная реконструкция
+          type: array
+          items: { $ref: '#/components/schemas/ContractFlag' }
         imported_at: { $ref: '#/components/schemas/StringField' } # ISO8601 Z в value; единый конверт + честный no_data
         updated_at: { $ref: '#/components/schemas/StringField' }
     MapLot:

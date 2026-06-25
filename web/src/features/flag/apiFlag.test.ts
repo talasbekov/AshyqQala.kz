@@ -1,0 +1,75 @@
+import { describe, it, expect } from 'vitest';
+import { apiToViewFlag, type ApiContractFlag } from './apiFlag';
+
+function apiFlag(
+  partial: Partial<ApiContractFlag> & Pick<ApiContractFlag, 'flag_id' | 'state'>,
+): ApiContractFlag {
+  return {
+    methodology_version: { value: 'v1.0', state: 'ok' },
+    detected_at: { value: '2026-05-12T10:00:00Z', state: 'ok' },
+    evidence: null,
+    ...partial,
+  } as ApiContractFlag;
+}
+
+describe('apiToViewFlag (Story 5.1: API-флаг → view-модель)', () => {
+  it('НЕ-raised → null (бейдж не публикуется; рисуется строкой статуса)', () => {
+    expect(apiToViewFlag(apiFlag({ flag_id: 'price_per_km', state: 'not_raised' }))).toBeNull();
+    expect(apiToViewFlag(apiFlag({ flag_id: 'price_per_km', state: 'insufficient_data' }))).toBeNull();
+    expect(apiToViewFlag(apiFlag({ flag_id: 'single_participant', state: 'not_published' }))).toBeNull();
+  });
+
+  it('raised single_participant → participants из evidence; версия/дата проброшены', () => {
+    const f = apiToViewFlag(
+      apiFlag({ flag_id: 'single_participant', state: 'raised', evidence: { participant_count: 1 } }),
+    )!;
+    expect(f.flagId).toBe('single_participant');
+    expect(f.flagState).toBe('raised');
+    expect(f.evidence.participants).toBe(1);
+    expect(f.methodologyVersion).toBe('v1.0');
+    expect(f.detectedAt).toBe('2026-05-12T10:00:00Z');
+  });
+
+  it('raised price_per_km → каноничные строки + ТОЧНЫЙ порог (медиана×1.5 через BigInt)', () => {
+    const f = apiToViewFlag(
+      apiFlag({
+        flag_id: 'price_per_km',
+        state: 'raised',
+        evidence: { price_per_km: 71000000, median: 38400000, sample_size: 9, deviation_factor: 1.5 },
+      }),
+    )!;
+    expect(f.evidence.medianPerKm).toBe('38400000');
+    expect(f.evidence.thisPerKm).toBe('71000000');
+    expect(f.evidence.sampleSize).toBe(9);
+    expect(f.evidence.deviationFactor).toBe('1.5');
+    expect(f.evidence.thresholdPerKm).toBe('57600000'); // 38400000 × 1.5 — точно, без float
+  });
+
+  it('пустой evidence → поля НЕ фабрикуются (honesty §7.4)', () => {
+    const f = apiToViewFlag(apiFlag({ flag_id: 'price_per_km', state: 'raised', evidence: {} }))!;
+    expect(f.evidence.medianPerKm).toBeUndefined();
+    expect(f.evidence.thresholdPerKm).toBeUndefined();
+    expect(f.evidence.sampleSize).toBeUndefined();
+  });
+
+  it('неканоничные числа отбрасываются (formatMoney строг — кормим только ^-?\\d+$)', () => {
+    const f = apiToViewFlag(
+      apiFlag({ flag_id: 'price_per_km', state: 'raised', evidence: { median: '38 400 000', price_per_km: 'x' } }),
+    )!;
+    expect(f.evidence.medianPerKm).toBeUndefined();
+    expect(f.evidence.thisPerKm).toBeUndefined();
+    expect(f.evidence.thresholdPerKm).toBeUndefined();
+  });
+
+  it('raised без detected_at → пустая дата (FlagBadge/диалог честно её скрывают, не падают)', () => {
+    const f = apiToViewFlag(
+      apiFlag({
+        flag_id: 'single_participant',
+        state: 'raised',
+        detected_at: { value: null, state: 'no_data' },
+        evidence: { participant_count: 1 },
+      }),
+    )!;
+    expect(f.detectedAt).toBe('');
+  });
+});

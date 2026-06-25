@@ -17,12 +17,31 @@ import (
 )
 
 type mockStore struct {
-	c   gen.Contract
-	err error
+	c          gen.Contract
+	err        error
+	actPresent bool
+	act        gen.Act
+	actErr     error
+	flags      []gen.RiskFlag
+	flagsErr   error
 }
 
 func (m mockStore) GetContractByID(context.Context, string) (gen.Contract, error) {
 	return m.c, m.err
+}
+
+func (m mockStore) GetLatestActByContractID(context.Context, int64) (gen.Act, error) {
+	if m.actErr != nil {
+		return gen.Act{}, m.actErr
+	}
+	if !m.actPresent {
+		return gen.Act{}, pgx.ErrNoRows // нет акта (честное состояние)
+	}
+	return m.act, nil
+}
+
+func (m mockStore) ListContractFlags(context.Context, pgtype.Int8) ([]gen.RiskFlag, error) {
+	return m.flags, m.flagsErr
 }
 
 // loadSchema грузит рукописный OpenAPI-арбитр и возвращает разрешённую схему по имени.
@@ -105,6 +124,73 @@ func TestContract_WireFormat_ValidatesAgainstOpenAPI(t *testing.T) {
 	subjKk, _ := body["subject_kk"].(map[string]any)
 	if subjKk["state"] != "no_data" || subjKk["value"] != nil {
 		t.Fatalf("subject_kk (NULL) → {value:null,state:no_data}, got %v", subjKk)
+	}
+}
+
+func TestContract_WithActAndRaisedFlag_ValidatesAgainstOpenAPI(t *testing.T) {
+	mkDate := func(s string) pgtype.Date {
+		tt, _ := time.Parse("2006-01-02", s)
+		return pgtype.Date{Time: tt, Valid: true}
+	}
+	store := mockStore{
+		c:          sampleContract(),
+		actPresent: true,
+		act: gen.Act{
+			ContractID:    1,
+			GoszakupActID: "ACT-1",
+			ActDate:       mkDate("2026-09-30"),
+			SignerInfo:    pgtype.Text{String: "Руководитель отдела государственных закупок", Valid: true},
+			SourceUrl:     pgtype.Text{String: "https://goszakup.gov.kz/ru/act/ACT-1", Valid: true},
+		},
+		// Только single_participant raised; price_per_km строки НЕТ → честный insufficient (AC4).
+		flags: []gen.RiskFlag{activeFlag("single_participant", "v1.0", `{"participant_count":1}`)},
+	}
+	srv := httptest.NewServer(newRouter(store))
+	defer srv.Close()
+
+	resp, err := http.Get(srv.URL + "/api/contracts/DEMO-0001")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status = %d, ожидалось 200", resp.StatusCode)
+	}
+	var body map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatal(err)
+	}
+	if err := loadSchema(t, "Contract").VisitJSON(body); err != nil {
+		t.Fatalf("ответ с актом/флагами не валиден по OpenAPI Contract: %v", err)
+	}
+
+	// FR-11: акт присутствует, дата/подписант в state=ok
+	act, _ := body["act"].(map[string]any)
+	if act["present"] != true {
+		t.Fatalf("act.present должно быть true, got %v", act["present"])
+	}
+	actDate, _ := act["act_date"].(map[string]any)
+	if actDate["state"] != "ok" {
+		t.Fatalf("act.act_date.state = %v, ожидалось ok", actDate["state"])
+	}
+
+	// AC3/AC4: single_participant raised (+evidence), price_per_km — НЕТ строки → insufficient (не «чисто»)
+	flags, _ := body["flags"].([]any)
+	if len(flags) != 2 {
+		t.Fatalf("ожидалось 2 дескриптора флага (контракт-субъект), got %d", len(flags))
+	}
+	states := map[string]string{}
+	for _, f := range flags {
+		fm, _ := f.(map[string]any)
+		id, _ := fm["flag_id"].(string)
+		st, _ := fm["state"].(string)
+		states[id] = st
+	}
+	if states["single_participant"] != "raised" {
+		t.Fatalf("single_participant: ожидалось raised, got %q", states["single_participant"])
+	}
+	if states["price_per_km"] != "insufficient_data" {
+		t.Fatalf("price_per_km без строки → insufficient_data (не not_raised/чисто), got %q", states["price_per_km"])
 	}
 }
 

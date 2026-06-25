@@ -39,9 +39,11 @@ export function FlagBadge({
         <Icon name={raised ? 'flag' : 'insufficient'} />
         <span className="aq-flag__text">{text}</span>
       </button>
-      <p className="aq-flag__date">
-        {t('flag.detected_at', { date: formatDate(flag.detectedAt, lang) })}
-      </p>
+      {flag.detectedAt ? (
+        <p className="aq-flag__date">
+          {t('flag.detected_at', { date: formatDate(flag.detectedAt, lang) })}
+        </p>
+      ) : null}
       <div className="aq-flag__links">
         <button type="button" className="aq-flag__link" onClick={onOpenMethodology}>
           {t('flag.how_calculated')} ↗

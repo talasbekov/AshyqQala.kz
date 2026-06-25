@@ -61,6 +61,39 @@
   text-underline-offset: 2px;
 }
 
+/* Story 5.1: блок акта приёмки (FR-11) — отделён границей, над-метка label-caps. */
+.contract-card__act {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.contract-card__act-heading {
+  margin: 0 0 var(--space-2);
+  font-size: var(--type-label-caps-size);
+  font-weight: var(--type-label-caps-weight);
+  letter-spacing: var(--type-label-caps-letter-spacing);
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+/* Story 5.1: честная строка статуса флагов (реконструкция AC4) — приглушённо, НЕ тревога/амбер. */
+.contract-card__flag-status {
+  display: grid;
+  gap: var(--space-row-gap);
+  margin: var(--space-3) 0 0;
+}
+
+.contract-card__flag-state {
+  color: var(--color-text-secondary);
+}
+
+.contract-card__contractor-note {
+  margin: var(--space-3) 0 0;
+  font-size: var(--type-body-size);
+  color: var(--color-text-secondary);
+}
+
 /* Скелетон — заглушки под раскладку (нейтральный muted-soft, не спиннер). */
 .contract-skeleton__line {
   background: var(--color-muted-soft);

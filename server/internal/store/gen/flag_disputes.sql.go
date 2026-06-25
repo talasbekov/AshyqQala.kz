@@ -70,7 +70,8 @@ type UpsertFlagDisputeParams struct {
 
 // Идемпотентно фиксирует/обновляет диспут флага (один на risk_flag_id, AR-28). resolved_at вычисляется из
 // статуса: NULL для raised/disputed, now() для confirmed/withdrawn (CHECK flag_disputes_resolved_chk). Повтор
-// того же risk_flag_id → UPDATE статуса/заметки (не дубль).
+// того же risk_flag_id → UPDATE статуса/заметки (не дубль). note/source_url через COALESCE: пустой вход (NULL)
+// СОХРАНЯЕТ ранее записанное обоснование (а не затирает — иначе повторный resolve без заметки терял бы контекст).
 func (q *Queries) UpsertFlagDispute(ctx context.Context, arg UpsertFlagDisputeParams) error {
 	_, err := q.db.Exec(ctx, upsertFlagDispute,
 		arg.RiskFlagID,

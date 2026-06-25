@@ -168,6 +168,23 @@ export interface components {
             /** @enum {string} */
             state: "raised" | "not_raised" | "insufficient_data" | "not_published";
         };
+        Act: {
+            present: boolean;
+            act_date: components["schemas"]["StringField"];
+            signer: components["schemas"]["StringField"];
+            source_url: components["schemas"]["StringField"];
+        };
+        ContractFlag: {
+            /** @enum {string} */
+            flag_id: "single_participant" | "price_per_km";
+            /** @enum {string} */
+            state: "raised" | "not_raised" | "insufficient_data" | "not_published";
+            methodology_version: components["schemas"]["StringField"];
+            detected_at: components["schemas"]["StringField"];
+            evidence: {
+                [key: string]: unknown;
+            } | null;
+        };
         Contract: {
             goszakup_contract_id: string;
             subject_ru: components["schemas"]["StringField"];
@@ -179,10 +196,15 @@ export interface components {
             status: components["schemas"]["StringField"];
             direction: components["schemas"]["StringField"];
             kato_code: components["schemas"]["StringField"];
+            customer: components["schemas"]["StringField"];
+            supplier: components["schemas"]["StringField"];
             source_url: components["schemas"]["StringField"];
+            act: components["schemas"]["Act"];
+            flags: components["schemas"]["ContractFlag"][];
             imported_at: components["schemas"]["StringField"];
             updated_at: components["schemas"]["StringField"];
         };
+        /** @description Инвариант координат (OpenAPI 3.0 не выражает условную required-зависимость декларативно, поэтому он задан здесь как контракт): geocode_state = ok ГАРАНТИРУЕТ, что lon и lat не null (точка на карте есть); при ЛЮБОМ другом состоянии (geocode_pending, geocode_failed) lon и lat равны null. Координаты НИКОГДА не равны 0,0. */
         MapLot: {
             goszakup_lot_id: string;
             subject_ru: components["schemas"]["StringField"];

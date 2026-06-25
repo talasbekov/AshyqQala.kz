@@ -16,7 +16,39 @@ const DEMO2 = {
   status: { value: 'active', state: 'ok' },
   direction: { value: 'road', state: 'ok' },
   kato_code: { value: '710000000', state: 'ok' },
+  customer: { value: null, state: 'no_data' },
+  supplier: { value: null, state: 'no_data' },
   source_url: { value: 'https://goszakup.gov.kz/ru/contract/DEMO-0002', state: 'ok' },
+  act: {
+    present: false,
+    act_date: { value: null, state: 'no_data' },
+    signer: { value: null, state: 'no_data' },
+    source_url: { value: null, state: 'no_data' },
+  },
+  // Story 5.1: price_per_km RAISED из API (evidence пересчитываемости) → бейдж + методика ×1.5.
+  flags: [
+    {
+      flag_id: 'single_participant',
+      state: 'not_raised',
+      methodology_version: { value: 'v1.0', state: 'ok' },
+      detected_at: { value: '2026-05-12T10:00:00Z', state: 'ok' },
+      evidence: null,
+    },
+    {
+      flag_id: 'price_per_km',
+      state: 'raised',
+      methodology_version: { value: 'v1.0', state: 'ok' },
+      detected_at: { value: '2026-05-12T10:00:00Z', state: 'ok' },
+      evidence: {
+        price_per_km: 71000000,
+        median: 38400000,
+        sample_size: 9,
+        deviation_factor: 1.5,
+        comparability_key: 'road|710000000',
+        methodology_version: 'v1.0',
+      },
+    },
+  ],
   imported_at: { value: '2026-02-10T10:00:00Z', state: 'ok' },
   updated_at: { value: '2026-02-10T10:00:00Z', state: 'ok' },
 };
@@ -66,29 +98,53 @@ const DEMO3 = {
   status: { value: 'active', state: 'ok' },
   direction: { value: 'road', state: 'ok' },
   kato_code: { value: '710000000', state: 'ok' },
+  customer: { value: null, state: 'no_data' },
+  supplier: { value: null, state: 'no_data' },
   source_url: { value: 'https://goszakup.gov.kz/ru/contract/DEMO-0003', state: 'ok' },
+  act: {
+    present: false,
+    act_date: { value: null, state: 'no_data' },
+    signer: { value: null, state: 'no_data' },
+    source_url: { value: null, state: 'no_data' },
+  },
+  // Story 5.1: НИ ОДНОГО raised. Честная реконструкция (AC4): single_participant проверен (not_raised),
+  // price_per_km без строки → insufficient_data. Оба видны строкой статуса — «всё чисто» не подразумевается.
+  flags: [
+    {
+      flag_id: 'single_participant',
+      state: 'not_raised',
+      methodology_version: { value: 'v1.0', state: 'ok' },
+      detected_at: { value: '2026-05-12T10:00:00Z', state: 'ok' },
+      evidence: null,
+    },
+    {
+      flag_id: 'price_per_km',
+      state: 'insufficient_data',
+      methodology_version: { value: null, state: 'no_data' },
+      detected_at: { value: null, state: 'no_data' },
+      evidence: null,
+    },
+  ],
   imported_at: { value: '2026-04-05T10:00:00Z', state: 'ok' },
   updated_at: { value: '2026-04-05T10:00:00Z', state: 'ok' },
 };
 
-test('карточка 1.9: честное «нет данных» + методика «недостаточно сопоставимых данных»', async ({
+test('карточка 5.1: честное «нет данных» + видимая реконструкция (insufficient ≠ «всё чисто»)', async ({
   page,
 }) => {
   await page.route('**/api/contracts/DEMO-0003', (route) => route.fulfill({ json: DEMO3 }));
   await page.goto('/contracts/DEMO-0003');
 
-  // Поле plan_end = NULL → честное «нет данных» (AC3), не пустота.
+  // Поле plan_end = NULL → честное «нет данных» (AC1), не пустота.
   await expect(page.getByText(/нет данных|деректер жоқ/i).first()).toBeVisible();
 
-  // Методика флага в состоянии «недостаточно»: формула/пороги показаны ВСЕГДА + честная плашка.
-  await page
-    .getByRole('button', { name: /Қалай есептелді|Как это посчитано/ })
-    .first()
-    .click();
-  const dialog = page.getByRole('dialog');
-  await expect(dialog).toBeVisible();
-  await expect(dialog).toContainText('1.5');
+  // Активных сигналов нет — заголовок честный (не «Сигналы (0)»).
   await expect(
-    dialog.getByText(/недостаточно сопоставимых данных|салыстыруға жеткілікті дерек жоқ/i).first(),
+    page.getByRole('heading', { name: /Активных сигналов нет|Белсенді сигнал жоқ/ }),
+  ).toBeVisible();
+
+  // AC4: реконструкция видна строкой статуса — «недостаточно данных для оценки» (НЕ молчание = «чисто»).
+  await expect(
+    page.getByText(/недостаточно данных для оценки|бағалауға дерек жеткіліксіз/i).first(),
   ).toBeVisible();
 });

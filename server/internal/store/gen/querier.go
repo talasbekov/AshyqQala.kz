@@ -6,6 +6,8 @@ package gen
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
@@ -33,6 +35,10 @@ type Querier interface {
 	GetFlagDispute(ctx context.Context, riskFlagID int64) (FlagDispute, error)
 	// Гео-результат по natural goszakup_lot_id (для тестов/проверки).
 	GetGeoLotByLotID(ctx context.Context, goszakupLotID string) (InterimGeoLot, error)
+	// Последний акт по контракту (internal contract_id) для карточки (Story 5.1, FR-11). Детерминированный
+	// порядок: наибольшая act_date (NULL — в конец), затем id. Не найдено → pgx.ErrNoRows (честное «нет акта»,
+	// карточка показывает блок акта в состоянии no_data, НЕ выдумывает дату/подписанта).
+	GetLatestActByContractID(ctx context.Context, contractID int64) (Act, error)
 	// Лот по публичному natural id; удалённые скрыты.
 	GetLotByID(ctx context.Context, goszakupLotID string) (Lot, error)
 	// Все пороги заданной версии (для evidence/пересчёта); порядок по ключу стабилен.
@@ -47,6 +53,11 @@ type Querier interface {
 	// детерминированный порядок: агрегация per-org берёт последнюю активную (наибольший start_date)
 	// Вставка записи РНУ (seed-тесты / живой импорт Epic 2).
 	InsertRNUEntry(ctx context.Context, arg InsertRNUEntryParams) error
+	// ВСЕ contract-флаги (активные И снятые) по contract_id — для ЧЕСТНОЙ реконструкции состояния на ЧТЕНИИ
+	// (Story 5.1, AC4). Стор хранит только raised (is_active) и снятые (is_active=false) строки; «нет строки» НЕ
+	// значит «всё чисто» → читающий слой выводит insufficient_data при отсутствии строки (см. resolveContractFlags).
+	// Детерминированный порядок (flag_type) — стабильность wire/golden.
+	ListContractFlags(ctx context.Context, contractID pgtype.Int8) ([]RiskFlag, error)
 	// Перечисление лотов для batch-обработки (геокодинг — Story 0.7); удалённые скрыты, порядок стабилен.
 	ListLots(ctx context.Context) ([]Lot, error)
 	// ⏳ ИНТЕРИМ (Story 0.8, трек «Парсер-мост»): лоты Астаны с интерим-гео для ранней карты.
@@ -69,7 +80,8 @@ type Querier interface {
 	RaiseContractorFlag(ctx context.Context, arg RaiseContractorFlagParams) error
 	// Идемпотентно фиксирует/обновляет диспут флага (один на risk_flag_id, AR-28). resolved_at вычисляется из
 	// статуса: NULL для raised/disputed, now() для confirmed/withdrawn (CHECK flag_disputes_resolved_chk). Повтор
-	// того же risk_flag_id → UPDATE статуса/заметки (не дубль).
+	// того же risk_flag_id → UPDATE статуса/заметки (не дубль). note/source_url через COALESCE: пустой вход (NULL)
+	// СОХРАНЯЕТ ранее записанное обоснование (а не затирает — иначе повторный resolve без заметки терял бы контекст).
 	UpsertFlagDispute(ctx context.Context, arg UpsertFlagDisputeParams) error
 	// Идемпотентный UPSERT гео-результата лота по goszakup_lot_id (повтор batch-Nominatim не плодит дубли).
 	// unmatched → lat/lon NULL (честность: «без точки на карте», НЕ 0,0). ⏳ интерим (Story 0.7).
