@@ -155,6 +155,77 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/error-reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Канал «сообщить об ошибке» (Story 5.4, FR-28) — публичный безаккаунтный досудебный канал
+         * @description ПЕРВЫЙ write-эндпоинт. Принимает обращение об ошибке в данных/флаге/геопривязке и кладёт в очередь error_reports (Directus триажит). Защита: honeypot (скрытое поле leave_blank) + лимит тела + rate-limit per-IP. Без аккаунта, без публичного трекинга статуса (PRD §5.11).
+         *
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ErrorReportRequest"];
+                };
+            };
+            responses: {
+                /** @description обращение принято в очередь */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorReportResponse"];
+                    };
+                };
+                /** @description некорректный вход */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description слишком много обращений (rate-limit) */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description внутренняя ошибка */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/lots": {
         parameters: {
             query?: never;
@@ -275,6 +346,23 @@ export interface components {
         Methodology: {
             version: string;
             thresholds: components["schemas"]["MethodologyThresholds"];
+        };
+        ErrorReportRequest: {
+            /** @enum {string} */
+            kind: "data_error" | "flag_error" | "geo_wrong_point";
+            /** @enum {string} */
+            subject_type: "contract" | "contractor" | "geo_object";
+            subject_ref: string;
+            message: string;
+            contact?: string;
+            source_url?: string;
+            leave_blank?: string;
+        };
+        ErrorReportResponse: {
+            /** Format: int64 */
+            id?: number;
+            /** @enum {string} */
+            status: "received";
         };
         Error: {
             error: {

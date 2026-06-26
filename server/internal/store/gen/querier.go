@@ -31,6 +31,8 @@ type Querier interface {
 	GetContractFlag(ctx context.Context, arg GetContractFlagParams) (RiskFlag, error)
 	// Флаг данного типа по подрядчику (активный или снятый) — для чтения/тестов. Не найдено → pgx.ErrNoRows.
 	GetContractorFlag(ctx context.Context, arg GetContractorFlagParams) (RiskFlag, error)
+	// Чтение обращения по id (для интеграционных тестов/диагностики; публичный API НЕ использует). Нет → pgx.ErrNoRows.
+	GetErrorReport(ctx context.Context, id int64) (ErrorReport, error)
 	// Диспут по флагу (для чтения/тестов). Не найдено → pgx.ErrNoRows.
 	GetFlagDispute(ctx context.Context, riskFlagID int64) (FlagDispute, error)
 	// Гео-результат по natural goszakup_lot_id (для тестов/проверки).
@@ -45,6 +47,10 @@ type Querier interface {
 	GetMethodologyParamsByVersion(ctx context.Context, version string) ([]MethodologyParam, error)
 	// Медиана группы по ключу сопоставимости. Отсутствие строки → читатель отдаёт not_comparable (нечего сравнивать).
 	GetPriceBenchmark(ctx context.Context, comparabilityKey string) (PriceBenchmark, error)
+	// Принимает публичное обращение об ошибке (FR-28, Story 5.4) в очередь error_reports (status=new по умолчанию).
+	// Только INSERT (публичный API не читает/не правит очередь — это Directus). contact/source_url опциональны (NULL).
+	// Возвращает id (для honest-ответа «принято #id», без публичного трекинга статуса — PRD §5.11).
+	InsertErrorReport(ctx context.Context, arg InsertErrorReportParams) (InsertErrorReportRow, error)
 	// Append-only вставка строки версии порога. UPDATE/DELETE запрещены триггером (иммутабельность B-4):
 	// правка порога = НОВАЯ версия. Источник ручной правки — registry/values/methodology_params.vN.yaml.
 	InsertMethodologyParam(ctx context.Context, arg InsertMethodologyParamParams) error

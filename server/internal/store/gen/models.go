@@ -37,6 +37,19 @@ type Contract struct {
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 }
 
+type ErrorReport struct {
+	ID          int64              `json:"id"`
+	Kind        string             `json:"kind"`
+	SubjectType string             `json:"subject_type"`
+	SubjectRef  string             `json:"subject_ref"`
+	Message     string             `json:"message"`
+	Contact     pgtype.Text        `json:"contact"`
+	SourceUrl   pgtype.Text        `json:"source_url"`
+	Status      string             `json:"status"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	ResolvedAt  pgtype.Timestamptz `json:"resolved_at"`
+}
+
 type FlagDispute struct {
 	ID          int64              `json:"id"`
 	RiskFlagID  int64              `json:"risk_flag_id"`

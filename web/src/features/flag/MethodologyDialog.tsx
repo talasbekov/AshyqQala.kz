@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Lang } from '../../shared/i18n';
-import { formatMoney, formatDate } from '../../shared/i18n/format';
+import { formatMoney, formatDateSafe } from '../../shared/i18n/format';
 import { Icon } from '../../shared/ui/Icon';
 import type { MethodologyTarget } from './apiFlag';
 import { useMethodology } from './useMethodology';
@@ -15,12 +15,14 @@ export function MethodologyDialog({
   lang,
   sourceUrl,
   reportErrorHref,
+  onReportError,
   onClose,
 }: {
   target: MethodologyTarget;
   lang: Lang;
   sourceUrl: string | null;
   reportErrorHref: string;
+  onReportError?: () => void; // Story 5.4: открыть форму вместо mailto (gate-дверь сохраняется)
   onClose: () => void;
 }) {
   const { t } = useTranslation('chrome');
@@ -29,7 +31,7 @@ export function MethodologyDialog({
     ref.current?.focus();
   }, []);
 
-  const { data: meth } = useMethodology();
+  const { data: meth, isError: methError } = useMethodology();
   const th = meth?.thresholds;
   const ev = target.evidence;
   const raised = target.state === 'raised';
@@ -64,7 +66,17 @@ export function MethodologyDialog({
         </p>
         <p className="aq-meth__simple">{t('methodology.simple_note')}</p>
 
-        {/* Формула — ВСЕГДА (пороги из params). */}
+        {/* Честность (review-фикс 5.3): пороги грузятся из /api/methodology. Пока их НЕТ — НЕ заявляем «показаны
+            ВСЕГДА» (см. always_shown ниже), а честно говорим «загружаются»/«недоступна». */}
+        {th === undefined && (
+          <p className="aq-meth__note" role="status">
+            {methError
+              ? t('methodology.thresholds_unavailable')
+              : t('methodology.thresholds_loading')}
+          </p>
+        )}
+
+        {/* Формула — когда пороги загружены (factor из params). */}
         {isPrice && factor !== undefined && (
           <p className="aq-meth__formula">{t('methodology.formula_price', { factor })}</p>
         )}
@@ -126,9 +138,11 @@ export function MethodologyDialog({
                 <dd>{formatMoney(ev.medianPerKm, lang)}</dd>
               </div>
             )}
-            {ev.thresholdPerKm && factor !== undefined && (
+            {/* review-фикс 5.3: порог из СОБСТВЕННОГО deviation_factor evidence (самосогласованный воркшит,
+                FR-23), НЕ из params — воркшит переиспользуем даже при незагруженных params; label↔значение совпадают. */}
+            {ev.thresholdPerKm && ev.deviationFactor !== undefined && (
               <div className="aq-meth__row">
-                <dt>{t('methodology.ev_threshold', { factor })}</dt>
+                <dt>{t('methodology.ev_threshold', { factor: ev.deviationFactor })}</dt>
                 <dd>{formatMoney(ev.thresholdPerKm, lang)}</dd>
               </div>
             )}
@@ -148,8 +162,11 @@ export function MethodologyDialog({
             {isPrice && minSample !== undefined && months !== undefined && (
               <p>{t('methodology.insufficient_price', { min: minSample, months })}</p>
             )}
+            {/* review-фикс 5.3 (AC-2): single_participant тоже объясняет, какое условие не выполнено. */}
+            {!isPrice && <p>{t('methodology.insufficient_single_participant')}</p>}
             <p className="aq-meth__note">{t('methodology.insufficient_note')}</p>
-            <p className="aq-meth__note">{t('methodology.always_shown')}</p>
+            {/* «пороги показаны ВСЕГДА» — только когда они и правда загружены (иначе это ложь, review-фикс 5.3). */}
+            {th !== undefined && <p className="aq-meth__note">{t('methodology.always_shown')}</p>}
           </div>
         )}
 
@@ -158,7 +175,7 @@ export function MethodologyDialog({
           {target.detectedAt
             ? t('methodology.as_of', {
                 version: target.methodologyVersion || '—',
-                date: formatDate(target.detectedAt, lang),
+                date: formatDateSafe(target.detectedAt, lang),
               })
             : t('methodology.as_of_no_date', { version: target.methodologyVersion || '—' })}
         </p>
@@ -171,9 +188,20 @@ export function MethodologyDialog({
               {t('contract.source')} ↗
             </a>
           )}
-          <a className="aq-meth__link" href={reportErrorHref}>
-            {t('report_error.link')}
-          </a>
+          {onReportError ? (
+            <button
+              type="button"
+              className="aq-meth__link"
+              aria-haspopup="dialog"
+              onClick={onReportError}
+            >
+              {t('report_error.link')}
+            </button>
+          ) : (
+            <a className="aq-meth__link" href={reportErrorHref}>
+              {t('report_error.link')}
+            </a>
+          )}
           <button type="button" className="aq-meth__close" onClick={onClose}>
             {t('methodology.close')}
           </button>

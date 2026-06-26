@@ -43,6 +43,10 @@ const CARD_KEYS = [
   'methodology.worksheet_heading',
   'methodology.as_of',
   'methodology.as_of_no_date',
+  // Story 5.3 review-фиксы (2026-06-26): честный статус порогов + условие single_participant.
+  'methodology.thresholds_loading',
+  'methodology.thresholds_unavailable',
+  'methodology.insufficient_single_participant',
 ];
 
 describe('ContractCard строки (Story 5.1)', () => {

@@ -67,6 +67,40 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
 
+  /api/error-reports:
+    post:
+      summary: Канал «сообщить об ошибке» (Story 5.4, FR-28) — публичный безаккаунтный досудебный канал
+      description: >
+        ПЕРВЫЙ write-эндпоинт. Принимает обращение об ошибке в данных/флаге/геопривязке и кладёт в очередь
+        error_reports (Directus триажит). Защита: honeypot (скрытое поле leave_blank) + лимит тела + rate-limit per-IP.
+        Без аккаунта, без публичного трекинга статуса (PRD §5.11).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ErrorReportRequest' }
+      responses:
+        '201':
+          description: обращение принято в очередь
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorReportResponse' }
+        '400':
+          description: некорректный вход
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '429':
+          description: слишком много обращений (rate-limit)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          description: внутренняя ошибка
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
   /api/lots:
     get:
       summary: ⏳ Лоты Астаны с интерим-гео для ранней карты (Story 0.8, трек «Парсер-мост»)
@@ -242,6 +276,27 @@ components:
       properties:
         version: { type: string } # каноническая methodology_version (^v\d+\.\d+$)
         thresholds: { $ref: '#/components/schemas/MethodologyThresholds' }
+    ErrorReportRequest:
+      type: object
+      additionalProperties: false
+      # Публичное обращение (FR-28, Story 5.4). kind/subject_type — доменные enum (зеркало CHECK миграции 0011).
+      # leave_blank — honeypot (скрытое поле, неавтозаполняемое имя; должно быть пустым). contact/source_url опц.
+      required: [kind, subject_type, subject_ref, message]
+      properties:
+        kind: { type: string, enum: [data_error, flag_error, geo_wrong_point] }
+        subject_type: { type: string, enum: [contract, contractor, geo_object] }
+        subject_ref: { type: string, minLength: 1, maxLength: 128 }
+        message: { type: string, minLength: 1, maxLength: 5000 }
+        contact: { type: string, maxLength: 200 }
+        source_url: { type: string, maxLength: 512 }
+        leave_blank: { type: string } # honeypot — должен быть пустым
+    ErrorReportResponse:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        id: { type: integer, format: int64 } # отсутствует при honeypot-приёме
+        status: { type: string, enum: [received] }
     Error:
       type: object
       additionalProperties: false

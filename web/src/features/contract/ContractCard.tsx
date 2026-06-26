@@ -12,7 +12,7 @@ import {
   type MethodologyTarget,
 } from '../flag';
 import { ErrorBoundary } from '../../shared/ui/ErrorBoundary';
-import { ReportError, reportErrorMailto } from '../share';
+import { ReportError, ReportErrorForm, reportErrorMailto, type ReportTarget } from '../share';
 import '../flag/flag.css';
 import './contract-card.css';
 
@@ -30,7 +30,15 @@ function Value({ field, format }: { field: StringField; format?: (v: string) => 
   return <DataState kind={dataStateFromValueState(state)} state={state} />;
 }
 
-export function ContractCard({ contract, lang }: { contract: Contract; lang: Lang }) {
+export function ContractCard({
+  contract,
+  lang,
+  autoReport = false,
+}: {
+  contract: Contract;
+  lang: Lang;
+  autoReport?: boolean; // Story 5.4: deep-link ?report — сразу открыть форму (цель Epic 7)
+}) {
   const { t } = useTranslation('chrome');
   // subject — в активном языке; lang-атрибут DOM обязателен (доменные данные на языке источника).
   const subject = lang === 'kk' ? contract.subject_kk : contract.subject_ru;
@@ -46,6 +54,25 @@ export function ContractCard({ contract, lang }: { contract: Contract; lang: Lan
   const [methTarget, setMethTarget] = useState<MethodologyTarget | null>(null);
   const reportHref = reportErrorMailto(
     t('report_error.subject', { id: contract.goszakup_contract_id }),
+  );
+
+  // Story 5.4: форма «Сообщить об ошибке» (FR-28) достижима у каждого флага (бейдж + методика) и из подвала.
+  // Привязка к контракту из контекста. autoReport (deep-link ?report) сразу открывает форму.
+  const flagReportTarget: ReportTarget = {
+    kind: 'flag_error',
+    subjectType: 'contract',
+    subjectRef: contract.goszakup_contract_id,
+    ...(sourceUrl ? { sourceUrl } : {}),
+  };
+  const [reportTarget, setReportTarget] = useState<ReportTarget | null>(
+    autoReport
+      ? {
+          kind: 'data_error',
+          subjectType: 'contract',
+          subjectRef: contract.goszakup_contract_id,
+          ...(sourceUrl ? { sourceUrl } : {}),
+        }
+      : null,
   );
 
   const act = contract.act;
@@ -176,6 +203,7 @@ export function ContractCard({ contract, lang }: { contract: Contract; lang: Lan
               lang={lang}
               onOpenMethodology={() => setMethTarget(apiToMethodologyTarget(f))}
               reportErrorHref={reportHref}
+              onReportError={() => setReportTarget(flagReportTarget)}
             />
           );
         })}
@@ -189,6 +217,7 @@ export function ContractCard({ contract, lang }: { contract: Contract; lang: Lan
                 <button
                   type="button"
                   className="contract-card__flag-status-row"
+                  aria-haspopup="dialog"
                   onClick={() => setMethTarget(apiToMethodologyTarget(f))}
                 >
                   <span>{t(`flag.${f.flag_id}.name`)}</span>
@@ -209,7 +238,10 @@ export function ContractCard({ contract, lang }: { contract: Contract; lang: Lan
       </section>
 
       {methTarget && (
+        // key по flagId: при смене флаг→флаг (truthy→truthy) ErrorBoundary РЕМОНТируется → сбрасывает hasError,
+        // иначе застрявший error-fallback показался бы для следующего, исправного флага (review-фикс 5.3).
         <ErrorBoundary
+          key={methTarget.flagId}
           fallback={
             <div
               className="aq-meth-backdrop"
@@ -235,9 +267,14 @@ export function ContractCard({ contract, lang }: { contract: Contract; lang: Lan
             lang={lang}
             sourceUrl={sourceUrl}
             reportErrorHref={reportHref}
+            onReportError={() => setReportTarget(flagReportTarget)}
             onClose={() => setMethTarget(null)}
           />
         </ErrorBoundary>
+      )}
+
+      {reportTarget && (
+        <ReportErrorForm target={reportTarget} onClose={() => setReportTarget(null)} />
       )}
     </article>
   );

@@ -1,2 +1,11 @@
 export { ReportError } from './ReportError';
-export { reportErrorMailto, REPORT_ERROR_EMAIL } from './reportError';
+export { ReportErrorForm } from './ReportErrorForm';
+export {
+  reportErrorMailto,
+  postErrorReport,
+  buildErrorReportRequest,
+  REPORT_ERROR_EMAIL,
+  type ReportTarget,
+  type ErrorReportRequest,
+  type ErrorReportResponse,
+} from './reportError';

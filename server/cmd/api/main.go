@@ -1,4 +1,5 @@
-// Command api — публичный read-only HTTP-сервис (chi + pgx). Токен goszakup НЕ видит.
+// Command api — публичный HTTP-сервис (chi + pgx): read-эндпоинты + один write-канал «сообщить об ошибке»
+// (FR-28, Story 5.4). Токен goszakup НЕ видит.
 package main
 
 import (
@@ -100,6 +101,11 @@ func main() {
 	// через store (НЕ tools/scrape — изоляция); замещается живым импортом при swap scrape→ows.
 	mapH := httpapi.MapLotsHandler{Store: gen.New(pool), Log: log}
 	r.Get("/api/lots", mapH.List)
+
+	// Story 5.4 (FR-28): публичный безаккаунтный канал «сообщить об ошибке» — ПЕРВЫЙ write-эндпоинт.
+	// Защита: honeypot + лимит тела + in-memory rate-limit (без новых зависимостей). Токен не нужен.
+	erH := httpapi.NewErrorReportsHandler(gen.New(pool), log)
+	r.Post("/api/error-reports", erH.Create)
 
 	srv := &http.Server{
 		Addr:              cfg.Addr,

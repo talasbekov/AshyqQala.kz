@@ -77,12 +77,18 @@ test('карточка 1.9: нейтральный флаг → методика
   });
   await expect(badge).toBeVisible();
 
-  // GATE: рядом дверь «Сообщить об ошибке» (mailto). AC2.
-  const report = page
-    .getByRole('link', { name: /Қате туралы хабарлау|Сообщить об ошибке/ })
-    .first();
-  await expect(report).toBeVisible();
-  await expect(report).toHaveAttribute('href', /^mailto:/);
+  // GATE (Story 5.4): дверь «Сообщить об ошибке» → открывает полную форму; mailto — фолбэк внутри. AC2.
+  await page
+    .getByRole('button', { name: /Қате туралы хабарлау|Сообщить об ошибке/ })
+    .first()
+    .click();
+  const reportForm = page.getByRole('dialog', { name: /Қате туралы хабарлау|Сообщить об ошибке/ });
+  await expect(reportForm).toBeVisible();
+  await expect(
+    reportForm.getByRole('link', { name: /Хатпен жіберу|Отправить письмом/ }),
+  ).toHaveAttribute('href', /^mailto:/);
+  // закрыть форму, чтобы не мешала последующим проверкам
+  await reportForm.getByRole('button', { name: /Жабу|Закрыть/ }).click();
 
   // GATE: путь к методике → открывает экран методики с формулой ×1.5. AC1/AC2.
   await page
@@ -175,4 +181,128 @@ test('карточка 5.1: честное «нет данных» + видим�
   await expect(
     dialog.getByText(/Сигнал не выставлен|Сигнал қойылмады/).first(),
   ).toBeVisible();
+});
+
+// review-фикс 5.3 (per-field degrade): prefix-валидная, но битая дата (`2026-13-45`) НЕ роняет весь экран
+// методики через ErrorBoundary — деградирует ОДНО поле as_of к сырому значению; формула/пороги остаются,
+// общий error-fallback (role=alertdialog) НЕ показывается. Доказательство страховки честности (Patch #6/#8).
+const DEMO_BADDATE = {
+  ...DEMO2,
+  goszakup_contract_id: 'DEMO-0004',
+  flags: [
+    {
+      flag_id: 'price_per_km',
+      state: 'raised',
+      methodology_version: { value: 'v1.0', state: 'ok' },
+      detected_at: { value: '2026-13-45', state: 'ok' }, // проходит regex ^\d{4}-\d{2}-\d{2}, но невалидна
+      evidence: {
+        price_per_km: 71000000,
+        median: 38400000,
+        sample_size: 9,
+        deviation_factor: 1.5,
+        comparability_key: 'road|710000000',
+        methodology_version: 'v1.0',
+      },
+    },
+  ],
+};
+
+test('методика 5.3: битая дата деградирует одно поле, не роняет экран (per-field degrade)', async ({
+  page,
+}) => {
+  await page.route('**/api/contracts/DEMO-0004', (route) => route.fulfill({ json: DEMO_BADDATE }));
+  await page.route('**/api/methodology', (route) => route.fulfill({ json: METHODOLOGY }));
+  await page.goto('/contracts/DEMO-0004');
+
+  await page
+    .getByRole('button', { name: /Қалай есептелді|Как это посчитано/ })
+    .first()
+    .click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  // Формула/порог остались (битое поле даты не снесло весь экран).
+  await expect(dialog).toContainText('1.5');
+  // Дата деградировала к сырому значению (а не крэш всего диалога).
+  await expect(dialog).toContainText('2026-13-45');
+  // Общий error-fallback (role=alertdialog) НЕ показан → ErrorBoundary не сработал.
+  await expect(page.getByRole('alertdialog')).toHaveCount(0);
+});
+
+// Story 5.4 (AC-1): полная форма «Сообщить об ошибке» — честный автомат: пусто заблокировано →
+// заполнение → отправка → успех (ровно один POST). Эндпоинт замокан route.fulfill.
+test('форма ошибки 5.4: пусто заблокировано → заполнение → отправка → успех (один POST)', async ({
+  page,
+}) => {
+  await page.route('**/api/contracts/DEMO-0002', (route) => route.fulfill({ json: DEMO2 }));
+  await page.route('**/api/methodology', (route) => route.fulfill({ json: METHODOLOGY }));
+  let posts = 0;
+  await page.route('**/api/error-reports', (route) => {
+    posts += 1;
+    return route.fulfill({ status: 201, json: { id: 1, status: 'received' } });
+  });
+  await page.goto('/contracts/DEMO-0002');
+
+  await page
+    .getByRole('button', { name: /Қате туралы хабарлау|Сообщить об ошибке/ })
+    .first()
+    .click();
+  const form = page.getByRole('dialog', { name: /Қате туралы хабарлау|Сообщить об ошибке/ });
+  await expect(form).toBeVisible();
+
+  const submit = form.locator('button[type="submit"]');
+  await expect(submit).toBeDisabled(); // пустое сообщение → отправка заблокирована
+
+  await form.getByRole('textbox').first().fill('сумма не совпадает с первоисточником');
+  await expect(submit).toBeEnabled();
+  await submit.click();
+
+  await expect(form.getByText(/қабылданды|принято/i)).toBeVisible();
+  expect(posts).toBe(1);
+});
+
+// Story 5.4 (AC-1): ошибка сервера → честная ошибка, введённый текст НЕ теряется.
+test('форма ошибки 5.4: ошибка сервера → честная ошибка, текст сохранён', async ({ page }) => {
+  await page.route('**/api/contracts/DEMO-0002', (route) => route.fulfill({ json: DEMO2 }));
+  await page.route('**/api/methodology', (route) => route.fulfill({ json: METHODOLOGY }));
+  await page.route('**/api/error-reports', (route) =>
+    route.fulfill({ status: 500, json: { error: { code: 'INTERNAL', message: 'x' } } }),
+  );
+  await page.goto('/contracts/DEMO-0002');
+
+  await page
+    .getByRole('button', { name: /Қате туралы хабарлау|Сообщить об ошибке/ })
+    .first()
+    .click();
+  const form = page.getByRole('dialog', { name: /Қате туралы хабарлау|Сообщить об ошибке/ });
+  const textarea = form.getByRole('textbox').first();
+  await textarea.fill('важный текст обращения');
+  await form.locator('button[type="submit"]').click();
+
+  await expect(form.getByRole('alert')).toBeVisible(); // честная ошибка
+  await expect(textarea).toHaveValue('важный текст обращения'); // текст не потерян
+});
+
+// Story 5.4 review-фикс (#6): защита от двойной отправки — повторный клик во время submitting НЕ шлёт второй POST.
+test('форма ошибки 5.4: двойной клик во время отправки → один POST', async ({ page }) => {
+  await page.route('**/api/contracts/DEMO-0002', (route) => route.fulfill({ json: DEMO2 }));
+  await page.route('**/api/methodology', (route) => route.fulfill({ json: METHODOLOGY }));
+  let posts = 0;
+  await page.route('**/api/error-reports', async (route) => {
+    posts += 1;
+    await new Promise((r) => setTimeout(r, 300)); // держим запрос в submitting
+    await route.fulfill({ status: 201, json: { id: 1, status: 'received' } });
+  });
+  await page.goto('/contracts/DEMO-0002');
+
+  await page
+    .getByRole('button', { name: /Қате туралы хабарлау|Сообщить об ошибке/ })
+    .first()
+    .click();
+  const form = page.getByRole('dialog', { name: /Қате туралы хабарлау|Сообщить об ошибке/ });
+  await form.getByRole('textbox').first().fill('двойной клик');
+  const submit = form.locator('button[type="submit"]');
+  await submit.click();
+  await submit.click({ force: true }).catch(() => {}); // во время submitting — должен быть no-op
+  await expect(form.getByText(/қабылданды|принято/i)).toBeVisible();
+  expect(posts).toBe(1);
 });

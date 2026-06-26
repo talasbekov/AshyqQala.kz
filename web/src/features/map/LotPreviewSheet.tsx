@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Lang } from '../../shared/i18n';
 import { DataState, dataStateFromValueState } from '../../shared/state/DataState';
+import { ReportErrorForm } from '../share';
 import type { MapLot } from './lots';
 import { safeFormatMoney } from './lots';
 import type { components } from '../../shared/api/schema.gen';
@@ -40,6 +41,7 @@ export function LotPreviewSheet({
 }) {
   const { t } = useTranslation('chrome');
   const sheetRef = useRef<HTMLDivElement>(null);
+  const [reporting, setReporting] = useState(false); // Story 5.4 (AC-3): «точка не там» → geo_wrong_point
 
   // Базовое управление фокусом (полный focus-trap — Epic 3, Story 3.5): фокус на лист при открытии.
   useEffect(() => {
@@ -77,10 +79,29 @@ export function LotPreviewSheet({
         {/* AC2: контракт и сигналы по лоту ждут официального источника — честно, не пустота/выдумка. */}
         <p className="aq-sheet__awaiting">{t('map.awaiting_official_source')}</p>
         <div className="aq-sheet__actions">
+          <button
+            type="button"
+            className="aq-sheet__close"
+            aria-haspopup="dialog"
+            onClick={() => setReporting(true)}
+          >
+            {t('report_error.geo_link')}
+          </button>
           <button type="button" className="aq-sheet__close" onClick={onClose}>
             {t('map.preview_close')}
           </button>
         </div>
+        {/* Форма рендерится ВНУТРИ листа (его onClick stopPropagation) — клик по её бэкдропу не закроет лист. */}
+        {reporting && (
+          <ReportErrorForm
+            target={{
+              kind: 'geo_wrong_point',
+              subjectType: 'geo_object',
+              subjectRef: lot.goszakup_lot_id,
+            }}
+            onClose={() => setReporting(false)}
+          />
+        )}
       </div>
     </div>
   );

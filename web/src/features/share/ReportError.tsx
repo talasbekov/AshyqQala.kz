@@ -1,15 +1,28 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { reportErrorMailto } from './reportError';
+import { ReportErrorForm } from './ReportErrorForm';
 
-// Дверь «Сообщить об ошибке» (Story 1.9, FR-28 stub) — безаккаунтный mailto-канал. Полная форма +
-// Directus-очередь — Epic 5 (Story 5.4). Используется в подвале карточки; рядом с флагом ссылка строится
-// через reportErrorMailto напрямую (gate-проп бейджа).
+// Дверь «Сообщить об ошибке» (Story 5.4, FR-28). Кнопка → открывает полную форму (POST в Directus-очередь).
+// Подвал карточки: обращение о данных контракта (kind=data_error). Mailto — фолбэк внутри формы.
 export function ReportError({ contractId, className }: { contractId: string; className?: string }) {
   const { t } = useTranslation('chrome');
-  const href = reportErrorMailto(t('report_error.subject', { id: contractId }));
+  const [open, setOpen] = useState(false);
   return (
-    <a className={className ?? 'aq-report-error'} href={href}>
-      {t('report_error.link')}
-    </a>
+    <>
+      <button
+        type="button"
+        className={className ?? 'aq-report-error'}
+        aria-haspopup="dialog"
+        onClick={() => setOpen(true)}
+      >
+        {t('report_error.link')}
+      </button>
+      {open && (
+        <ReportErrorForm
+          target={{ kind: 'data_error', subjectType: 'contract', subjectRef: contractId }}
+          onClose={() => setOpen(false)}
+        />
+      )}
+    </>
   );
 }

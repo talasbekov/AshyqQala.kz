@@ -35,3 +35,14 @@ export function formatDate(iso: string, lang: Lang): string {
     timeZone: 'UTC',
   }).format(d);
 }
+
+// formatDateSafe — formatDate с честной per-field деградацией (review-фикс 5.3): prefix-валидная, но
+// невалидная дата (`2026-13-45`, `0000-00-00`) НЕ роняет рендер там, где нет ErrorBoundary (бейдж флага,
+// строки as_of) — возвращаем сырое значение вместо throw. Одно битое поле не сносит весь экран/карточку.
+export function formatDateSafe(iso: string, lang: Lang): string {
+  try {
+    return formatDate(iso, lang);
+  } catch {
+    return iso;
+  }
+}

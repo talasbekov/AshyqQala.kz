@@ -32,6 +32,12 @@ type MethodologyDTO struct {
 
 // Get обслуживает GET /api/methodology — статичные пороги из methodology_params (без БД).
 func (h MethodologyHandler) Get(w http.ResponseWriter, _ *http.Request) {
+	// nil-слайс маршалится в JSON `null`, что нарушает OpenAPI (`single_participant_exclude_methods`:
+	// required `array`). Коэрсим nil → [] — честный пустой список, валидный по контракту (review-фикс 5.3).
+	excludeMethods := h.Params.SingleParticipantExcludeMethods
+	if excludeMethods == nil {
+		excludeMethods = []string{}
+	}
 	writeJSON(w, http.StatusOK, MethodologyDTO{
 		Version: h.Params.MethodologyVersion,
 		Thresholds: MethodologyThresholds{
@@ -40,7 +46,7 @@ func (h MethodologyHandler) Get(w http.ResponseWriter, _ *http.Request) {
 			PricePerKMDeviationFactor:       h.Params.PricePerKMDeviationFactor,
 			MonopolyConcentrationShare:      h.Params.MonopolyConcentrationShare,
 			MonopolyMinGroupContracts:       h.Params.MonopolyMinGroupContracts,
-			SingleParticipantExcludeMethods: h.Params.SingleParticipantExcludeMethods,
+			SingleParticipantExcludeMethods: excludeMethods,
 		},
 	})
 }

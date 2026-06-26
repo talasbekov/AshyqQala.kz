@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import type { Lang } from '../../shared/i18n';
-import { formatDate } from '../../shared/i18n/format';
+import { formatDateSafe } from '../../shared/i18n/format';
 import { Icon } from '../../shared/ui/Icon';
 import type { ContractFlag } from './contractStories';
 
@@ -12,11 +12,13 @@ export function FlagBadge({
   lang,
   onOpenMethodology,
   reportErrorHref,
+  onReportError,
 }: {
   flag: ContractFlag;
   lang: Lang;
   onOpenMethodology: () => void;
   reportErrorHref: string;
+  onReportError?: () => void; // Story 5.4: открыть форму вместо mailto (gate-дверь сохраняется)
 }) {
   const { t } = useTranslation('chrome');
   const summary = t(`flag.${flag.flagId}.summary`);
@@ -41,16 +43,27 @@ export function FlagBadge({
       </button>
       {flag.detectedAt ? (
         <p className="aq-flag__date">
-          {t('flag.detected_at', { date: formatDate(flag.detectedAt, lang) })}
+          {t('flag.detected_at', { date: formatDateSafe(flag.detectedAt, lang) })}
         </p>
       ) : null}
       <div className="aq-flag__links">
         <button type="button" className="aq-flag__link" onClick={onOpenMethodology}>
           {t('flag.how_calculated')} ↗
         </button>
-        <a className="aq-flag__link" href={reportErrorHref}>
-          {t('report_error.link')}
-        </a>
+        {onReportError ? (
+          <button
+            type="button"
+            className="aq-flag__link"
+            aria-haspopup="dialog"
+            onClick={onReportError}
+          >
+            {t('report_error.link')}
+          </button>
+        ) : (
+          <a className="aq-flag__link" href={reportErrorHref}>
+            {t('report_error.link')}
+          </a>
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,24 @@
 # Deferred Work
 
+## Deferred from: code review of 5-4-канал-сообщить-об-ошибке (2026-06-26)
+
+- **Возврат фокуса на триггер + закрытие формы во время сабмита** (`web/src/features/share/ReportErrorForm.tsx`) — при закрытии (Escape/кнопка/бэкдроп) фокус не возвращается на открывшую дверь; закрытие на лету POST'а оставляет запрос «в полёте» (запись на сервере есть, юзер без подтверждения, риск повторной отправки). Привязано к полному focus-trap (Story 3.5). Активировать вместе с 3.5: сохранять триггер, возвращать фокус; блокировать/предупреждать закрытие при `isPending`.
+- **rate-limiter без эвикции ключей (см. также dev-запись ниже)** — после XFF-фикса (правый хоп) усиление подменой устранено; рост по реальным IP остаётся. LRU/периодическая чистка ИЛИ внешний rate-limit (Caddy `trusted_proxies`) — при росте трафика.
+
+## Deferred from: dev of 5-4-канал-сообщить-об-ошибке (2026-06-26)
+
+- **Изоляция интеграционных тестов risk_flags-семейства (общая БД, глобальные счётчики)** (`server/internal/store/projection/{price_per_km,risk_flags,monopoly,rnu}_integration_test.go`) — при полном прогоне `go test -tags=integration ./internal/store/...` против ОДНОЙ общей БД `TestPricePerKMFlag_RaiseAutoClear` и `TestSingleParticipantFlag_RaiseAutoClearIdempotent` падают («active = 2, ожид. 1»): тесты считают ГЛОБАЛЬНОЕ число активных флагов и не изолируют строки друг друга. В ИЗОЛЯЦИИ оба зелёные. ПРЕД-СУЩЕСТВУЮЩЕЕ (не вызвано 5.4: миграция `error_reports` аддитивна, risk_flags не трогался; CI, вероятно, изолирует БД per-package/контейнер). Активировать: TRUNCATE risk_flags в setup каждого теста ИЛИ считать активные флаги ТОЛЬКО по subject_id теста, ИЛИ per-test schema/контейнер.
+- **`error_reports` → SM-C2 + `geo_objects.wrong_reported`** — обращение `kind=geo_wrong_point` фиксируется в `error_reports` (5.4), но простановка `wrong_reported` на `geo_objects` и инкремент счётчика SM-C2 на `/metrics` — **Epic 3** (геокуратор `geo_objects` ещё не построен; карта = `interim_geo_lots`). [Source: architecture.md:893-894]
+- **Гранты БД для `error_reports` (Directus-очередь)** — таблица создана (миграция 0011); compose-гранты «API только INSERT, Directus полный, importer без доступа» прописать вместе с разводкой грантов проекции/курации (как для прочих кураторских таблиц). [Source: architecture.md:310,416]
+- **Telegram deep-link отправитель** — 5.4 строит ЦЕЛЬ deep-link открытия формы по объекту; пуш, который шлёт ссылку — **Epic 7** (бота нет).
+- **Антиспам — усиление при росте трафика** — сейчас honeypot + лимит тела + in-memory per-IP rate-limit (карта IP растёт без чистки). При росте: периодическая чистка/LRU лимитера ИЛИ внешний rate-limit (Caddy), captcha/Turnstile при волне спама.
+
+## Deferred from: code review of 5-3-экран-методики-флага (2026-06-26)
+
+- **Go-хендлер `/api/methodology` — defensive-валидация порогов + проверка `writeJSON`-ошибки** (`server/internal/httpapi/methodology.go:34-46`) — хендлер публикует пороги из `methodology_params` без проверки `factor/months/min_sample > 0`; при битом конфиге (factor=0) формула вырождается в «median × 0» (всегда истина). `writeJSON` не проверяет ошибку encode. Сейчас безопасно: params грузятся из иммутабельного валидированного реестра (`methodology_params.v1.yaml`, формат версии/значения проверены при загрузке) → не реальный сценарий данных. Активировать при наполнении DB-реестра / живом пересчёте (Epic 2): sanity-валидация порогов на отдаче + проверка `writeJSON`.
+- **ErrorBoundary fallback без Escape/возврата фокуса** (`web/src/features/contract/ContractCard.tsx`) — fallback диалога методики (показывается при render-throw) не обрабатывает Escape и не ставит/возвращает фокус, в отличие от самого `MethodologyDialog`. AT-пользователь на пути восстановления после ошибки теряет фокус. Привязано к полному focus-trap, отложенному в **Story 3.5** (a11y canvas-карты/диалогов) — закрыть вместе.
+- **`insufficient_monopoly` — мёртвая i18n-строка** (повтор defer 2026-06-25) — рендера нет: монополия недостижима с карточки контракта (`contract_flags.go` `contractFlagTypes`=[single_participant, price_per_km]; монополия/РНУ — субъект-подрядчик, AC5). Forward-compat для карточки подрядчика (**Story 5-2**): подключится при ветке monopoly в `MethodologyDialog`.
+
 ## Deferred from: code review of story-5.3 (2026-06-25)
 
 - **monopoly/rnu-методика недостижима с карточки контракта** — AC-2 «разделены min_sample/min_group_contracts» полностью реализуется только с карточкой подрядчика (5-2): `min_group_contracts` уже в `/api/methodology` + i18n (`insufficient_monopoly`), но surface монополии/РНУ — contractor (5-2, заблокирована). На карточке контракта реализован `min_sample` (price_per_km). Активировать с 5-2: ветка monopoly/rnu в MethodologyDialog + рендер `insufficient_monopoly`.
