@@ -15,5 +15,13 @@
   "flag_state.raised": "сигнал отмечен",
   "flag_state.not_raised": "сигнал не отмечен",
   "flag_state.insufficient_data": "недостаточно данных для оценки",
-  "flag_state.not_published": "не опубликовано"
+  "flag_state.not_published": "не опубликовано",
+  "flag.single_participant.name": "Единственный участник",
+  "flag.single_participant.summary": "Зафиксирован один участник",
+  "flag.price_per_km.name": "Цена за км",
+  "flag.price_per_km.summary": "Цена за км выше медианы",
+  "signals.none": "Активных сигналов нет",
+  "link.source": "Первоисточник на goszakup.gov.kz",
+  "link.methodology": "Как это посчитано",
+  "link.report_error": "Сообщить об ошибке"
 }

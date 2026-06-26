@@ -32,6 +32,25 @@ func (rd Renderer) Render(flagID string, ev Evidence, params Params, loc registr
 	return rd.glossaryOr(loc, "frame.signal") + ": " + rd.RenderFlagState(ev.FlagState, loc)
 }
 
+// FlagName — отображаемое имя флага (glossary `flag.<id>.name`), единый источник (Story 5.5, вариант A).
+// Никогда пусто: отсутствие ключа → честный fallback «неизвестно, см. методику».
+func (rd Renderer) FlagName(flagID string, loc registry.Locale) string {
+	return rd.glossaryOr(loc, "flag."+flagID+".name")
+}
+
+// FlagLine — полная нейтральная строка флага для презентационных поверхностей (web-бейдж и OG), AC-2/AC-4.
+// СОВПАДАЕТ с web FlagBadge (web/src/features/flag/FlagBadge.tsx): raised → "<summary> — <рамка>";
+// иначе → "<summary>: <недостаточно сопоставимых данных>". summary/рамка — из glossary (единый источник,
+// вариант A); поэтому смысловое ядро web и OG идентично (cross-surface golden, Story 5.7). Никогда пусто.
+// Прим.: "недостаточно сопоставимых данных" = value_state.insufficient_sample (== web `flag.insufficient`).
+func (rd Renderer) FlagLine(flagID string, fs registry.FlagState, loc registry.Locale) string {
+	summary := rd.glossaryOr(loc, "flag."+flagID+".summary")
+	if fs == registry.FlagRaised {
+		return summary + " — " + rd.glossaryOr(loc, "frame.signal")
+	}
+	return summary + ": " + rd.glossaryOr(loc, "value_state.insufficient_sample")
+}
+
 // RenderFlagState — ЗАКРЫТЫЙ union по flag_state с ОБЯЗАТЕЛЬНОЙ default-веткой.
 // Новый/неизвестный член enum → честный текст «неизвестно, см. методику», НИКОГДА пусто/паника.
 func (rd Renderer) RenderFlagState(s registry.FlagState, loc registry.Locale) string {
@@ -42,6 +61,10 @@ func (rd Renderer) RenderFlagState(s registry.FlagState, loc registry.Locale) st
 		return rd.unknown(loc)
 	}
 }
+
+// Text — публичный доступ к строке glossary по ключу с честным fallback (для адаптеров OG/Telegram —
+// Epic 5/7). Никогда не возвращает пустую строку (отсутствие ключа → «неизвестно, см. методику»).
+func (rd Renderer) Text(loc registry.Locale, key string) string { return rd.glossaryOr(loc, key) }
 
 // RenderValueState — ЗАКРЫТЫЙ union по value_state с ОБЯЗАТЕЛЬНОЙ default-веткой.
 func (rd Renderer) RenderValueState(s registry.ValueState, loc registry.Locale) string {

@@ -5,6 +5,8 @@ import { useContract } from './useContract';
 import type { ContractFetchError } from './useContract';
 import { ContractCard } from './ContractCard';
 import { ContractSkeleton } from './ContractSkeleton';
+import { PermalinkButton } from './PermalinkButton';
+import { buildPermalink } from './permalink';
 
 // Маршрут карточки. Router-loader НЕ фетчит — данные грузит useContract (TanStack Query).
 export function ContractRoute() {
@@ -12,10 +14,12 @@ export function ContractRoute() {
   const [searchParams] = useSearchParams();
   // Story 5.4 (AC-2): deep-link ?report (цель для Telegram-пуша, Epic 7) сразу открывает форму ошибки.
   const autoReport = searchParams.get('report') !== null;
+  // Story 5.6 (AR-29): ?mv из перманентной ссылки — сервер по ней детектирует дрейф методики.
+  const permalinkMv = searchParams.get('mv');
   const { i18n, t } = useTranslation('chrome');
   const lang: Lang = i18n.language.startsWith('ru') ? 'ru' : 'kk';
 
-  const q = useContract(goszakupId);
+  const q = useContract(goszakupId, permalinkMv);
 
   if (q.isPending) return <ContractSkeleton />;
   if (q.isError) {
@@ -28,5 +32,26 @@ export function ContractRoute() {
       </p>
     );
   }
-  return <ContractCard contract={q.data} lang={lang} autoReport={autoReport} />;
+
+  const c = q.data;
+  // Перманентная ссылка-на-дату (AR-29): штамп (as_of, mv) только из честных ok-значений (пустое не штампуем).
+  const permalink = buildPermalink(
+    c.goszakup_contract_id,
+    c.as_of.state === 'ok' ? c.as_of.value : null,
+    c.methodology_version.state === 'ok' ? c.methodology_version.value : null,
+  );
+  // Дрейф методики: ссылка создана под иной версией → честный баннер «показано текущее, срез не сохраняется».
+  const drift = c.methodology_drift;
+
+  return (
+    <>
+      {drift.present ? (
+        <p className="contract-drift" role="status">
+          {t('methodology.drift', { from: drift.requested_version, to: drift.current_version })}
+        </p>
+      ) : null}
+      <ContractCard contract={c} lang={lang} autoReport={autoReport} />
+      <PermalinkButton href={permalink} />
+    </>
+  );
 }

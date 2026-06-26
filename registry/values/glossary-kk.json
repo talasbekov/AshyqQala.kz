@@ -15,5 +15,13 @@
   "flag_state.raised": "сигнал белгіленді",
   "flag_state.not_raised": "сигнал белгіленбеді",
   "flag_state.insufficient_data": "бағалауға дерек жеткіліксіз",
-  "flag_state.not_published": "жарияланбаған"
+  "flag_state.not_published": "жарияланбаған",
+  "flag.single_participant.name": "Бір қатысушы",
+  "flag.single_participant.summary": "Бір қатысушы тіркелді",
+  "flag.price_per_km.name": "Шақырым құны",
+  "flag.price_per_km.summary": "Шақырым құны медианадан жоғары",
+  "signals.none": "Белсенді сигналдар жоқ",
+  "link.source": "goszakup.gov.kz дереккөзі",
+  "link.methodology": "Қалай есептелді",
+  "link.report_error": "Қате туралы хабарлау"
 }

@@ -176,12 +176,21 @@ func flagsToStrings(in []FlagState) []string {
 // нейтральная рамка, текст default-ветки и метка КАЖДОГО honest-состояния. Отсутствие/пустое
 // → honest-fail на старте (AC1), чтобы пропущенный перевод не маскировался под «неизвестно».
 func requiredGlossaryKeys() []string {
-	keys := []string{"frame.signal", "state.unknown"}
+	// frame.signal/state.unknown — несущие; signals.none + link.* — нейтральная навигация/агрегат OG-поверхности
+	// (Story 5.5): единый источник прозы, обязателен в каждой локали (забытый перевод → honest-fail, не «пусто»).
+	keys := []string{"frame.signal", "state.unknown", "signals.none", "link.source", "link.methodology", "link.report_error"}
 	for _, s := range AllValueStates() {
 		keys = append(keys, "value_state."+string(s))
 	}
 	for _, s := range AllFlagStates() {
 		keys = append(keys, "flag_state."+string(s))
+	}
+	// Проза флагов — единый источник (Story 5.5, вариант A): name/summary для презентационных
+	// поверхностей (web-бейдж + OG-рендер) живут ТОЛЬКО здесь; web сверяется parity-тестом. Должны
+	// присутствовать в КАЖДОЙ локали (забытый kk-перевод → honest-fail на старте, не «неизвестно» в OG).
+	// Список флагов MVP синхронизирован с httpapi.contractFlagTypes (FR-19 single_participant, FR-20 price_per_km).
+	for _, f := range []string{"single_participant", "price_per_km"} {
+		keys = append(keys, "flag."+f+".name", "flag."+f+".summary")
 	}
 	return keys
 }

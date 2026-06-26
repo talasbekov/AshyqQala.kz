@@ -19,9 +19,18 @@ type Querier interface {
 	ClearContractorFlag(ctx context.Context, arg ClearContractorFlagParams) error
 	// Число активных флагов данного типа (диагностика/тесты).
 	CountActiveContractFlags(ctx context.Context, flagType string) (int64, error)
+	// M — поднятые (активные) сигналы.
+	CountActiveFlags(ctx context.Context) (int64, error)
 	// Число диспутов заданного статуса (питает SM-C1: confirmed|withdrawn — знаменатель, withdrawn — числитель).
 	CountFlagDisputesByStatus(ctx context.Context, status string) (int64, error)
+	// Метрики этапа 5 для pilot-one-pager (Story 5.6, AC-3). Честные count'ы по проекции; источник данных
+	// (синтетика/интерим/живой ows) штампуется артефактом, не выдаётся за пилотный результат.
+	// N — размеченные контракты (импортированы в проекцию, не помечены удалёнными).
+	CountMarkedContracts(ctx context.Context) (int64, error)
 	CountPriceBenchmarks(ctx context.Context) (int64, error)
+	// X — активные сигналы, ПЕРЕСЧИТЫВАЕМЫЕ третьим лицом по опубликованной методике: непустые methodology_version
+	// и evidence (оба NOT NULL по схеме; вырожденные '' / '{}' не пересчитываемы). [Story 5.6 OQ#3 ✅ вариант (а)]
+	CountRecomputableFlags(ctx context.Context) (int64, error)
 	// Очистка кэша перед публикацией нового снапшота. В ОДНОЙ транзакции с InsertPriceBenchmark = атомарный
 	// swap (читатель видит старый ИЛИ новый снапшот целиком — MVCC; полупересчёт невидим).
 	DeleteAllPriceBenchmarks(ctx context.Context) error

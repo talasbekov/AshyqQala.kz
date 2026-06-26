@@ -196,15 +196,28 @@ export function ContractCard({
         {raisedApiFlags.map((f) => {
           const view = apiToViewFlag(f);
           if (view === null) return null;
+          // Story 5.6 (AR-29/SM-5): у raised-флага — экспорт пересчитываемого evidence (JSON) для цитирования в СМИ.
+          const evidenceHref = `/api/contracts/${encodeURIComponent(
+            contract.goszakup_contract_id,
+          )}/flags/${encodeURIComponent(f.flag_id)}/evidence.json`;
           return (
-            <FlagBadge
-              key={f.flag_id}
-              flag={view}
-              lang={lang}
-              onOpenMethodology={() => setMethTarget(apiToMethodologyTarget(f))}
-              reportErrorHref={reportHref}
-              onReportError={() => setReportTarget(flagReportTarget)}
-            />
+            <div key={f.flag_id} className="contract-card__flag">
+              <FlagBadge
+                flag={view}
+                lang={lang}
+                onOpenMethodology={() => setMethTarget(apiToMethodologyTarget(f))}
+                reportErrorHref={reportHref}
+                onReportError={() => setReportTarget(flagReportTarget)}
+              />
+              <a
+                className="contract-card__evidence-export"
+                href={evidenceHref}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {t('contract.export_evidence')} ↗
+              </a>
+            </div>
           );
         })}
 

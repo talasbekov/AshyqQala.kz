@@ -49,6 +49,44 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
 
+  /api/contracts/{goszakup_id}/flags/{flag_type}/evidence.json:
+    get:
+      summary: Экспорт evidence raised-флага — канонический JSON (Story 5.6, AR-29/SM-5)
+      description: >
+        Пересчитываемый третьим лицом/СМИ экспорт evidence ОДНОГО raised-флага контракта. subject_ref —
+        публичный goszakup_contract_id (не суррогатный bigint). Не-raised флаг / отсутствие → 404 (цитировать нечего).
+        Параллельный печатный нейтральный текст — .txt (text/plain, вне JSON-арбитра, как OG-HTML Story 5.5).
+      parameters:
+        - name: goszakup_id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: flag_type
+          in: path
+          required: true
+          schema: { type: string, enum: [single_participant, price_per_km] }
+        - name: lang
+          in: query
+          required: false
+          description: язык нейтральной рамки печатного .txt; JSON локаль-агностичен
+          schema: { type: string, enum: [ru, kk] }
+      responses:
+        '200':
+          description: канонический экспорт evidence
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EvidenceExport' }
+        '404':
+          description: нет raised-флага этого типа у контракта (цитировать нечего)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          description: внутренняя ошибка
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
   /api/methodology:
     get:
       summary: Пороги методики (Story 5.3, FR-23) — единый источник для экрана методики
@@ -178,6 +216,31 @@ components:
           type: object
           nullable: true
           additionalProperties: true
+    MethodologyDrift:
+      type: object
+      additionalProperties: false
+      # AR-29 (Story 5.6): честный сигнал, что перманентная ссылка-на-дату создана под ИНОЙ версией методики,
+      # чем текущая. present=false при отсутствии дрейфа/штампа. Карточка ВСЕГДА показывает текущее состояние;
+      # исторический срез в MVP не хранится (нет snapshot_id) — дрейф лишь честно сообщает «методика сменилась».
+      required: [present, requested_version, current_version]
+      properties:
+        present: { type: boolean }
+        requested_version: { type: string } # mv из ссылки (пусто, если штампа не было)
+        current_version: { type: string }   # текущая каноническая methodology_version
+    EvidenceExport:
+      type: object
+      additionalProperties: false
+      # AR-29 (Story 5.6): канонический экспорт evidence raised-флага для цитирования третьим лицом/СМИ.
+      # subject_ref — ПУБЛИЧНЫЙ goszakup_contract_id (НЕ внутренний bigint). evidence — сырой пересчитываемый объект.
+      required: [flag_type, subject_type, subject_ref, methodology_version, evidence]
+      properties:
+        flag_type: { type: string, enum: [single_participant, price_per_km] }
+        subject_type: { type: string }
+        subject_ref: { type: string }
+        methodology_version: { type: string }
+        evidence:
+          type: object
+          additionalProperties: true
     Contract:
       type: object
       additionalProperties: false
@@ -199,6 +262,9 @@ components:
         - flags
         - imported_at
         - updated_at
+        - methodology_version
+        - as_of
+        - methodology_drift
       properties:
         goszakup_contract_id: { type: string }
         subject_ru: { $ref: '#/components/schemas/StringField' }
@@ -219,6 +285,10 @@ components:
           items: { $ref: '#/components/schemas/ContractFlag' }
         imported_at: { $ref: '#/components/schemas/StringField' } # ISO8601 Z в value; единый конверт + честный no_data
         updated_at: { $ref: '#/components/schemas/StringField' }
+        # AR-29 (Story 5.6) — перманентная ссылка-на-дату:
+        methodology_version: { $ref: '#/components/schemas/StringField' } # текущая каноническая версия (штамп ссылки/дисплей)
+        as_of: { $ref: '#/components/schemas/StringField' }               # дата-штамп ссылки (detected_at raised / updated_at)
+        methodology_drift: { $ref: '#/components/schemas/MethodologyDrift' } # present=true если ссылка под иной версией методики
     MapLot:
       type: object
       additionalProperties: false

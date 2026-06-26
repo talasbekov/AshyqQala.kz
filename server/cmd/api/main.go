@@ -18,6 +18,9 @@ import (
 	"ashyqqala/server/internal/httpapi"
 	"ashyqqala/server/internal/methodology"
 	"ashyqqala/server/internal/metrics"
+	"ashyqqala/server/internal/og"
+	"ashyqqala/server/internal/registry"
+	"ashyqqala/server/internal/render"
 	"ashyqqala/server/internal/store/gen"
 	"ashyqqala/server/internal/store/projection"
 )
@@ -72,6 +75,15 @@ func main() {
 	// Story 4.6 (D1): SM-C1 — DB-derived из flag_disputes (restart-safe/race-free), экспонируется через /metrics.
 	metrics.RegisterSMC1(projection.NewFlagDisputeStore(pool).SMC1Counts, log)
 
+	// Story 5.5: единый источник прозы (registry) + рендерер для OG-поверхности («текст только через render»).
+	// Честный fail-fast на рассинхроне registry↔Go-консты (как методика выше).
+	reg, err := registry.Load(cfg.RegistryRoot)
+	if err != nil {
+		log.Error("registry_load_failed", "error", err.Error())
+		os.Exit(1)
+	}
+	renderer := render.Renderer{Reg: reg}
+
 	r := chi.NewRouter()
 	r.Use(middleware.Recoverer)
 
@@ -90,12 +102,26 @@ func main() {
 
 	r.Handle("/metrics", metrics.Handler())
 
-	h := httpapi.ContractsHandler{Store: gen.New(pool), Log: log}
+	h := httpapi.ContractsHandler{Store: gen.New(pool), Log: log, Version: params.MethodologyVersion}
 	r.Get("/api/contracts/{goszakup_id}", h.Get)
+
+	// Story 5.5 (FR-27/UX-DR36): серверный OG-рендер карточки из ТОЙ ЖЕ проекции (h.Projection) — OG-`<meta>`-теги
+	// + версионированный по methodology_version URL картинки (cache-bust, AR-20). PNG-картинку добавит T5.
+	// PUBLIC_BASE_URL (если задан) → абсолютные og:url/og:image; иначе относительные (dev). Caddy маршрутизирует
+	// /og/* и/или соц-краулеров на api (deploy/Caddyfile).
+	ogH := og.MetaHandler{Contracts: h, Renderer: renderer, Version: params.MethodologyVersion, BaseURL: os.Getenv("PUBLIC_BASE_URL"), Log: log}
+	r.Get("/og/contracts/{goszakup_id}", ogH.ServeHTTP)
+	r.Get("/og/contracts/{goszakup_id}/image.png", ogH.Image) // Story 5.5 T5: серверный PNG-превью
 
 	// Story 5.3: пороги методики (FR-23) — единый источник для экрана методики (формула/пороги ВСЕГДА).
 	methH := httpapi.MethodologyHandler{Params: params}
 	r.Get("/api/methodology", methH.Get)
+
+	// Story 5.6 (AR-29/SM-5): экспорт evidence raised-флага для цитирования третьим лицом/СМИ — канонический
+	// JSON + печатный нейтральный текст. Та же проекция (GetContractByID → ListContractFlags); рамка из render.
+	evH := httpapi.EvidenceExportHandler{Store: gen.New(pool), Renderer: renderer, Log: log}
+	r.Get("/api/contracts/{goszakup_id}/flags/{flag_type}/evidence.json", evH.GetJSON)
+	r.Get("/api/contracts/{goszakup_id}/flags/{flag_type}/evidence.txt", evH.GetText)
 
 	// ⏳ ИНТЕРИМ (Story 0.8, трек «Парсер-мост»): ранняя карта лотов Астаны. Читает interim_geo_lots
 	// через store (НЕ tools/scrape — изоляция); замещается живым импортом при swap scrape→ows.

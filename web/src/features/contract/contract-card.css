@@ -146,3 +146,32 @@
   width: 100%;
   height: 1rem;
 }
+
+/* AR-29 (Story 5.6): баннер дрейфа методики + кнопка перманентной ссылки. Только раскладка (без цвета-как-тревоги). */
+.contract-drift {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  font-size: 0.875rem;
+}
+
+.contract-permalink {
+  margin-top: var(--space-3);
+}
+
+.contract-permalink__btn {
+  font: inherit;
+  cursor: pointer;
+}
+
+.contract-permalink__fallback {
+  display: block;
+  margin-top: var(--space-2);
+  font-size: 0.875rem;
+  word-break: break-all;
+}
+
+.contract-card__evidence-export {
+  display: inline-block;
+  margin: var(--space-2) 0 var(--space-3);
+  font-size: 0.875rem;
+}

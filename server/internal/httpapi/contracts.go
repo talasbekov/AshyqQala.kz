@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"ashyqqala/server/internal/apierr"
+	"ashyqqala/server/internal/registry"
 	"ashyqqala/server/internal/store/gen"
 )
 
@@ -48,6 +49,21 @@ type ContractDTO struct {
 	Flags      []ContractFlagDTO `json:"flags"` // FR-12/FR-23: активные флаги + честная реконструкция (AC4)
 	ImportedAt Field[string]     `json:"imported_at"`
 	UpdatedAt  Field[string]     `json:"updated_at"`
+	// AR-29 (Story 5.6) — перманентная ссылка-на-дату. methodology_version — текущая каноническая версия
+	// (для построения штампа ссылки/дисплея); as_of — дата-штамп (detected_at raised / updated_at). Пустые НЕ
+	// фабрикуем (честный no_data). methodology_drift.present=true, когда ссылка создана под иной версией методики.
+	MethodologyVersion Field[string]       `json:"methodology_version"`
+	AsOf               Field[string]       `json:"as_of"`
+	MethodologyDrift   MethodologyDriftDTO `json:"methodology_drift"`
+}
+
+// MethodologyDriftDTO — честный сигнал дрейфа методики для перманентной ссылки (AR-29). Карточка ВСЕГДА
+// показывает ТЕКУЩЕЕ состояние; исторический срез в MVP не хранится (нет snapshot_id, UPSERT перезаписывает).
+// present=true лишь когда ссылка несёт mv ≠ текущей — тогда баннер «методика сменилась» (не молчаливая подмена).
+type MethodologyDriftDTO struct {
+	Present          bool   `json:"present"`
+	RequestedVersion string `json:"requested_version"`
+	CurrentVersion   string `json:"current_version"`
 }
 
 // ActDTO — wire-форма акта на карточке (FR-11). present — есть ли акт вообще; при отсутствии все поля no_data
@@ -94,31 +110,47 @@ func toContractDTO(c gen.Contract) ContractDTO {
 		Flags:              resolveContractFlags(nil),     // дефолт: insufficient_data; перезапишет хендлер
 		ImportedAt:         fromTimestamptz(c.ImportedAt), // ISO8601 Z; NULL→no_data (не фабрикуем дату)
 		UpdatedAt:          fromTimestamptz(c.UpdatedAt),
+		MethodologyVersion: noData[string](),      // штамп ссылки — перезапишет Projection из h.Version
+		AsOf:               noData[string](),      // дата-штамп — перезапишет Projection
+		MethodologyDrift:   MethodologyDriftDTO{}, // present=false; дрейф проставляет Get по ?mv
 	}
 }
 
 // ContractsHandler — хендлер карточки контракта.
 type ContractsHandler struct {
-	Store ContractStore
-	Log   *slog.Logger
+	Store   ContractStore
+	Log     *slog.Logger
+	Version string // текущая каноническая methodology_version (AR-29: штамп перманентной ссылки + детект дрейфа)
 }
 
-// Get обслуживает GET /api/contracts/{goszakup_id}.
-func (h ContractsHandler) Get(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "goszakup_id")
-	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second) // per-request таймаут к БД
-	defer cancel()
-	c, err := h.Store.GetContractByID(ctx, id)
+// asOfStamp — дата-штамп для перманентной ссылки-на-дату: detected_at ПЕРВОГО raised-флага (когда сигнал
+// зафиксирован), иначе updated_at контракта; иначе честный no_data (пустой штамп НЕ фабрикуем, honesty-hole 5.1).
+func asOfStamp(dto ContractDTO) Field[string] {
+	for _, f := range dto.Flags {
+		if f.State == registry.FlagRaised && f.DetectedAt.State == registry.StateOK {
+			return f.DetectedAt
+		}
+	}
+	if dto.UpdatedAt.State == registry.StateOK {
+		return dto.UpdatedAt
+	}
+	return noData[string]()
+}
+
+// Projection — единый сборщик ContractDTO: ОДИН путь данных для JSON-карточки (Get) и для OG-рендера
+// (Story 5.5, internal/og), чтобы «цифры не расходились с SPA» (AC-1) гарантировалось структурой, а не
+// дисциплиной. Возвращает (dto, nil) при успехе; (zero, err) с raw-ошибкой для маппинга статуса вызывающим:
+// pgx.ErrNoRows (контракт не найден) → 404; прочее → 500. Конкретную причину сбоя логирует здесь.
+func (h ContractsHandler) Projection(ctx context.Context, goszakupID string) (ContractDTO, error) {
+	c, err := h.Store.GetContractByID(ctx, goszakupID)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
-		apierr.Write(w, http.StatusNotFound, apierr.CodeNotFound, "contract not found")
-		return
+		return ContractDTO{}, err
 	case err != nil:
 		if h.Log != nil {
-			h.Log.Error("get_contract_failed", "error", err.Error(), "goszakup_id", id)
+			h.Log.Error("get_contract_failed", "error", err.Error(), "goszakup_id", goszakupID)
 		}
-		apierr.Write(w, http.StatusInternalServerError, apierr.CodeInternal, "internal error")
-		return
+		return ContractDTO{}, err
 	}
 	dto := toContractDTO(c)
 
@@ -130,10 +162,9 @@ func (h ContractsHandler) Get(w http.ResponseWriter, r *http.Request) {
 		// dto.Act уже emptyActDTO()
 	case aerr != nil:
 		if h.Log != nil {
-			h.Log.Error("get_act_failed", "error", aerr.Error(), "goszakup_id", id)
+			h.Log.Error("get_act_failed", "error", aerr.Error(), "goszakup_id", goszakupID)
 		}
-		apierr.Write(w, http.StatusInternalServerError, apierr.CodeInternal, "internal error")
-		return
+		return ContractDTO{}, aerr
 	default:
 		dto.Act = toActDTO(act)
 	}
@@ -142,13 +173,37 @@ func (h ContractsHandler) Get(w http.ResponseWriter, r *http.Request) {
 	rows, ferr := h.Store.ListContractFlags(ctx, pgtype.Int8{Int64: c.ID, Valid: true})
 	if ferr != nil {
 		if h.Log != nil {
-			h.Log.Error("list_contract_flags_failed", "error", ferr.Error(), "goszakup_id", id)
+			h.Log.Error("list_contract_flags_failed", "error", ferr.Error(), "goszakup_id", goszakupID)
 		}
+		return ContractDTO{}, ferr
+	}
+	dto.Flags = resolveContractFlags(rows)
+	// AR-29 (перманентная ссылка-на-дату): текущая каноническая версия методики + дата-штамп. Пустую версию НЕ
+	// штампуем (versionField → no_data, honesty-hole 5.1). Дрейф проставляет Get по ?mv (request-scoped, OG не нужен).
+	dto.MethodologyVersion = versionField(h.Version)
+	dto.AsOf = asOfStamp(dto)
+	return dto, nil
+}
+
+// Get обслуживает GET /api/contracts/{goszakup_id}.
+func (h ContractsHandler) Get(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "goszakup_id")
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second) // per-request таймаут к БД
+	defer cancel()
+	dto, err := h.Projection(ctx, id)
+	switch {
+	case errors.Is(err, pgx.ErrNoRows):
+		apierr.Write(w, http.StatusNotFound, apierr.CodeNotFound, "contract not found")
+		return
+	case err != nil:
 		apierr.Write(w, http.StatusInternalServerError, apierr.CodeInternal, "internal error")
 		return
 	}
-	dto.Flags = resolveContractFlags(rows)
-
+	// AR-29 (перманентная ссылка-на-дату): ссылка несёт ?mv ≠ текущей версии методики → честный дрейф-сигнал
+	// (карточка показывает ТЕКУЩЕЕ состояние; исторический срез в MVP не хранится). Пустой ?mv / совпадение → нет дрейфа.
+	if mv := r.URL.Query().Get("mv"); mv != "" && h.Version != "" && mv != h.Version {
+		dto.MethodologyDrift = MethodologyDriftDTO{Present: true, RequestedVersion: mv, CurrentVersion: h.Version}
+	}
 	writeJSON(w, http.StatusOK, dto)
 }
 

@@ -12,6 +12,13 @@
 		reverse_proxy api:8080
 	}
 
+	# /og/* → chi (Story 5.5, FR-27): серверный OG-рендер карточки (HTML с OG-тегами + версионированная
+	# картинка). Шаринговый URL карточки — /og/contracts/{id}. ⏳ Детекция соц-краулеров на /contracts/{id}
+	# (чтобы и канонический URL отдавал OG-теги) — отложенное решение (OQ#2): по user-agent или всегда-SSR.
+	handle /og/* {
+		reverse_proxy api:8080
+	}
+
 	# SPA: статика web/dist + фолбэк на index.html для client-side маршрутов (React Router).
 	handle {
 		root * /srv

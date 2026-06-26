@@ -106,6 +106,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/contracts/{goszakup_id}/flags/{flag_type}/evidence.json": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Экспорт evidence raised-флага — канонический JSON (Story 5.6, AR-29/SM-5)
+         * @description Пересчитываемый третьим лицом/СМИ экспорт evidence ОДНОГО raised-флага контракта. subject_ref — публичный goszakup_contract_id (не суррогатный bigint). Не-raised флаг / отсутствие → 404 (цитировать нечего). Параллельный печатный нейтральный текст — .txt (text/plain, вне JSON-арбитра, как OG-HTML Story 5.5).
+         *
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description язык нейтральной рамки печатного .txt; JSON локаль-агностичен */
+                    lang?: "ru" | "kk";
+                };
+                header?: never;
+                path: {
+                    goszakup_id: string;
+                    flag_type: "single_participant" | "price_per_km";
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description канонический экспорт evidence */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["EvidenceExport"];
+                    };
+                };
+                /** @description нет raised-флага этого типа у контракта (цитировать нечего) */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description внутренняя ошибка */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/methodology": {
         parameters: {
             query?: never;
@@ -305,6 +369,21 @@ export interface components {
                 [key: string]: unknown;
             } | null;
         };
+        MethodologyDrift: {
+            present: boolean;
+            requested_version: string;
+            current_version: string;
+        };
+        EvidenceExport: {
+            /** @enum {string} */
+            flag_type: "single_participant" | "price_per_km";
+            subject_type: string;
+            subject_ref: string;
+            methodology_version: string;
+            evidence: {
+                [key: string]: unknown;
+            };
+        };
         Contract: {
             goszakup_contract_id: string;
             subject_ru: components["schemas"]["StringField"];
@@ -323,6 +402,9 @@ export interface components {
             flags: components["schemas"]["ContractFlag"][];
             imported_at: components["schemas"]["StringField"];
             updated_at: components["schemas"]["StringField"];
+            methodology_version: components["schemas"]["StringField"];
+            as_of: components["schemas"]["StringField"];
+            methodology_drift: components["schemas"]["MethodologyDrift"];
         };
         /** @description Инвариант координат (OpenAPI 3.0 не выражает условную required-зависимость декларативно, поэтому он задан здесь как контракт): geocode_state = ok ГАРАНТИРУЕТ, что lon и lat не null (точка на карте есть); при ЛЮБОМ другом состоянии (geocode_pending, geocode_failed) lon и lat равны null. Координаты НИКОГДА не равны 0,0. */
         MapLot: {

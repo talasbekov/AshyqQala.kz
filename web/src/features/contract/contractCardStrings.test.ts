@@ -47,16 +47,25 @@ const CARD_KEYS = [
   'methodology.thresholds_loading',
   'methodology.thresholds_unavailable',
   'methodology.insufficient_single_participant',
+  // Story 5.6 (AR-29): перманентная ссылка-на-дату + дрейф методики + экспорт evidence.
+  'methodology.permalink',
+  'methodology.permalink_copied',
+  'methodology.permalink_failed',
+  'methodology.drift',
+  'contract.export_evidence',
 ];
 
 describe('ContractCard строки (Story 5.1)', () => {
-  it('per-surface нейтральность: весь contract.* свободен от taboo-корней в обеих локалях', () => {
+  it('per-surface нейтральность: весь contract.* и methodology.* свободны от taboo-корней в обеих локалях', () => {
     for (const lang of LANGS) {
-      const contract = (resources[lang].chrome as Record<string, unknown>).contract;
-      const strings = collectStrings(contract).map((s) => s.toLowerCase());
-      for (const s of strings) {
-        for (const root of TABOO_ROOTS) {
-          expect(s.includes(root), `taboo "${root}" в ${lang}: "${s}"`).toBe(false);
+      // Story 5.6: methodology.* несёт строки перманентной ссылки/дрейфа — тоже под нейтральность-стражем.
+      for (const ns of ['contract', 'methodology'] as const) {
+        const dict = (resources[lang].chrome as Record<string, unknown>)[ns];
+        const strings = collectStrings(dict).map((s) => s.toLowerCase());
+        for (const s of strings) {
+          for (const root of TABOO_ROOTS) {
+            expect(s.includes(root), `taboo "${root}" в ${lang}.${ns}: "${s}"`).toBe(false);
+          }
         }
       }
     }
