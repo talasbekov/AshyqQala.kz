@@ -49,6 +49,32 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
 
+  /api/contractors/{bin}:
+    get:
+      summary: Карточка подрядчика по natural БИН (Story 5.2, FR-13/FR-14)
+      parameters:
+        - name: bin
+          in: path
+          required: true
+          description: Публичный natural БИН организации (12 цифр)
+          schema: { type: string }
+      responses:
+        '200':
+          description: подрядчик найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Contractor' }
+        '404':
+          description: подрядчик не найден
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          description: внутренняя ошибка
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
   /api/contracts/{goszakup_id}/flags/{flag_type}/evidence.json:
     get:
       summary: Экспорт evidence raised-флага — канонический JSON (Story 5.6, AR-29/SM-5)
@@ -289,6 +315,102 @@ components:
         methodology_version: { $ref: '#/components/schemas/StringField' } # текущая каноническая версия (штамп ссылки/дисплей)
         as_of: { $ref: '#/components/schemas/StringField' }               # дата-штамп ссылки (detected_at raised / updated_at)
         methodology_drift: { $ref: '#/components/schemas/MethodologyDrift' } # present=true если ссылка под иной версией методики
+    ContractorProfile:
+      type: object
+      additionalProperties: false
+      # Честное состояние профиля подрядчика (FR-13, Story 5.2). incomplete — связь контракт↔орг ещё не
+      # наполнена живым импортом (Story 2.2) → «профиль неполный». unverified — у орг есть manual/conflict
+      # псевдонимы → «профиль уточняется», флаги НЕ основание. "complete" в S-0 не выдаётся.
+      required: [state]
+      properties:
+        state: { type: string, enum: [incomplete, partial, unverified] }
+    ContractorContract:
+      type: object
+      additionalProperties: false
+      # Элемент списка контрактов подрядчика (FR-13, Story 5.2). goszakup_contract_id — публичная ссылка на карточку.
+      required: [goszakup_contract_id, subject_ru, subject_kk, amount_tng, kato_code, direction]
+      properties:
+        goszakup_contract_id: { type: string }
+        subject_ru: { $ref: '#/components/schemas/StringField' }
+        subject_kk: { $ref: '#/components/schemas/StringField' }
+        amount_tng: { $ref: '#/components/schemas/StringField' }
+        kato_code: { $ref: '#/components/schemas/StringField' }
+        direction: { $ref: '#/components/schemas/StringField' }
+    ContractorFlag:
+      type: object
+      additionalProperties: false
+      # Агрегированный флаг подрядчика (FR-21 монополия / FR-22 РНУ, Story 5.2). state — честная реконструкция
+      # на чтении; при unverified-профиле принудительно insufficient_data (флаг не основание).
+      required: [flag_id, state, methodology_version, detected_at, evidence]
+      properties:
+        flag_id: { type: string, enum: [monopoly, rnu] }
+        state: { type: string, enum: [raised, not_raised, insufficient_data, not_published] }
+        methodology_version: { $ref: '#/components/schemas/StringField' }
+        detected_at: { $ref: '#/components/schemas/StringField' }
+        evidence:
+          type: object
+          nullable: true
+          additionalProperties: true
+    RNUMark:
+      type: object
+      additionalProperties: false
+      # Метка РНУ (FR-14, Story 5.2). active реконструируется на чтении из дат (авто-снятие по end_date).
+      # У КАЖДОЙ метки свой source_url (AC-3: защитная ссылка на каждую метку). Нейтральные данные only.
+      required: [active, start_date, end_date, reason_ref, source_url, registry_id]
+      properties:
+        active: { type: boolean }
+        start_date: { $ref: '#/components/schemas/StringField' }
+        end_date: { $ref: '#/components/schemas/StringField' }
+        reason_ref: { $ref: '#/components/schemas/StringField' }
+        source_url: { $ref: '#/components/schemas/StringField' }
+        registry_id: { $ref: '#/components/schemas/StringField' }
+    Contractor:
+      type: object
+      additionalProperties: false
+      # Карточка подрядчика (FR-13/FR-14, Story 5.2). Публичный id = natural bin. Агрегаты count/amount —
+      # no_data при неполном профиле (linkage до Story 2.2), НЕ «0». regions — distinct КАТО.
+      required:
+        - bin
+        - name_ru
+        - name_kk
+        - reg_kato
+        - is_customer
+        - is_supplier
+        - profile
+        - contract_count
+        - total_amount_tng
+        - regions
+        - contracts
+        - flags
+        - rnu_marks
+        - source_url
+        - imported_at
+        - updated_at
+      properties:
+        bin: { type: string }
+        name_ru: { $ref: '#/components/schemas/StringField' }
+        name_kk: { $ref: '#/components/schemas/StringField' }
+        reg_kato: { $ref: '#/components/schemas/StringField' }
+        is_customer: { type: boolean }
+        is_supplier: { type: boolean }
+        profile: { $ref: '#/components/schemas/ContractorProfile' }
+        contract_count: { $ref: '#/components/schemas/StringField' }   # целое строкой; no_data при неполном профиле
+        total_amount_tng: { $ref: '#/components/schemas/StringField' } # тенге строкой; no_data при неполном профиле
+        regions:
+          type: array
+          items: { type: string }
+        contracts:
+          type: array
+          items: { $ref: '#/components/schemas/ContractorContract' }
+        flags:
+          type: array
+          items: { $ref: '#/components/schemas/ContractorFlag' }
+        rnu_marks:
+          type: array
+          items: { $ref: '#/components/schemas/RNUMark' }
+        source_url: { $ref: '#/components/schemas/StringField' }
+        imported_at: { $ref: '#/components/schemas/StringField' }
+        updated_at: { $ref: '#/components/schemas/StringField' }
     MapLot:
       type: object
       additionalProperties: false

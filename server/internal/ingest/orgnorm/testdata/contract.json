@@ -1,0 +1,35 @@
+[
+  {
+    "contract_id": "C-1",
+    "customer_bin": "111111111111",
+    "customer_name_ru": "Акимат Астаны",
+    "customer_name_kk": "Астана әкімдігі",
+    "customer_kato": "710000000",
+    "supplier_bin": "222222222222",
+    "supplier_name_ru": "ТОО Астана Жол",
+    "supplier_name_kk": "Астана Жол ЖШС",
+    "supplier_kato": "710000000"
+  },
+  {
+    "contract_id": "C-2",
+    "customer_bin": "111111111111",
+    "customer_name_ru": "Акимат Астаны",
+    "customer_name_kk": "Астана әкімдігі",
+    "customer_kato": "710000000",
+    "supplier_bin": "333333333333",
+    "supplier_name_ru": "ТОО СуВодоканал",
+    "supplier_name_kk": "СуВодоканал ЖШС",
+    "supplier_kato": "710000000"
+  },
+  {
+    "contract_id": "C-3",
+    "customer_bin": "111111111111",
+    "customer_name_ru": "Акимат Астаны",
+    "customer_name_kk": "Астана әкімдігі",
+    "customer_kato": "710000000",
+    "supplier_bin": "444444444444",
+    "supplier_name_ru": "ТОО СуВодоканал",
+    "supplier_name_kk": "СуВодоканал ЖШС",
+    "supplier_kato": "710000000"
+  }
+]

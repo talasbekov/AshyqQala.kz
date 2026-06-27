@@ -106,6 +106,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/contractors/{bin}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Карточка подрядчика по natural БИН (Story 5.2, FR-13/FR-14) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Публичный natural БИН организации (12 цифр) */
+                    bin: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description подрядчик найден */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Contractor"];
+                    };
+                };
+                /** @description подрядчик не найден */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description внутренняя ошибка */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/contracts/{goszakup_id}/flags/{flag_type}/evidence.json": {
         parameters: {
             query?: never;
@@ -405,6 +462,55 @@ export interface components {
             methodology_version: components["schemas"]["StringField"];
             as_of: components["schemas"]["StringField"];
             methodology_drift: components["schemas"]["MethodologyDrift"];
+        };
+        ContractorProfile: {
+            /** @enum {string} */
+            state: "incomplete" | "partial" | "unverified";
+        };
+        ContractorContract: {
+            goszakup_contract_id: string;
+            subject_ru: components["schemas"]["StringField"];
+            subject_kk: components["schemas"]["StringField"];
+            amount_tng: components["schemas"]["StringField"];
+            kato_code: components["schemas"]["StringField"];
+            direction: components["schemas"]["StringField"];
+        };
+        ContractorFlag: {
+            /** @enum {string} */
+            flag_id: "monopoly" | "rnu";
+            /** @enum {string} */
+            state: "raised" | "not_raised" | "insufficient_data" | "not_published";
+            methodology_version: components["schemas"]["StringField"];
+            detected_at: components["schemas"]["StringField"];
+            evidence: {
+                [key: string]: unknown;
+            } | null;
+        };
+        RNUMark: {
+            active: boolean;
+            start_date: components["schemas"]["StringField"];
+            end_date: components["schemas"]["StringField"];
+            reason_ref: components["schemas"]["StringField"];
+            source_url: components["schemas"]["StringField"];
+            registry_id: components["schemas"]["StringField"];
+        };
+        Contractor: {
+            bin: string;
+            name_ru: components["schemas"]["StringField"];
+            name_kk: components["schemas"]["StringField"];
+            reg_kato: components["schemas"]["StringField"];
+            is_customer: boolean;
+            is_supplier: boolean;
+            profile: components["schemas"]["ContractorProfile"];
+            contract_count: components["schemas"]["StringField"];
+            total_amount_tng: components["schemas"]["StringField"];
+            regions: string[];
+            contracts: components["schemas"]["ContractorContract"][];
+            flags: components["schemas"]["ContractorFlag"][];
+            rnu_marks: components["schemas"]["RNUMark"][];
+            source_url: components["schemas"]["StringField"];
+            imported_at: components["schemas"]["StringField"];
+            updated_at: components["schemas"]["StringField"];
         };
         /** @description Инвариант координат (OpenAPI 3.0 не выражает условную required-зависимость декларативно, поэтому он задан здесь как контракт): geocode_state = ok ГАРАНТИРУЕТ, что lon и lat не null (точка на карте есть); при ЛЮБОМ другом состоянии (geocode_pending, geocode_failed) lon и lat равны null. Координаты НИКОГДА не равны 0,0. */
         MapLot: {

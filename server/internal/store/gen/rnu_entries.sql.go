@@ -40,6 +40,43 @@ func (q *Queries) InsertRNUEntry(ctx context.Context, arg InsertRNUEntryParams) 
 	return err
 }
 
+const listRNUByOrg = `-- name: ListRNUByOrg :many
+SELECT id, organization_id, goszakup_rnu_id, start_date, end_date, reason_ref, source_url
+FROM rnu_entries
+WHERE organization_id = $1
+ORDER BY start_date DESC, id
+`
+
+// Записи РНУ конкретной организации (FR-14, карточка подрядчика, Story 5.2). Метка реконструируется на ЧТЕНИИ
+// из дат (end_date NULL/в будущем = активна; авто-снятие по end_date), а не из булева «активна». Порядок стабилен.
+func (q *Queries) ListRNUByOrg(ctx context.Context, organizationID int64) ([]RnuEntry, error) {
+	rows, err := q.db.Query(ctx, listRNUByOrg, organizationID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []RnuEntry{}
+	for rows.Next() {
+		var i RnuEntry
+		if err := rows.Scan(
+			&i.ID,
+			&i.OrganizationID,
+			&i.GoszakupRnuID,
+			&i.StartDate,
+			&i.EndDate,
+			&i.ReasonRef,
+			&i.SourceUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listRNUEntries = `-- name: ListRNUEntries :many
 SELECT id, organization_id, goszakup_rnu_id, start_date, end_date, reason_ref, source_url
 FROM rnu_entries

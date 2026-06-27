@@ -24,9 +24,9 @@ jobs:
           go-version-file: server/go.mod
           cache-dependency-path: server/go.sum
 
-      - name: Перекрёстный тест (registry↔OpenAPI↔Go) + doc-нейтральность (taboo RU/KZ) + single-source methodology_params
+      - name: Перекрёстный тест (registry↔OpenAPI↔Go) + doc-нейтральность (taboo RU/KZ) + single-source methodology_params + lexicon нормализации
         working-directory: server
-        run: go test ./internal/registry/... ./internal/render/... ./internal/methodology/...
+        run: go test ./internal/registry/... ./internal/render/... ./internal/methodology/... ./internal/lexicon/...
 
       - uses: actions/setup-node@v4
         with:

@@ -35,6 +35,8 @@ type Contract struct {
 	IsDeleted          bool               `json:"is_deleted"`
 	ImportedAt         pgtype.Timestamptz `json:"imported_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	CustomerOrgID      pgtype.Int8        `json:"customer_org_id"`
+	SupplierOrgID      pgtype.Int8        `json:"supplier_org_id"`
 }
 
 type ErrorReport struct {
@@ -97,6 +99,31 @@ type MethodologyParam struct {
 	Value         string             `json:"value"`
 	Description   pgtype.Text        `json:"description"`
 	EffectiveFrom pgtype.Timestamptz `json:"effective_from"`
+}
+
+type OrgNameAlias struct {
+	ID             int64              `json:"id"`
+	OrganizationID pgtype.Int8        `json:"organization_id"`
+	RawName        string             `json:"raw_name"`
+	Source         string             `json:"source"`
+	ResolveStatus  string             `json:"resolve_status"`
+	DetectedAt     pgtype.Timestamptz `json:"detected_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+}
+
+type Organization struct {
+	ID          int64              `json:"id"`
+	Bin         string             `json:"bin"`
+	NameRu      pgtype.Text        `json:"name_ru"`
+	NameKk      pgtype.Text        `json:"name_kk"`
+	RegKato     pgtype.Text        `json:"reg_kato"`
+	IsCustomer  bool               `json:"is_customer"`
+	IsSupplier  bool               `json:"is_supplier"`
+	FirstSeenAt pgtype.Timestamptz `json:"first_seen_at"`
+	SourceUrl   pgtype.Text        `json:"source_url"`
+	IsDeleted   bool               `json:"is_deleted"`
+	ImportedAt  pgtype.Timestamptz `json:"imported_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
 
 type PriceBenchmark struct {

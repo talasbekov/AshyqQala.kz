@@ -16,6 +16,7 @@ import (
 
 	"ashyqqala/server/internal/config"
 	"ashyqqala/server/internal/httpapi"
+	"ashyqqala/server/internal/lexicon"
 	"ashyqqala/server/internal/methodology"
 	"ashyqqala/server/internal/metrics"
 	"ashyqqala/server/internal/og"
@@ -104,6 +105,17 @@ func main() {
 
 	h := httpapi.ContractsHandler{Store: gen.New(pool), Log: log, Version: params.MethodologyVersion}
 	r.Get("/api/contracts/{goszakup_id}", h.Get)
+
+	// Story 5.2 (FR-13/FR-14): карточка подрядчика по натуральному БИН. Идентичность + агрегаты (по supplier_org_id,
+	// наполнение — Story 2.2) + агрегированные флаги (честная реконструкция) + метки РНУ (авто-снятие по end_date).
+	// Лексикон (Story 2.3) — для детекта «профиль уточняется» по совпадению имени с conflict/manual-псевдонимом.
+	lex, err := lexicon.Load(cfg.RegistryRoot)
+	if err != nil {
+		log.Error("lexicon_load_failed", "error", err.Error())
+		os.Exit(1)
+	}
+	ch := httpapi.ContractorsHandler{Store: gen.New(pool), Log: log, Lexicon: lex}
+	r.Get("/api/contractors/{bin}", ch.Get)
 
 	// Story 5.5 (FR-27/UX-DR36): серверный OG-рендер карточки из ТОЙ ЖЕ проекции (h.Projection) — OG-`<meta>`-теги
 	// + версионированный по methodology_version URL картинки (cache-bust, AR-20). PNG-картинку добавит T5.

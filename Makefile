@@ -50,8 +50,8 @@ gen-tokens: ## tokens.json (DTCG) → tokens.css + tokens.ts (свой codegen) 
 test: ## go test (server) — unit/property/golden/go-list; integration (testcontainers) — позже
 	cd $(SERVER_DIR) && go test ./...
 
-check-registry: ## Сторожа registry (Story 1.4/4.1): перекрёстный тест registry↔OpenAPI↔Go + doc-нейтральность + single-source methodology_params
-	cd $(SERVER_DIR) && go test -count=1 ./internal/registry/... ./internal/render/... ./internal/methodology/...
+check-registry: ## Сторожа registry (Story 1.4/4.1/2.3): перекрёстный тест registry↔OpenAPI↔Go + doc-нейтральность + single-source methodology_params + lexicon нормализации
+	cd $(SERVER_DIR) && go test -count=1 ./internal/registry/... ./internal/render/... ./internal/methodology/... ./internal/lexicon/...
 
 check-core: ## Сторож ядра (Story 1.10): go-list-границы — median/flags/normalize/benchmark не импортируют store/httpapi/goszakup/время
 	cd $(SERVER_DIR) && go test -count=1 ./internal/arch/...
@@ -83,7 +83,8 @@ migrate-status: ## goose: статус миграций
 	go run github.com/pressly/goose/v3/cmd/goose@$(GOOSE_VERSION) -dir migrations postgres "$(DATABASE_URL)" status
 
 db-seed: ## Применить seed (данные, не схема). Бьёт в COMPOSE-db (НЕ DATABASE_URL!); сначала migrate-up.
-	# Порядок важен (FK): contracts → acts/risk_flags (Story 5.1). Все файлы идемпотентны (ON CONFLICT).
-	for f in contracts acts risk_flags; do \
+	# Порядок важен (FK): contracts → acts → organizations(+link+aliases) → rnu_entries → risk_flags
+	# (Story 5.1/5.2). Все файлы идемпотентны (ON CONFLICT / NOT EXISTS).
+	for f in contracts acts organizations rnu_entries risk_flags; do \
 		docker compose -f deploy/docker-compose.yml exec -T db psql -v ON_ERROR_STOP=1 -U $(POSTGRES_USER) -d $(POSTGRES_DB) < fixtures/seed/$$f.sql; \
 	done

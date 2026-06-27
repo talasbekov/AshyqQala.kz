@@ -26,3 +26,19 @@ ON CONFLICT (flag_type, contract_id) WHERE contract_id IS NOT NULL DO UPDATE SET
     is_active           = TRUE,
     cleared_at          = NULL,
     methodology_version = EXCLUDED.methodology_version;
+
+-- Story 5.2: контракторский флаг МОНОПОЛИЯ (FR-21, subject_type='contractor', organization_id) для 222… —
+-- демонстрирует raised агрегированный флаг на карточке подрядчика. Идемпотентно (UPSERT по partial-unique
+-- (flag_type, organization_id) WHERE organization_id IS NOT NULL, как RaiseContractorFlag). evidence — форма
+-- MonopolyEvidence (FR-23, пересчитываемость): доля БИН по сумме ₸ в группе (КАТО×направление).
+INSERT INTO risk_flags (flag_type, subject_type, organization_id, evidence, is_active, methodology_version)
+SELECT 'monopoly', 'contractor', o.id,
+       '{"supplier_total_tng":311000000,"group_total_tng":480000000,"share":0.648,"comparability_key":"road|710000000","min_group_contracts":5,"group_contracts":6,"methodology_version":"v1.0"}'::jsonb,
+       TRUE, 'v1.0'
+FROM organizations o
+WHERE o.bin = '222222222222'
+ON CONFLICT (flag_type, organization_id) WHERE organization_id IS NOT NULL DO UPDATE SET
+    evidence            = EXCLUDED.evidence,
+    is_active           = TRUE,
+    cleared_at          = NULL,
+    methodology_version = EXCLUDED.methodology_version;

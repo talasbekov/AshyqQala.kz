@@ -5,6 +5,7 @@ import { lazy, Suspense } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 import { App, HomeView, NotFoundView, RouteError } from './App';
 import { ContractRoute } from './features/contract';
+import { ContractorRoute } from './features/contractor';
 
 // Карта тянет крупный чанк MapLibre — грузим ЛЕНИВО, чтобы не раздувать бандл главной/карточки
 // (NFR-1 <3с). MapLibre попадает в отдельный чанк, подгружаемый только на маршруте /map.
@@ -36,6 +37,7 @@ export const router = createBrowserRouter([
         ),
       },
       { path: 'contracts/:goszakupId', element: <ContractRoute /> },
+      { path: 'contractors/:bin', element: <ContractorRoute /> },
       // Нейтральная 404-заглушка для неизвестных путей (review-фикс P2; полноценная — позже).
       { path: '*', element: <NotFoundView /> },
     ],

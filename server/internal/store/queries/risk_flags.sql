@@ -65,3 +65,12 @@ WHERE flag_type = $1 AND organization_id = $2 AND is_active;
 SELECT id, flag_type, subject_type, contract_id, organization_id, severity, evidence, is_active, detected_at, cleared_at, methodology_version
 FROM risk_flags
 WHERE flag_type = $1 AND organization_id = $2;
+
+-- name: ListContractorFlags :many
+-- ВСЕ contractor-флаги (активные И снятые) по organization_id — для ЧЕСТНОЙ реконструкции состояния на ЧТЕНИИ
+-- (Story 5.2, как ListContractFlags для карточки контракта). «Нет строки» ≠ «всё чисто» → читающий слой выводит
+-- insufficient_data при отсутствии. Детерминированный порядок (flag_type) — стабильность wire.
+SELECT id, flag_type, subject_type, contract_id, organization_id, severity, evidence, is_active, detected_at, cleared_at, methodology_version
+FROM risk_flags
+WHERE organization_id = $1
+ORDER BY flag_type;

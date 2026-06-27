@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-06-19T18:38:34+0500
-last_updated: 2026-06-26T19:10:00+0500
+last_updated: 2026-06-27T00:00:00+0500
 project: AshyqQala.kz
 project_key: NOKEY
 tracking_system: file-system
@@ -76,7 +76,7 @@ development_status:
   2-0-фундамент-source-file-источник-и-проекция-lots: done
   2-1-живая-граница-декодирования-ows_v2-schema_hash: backlog
   2-2-ежедневный-инкрементальный-импорт-через-v2-journal-идемпотентный: backlog
-  2-3-нормализация-наименований-к-каноническому-бин: backlog
+  2-3-нормализация-наименований-к-каноническому-бин: done
   2-4-атомарная-публикация-снапшота-постимпортный-хук-пересчёта: backlog
   2-5-устойчивость-к-недоступности-источника: backlog
   2-6-идемпотентность-импорта-и-выживание-курации-s-0-приёмка: backlog
@@ -106,9 +106,9 @@ development_status:
   epic-4-retrospective: done
 
   # Epic 5: Карточки, методика-экран, шаринг и канал об ошибке (presentation)
-  epic-5: in-progress
+  epic-5: done
   5-1-полная-карточка-контракта-первоисточник-акт-активные-флаги: done
-  5-2-карточка-подрядчика-агрегаты-рну: backlog
+  5-2-карточка-подрядчика-агрегаты-рну: done
   5-3-экран-методики-флага: done
   5-4-канал-сообщить-об-ошибке-полный-fr-28: done
   5-5-og-шаринг-карточки-серверный-рендер: done

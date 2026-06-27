@@ -220,3 +220,28 @@
 - **Store collapse not_published/insufficient → clear** (`RecomputeRNU`) — kill-switch-off и битая запись сводятся к снятию флага, как обычный not_raised; различие теряется на границе store. Пересмотреть при presentation (**Epic 5**), если рендеру нужно отличать not_published от not_raised.
 - **Negative-control загрузчика не доказывает причину** (`methodology_test.go`) — кейсы `«…enabled отсутствует»` проверяют `err != nil`, не подстроку ошибки ([[guards-must-prove-red]]). Усилить assert'ом причины для обоих enabled-флагов (single_participant + rnu).
 - **Инвариант импортёра /v2/rnu (Epic 2): НЕ удалять записи при истечении** — проставлять `end_date` (delta-пересчёт `RecomputeRNU` не посещает удалённые строки → устаревший активный флаг остался бы). Зафиксировать в контракте импортёра (комментарий 0008 + Dev Notes уже фиксируют модель «end_date, не DELETE»).
+
+## Deferred from: code review of story 2.3 (2026-06-27)
+
+- **Conflict фиксирует только первый БИН** (`orgnorm/plan.go` дедуп по `(raw_name, source)`) — при «одно имя → N БИН» создаётся одна conflict-строка, привязанная к первому; прочие вовлечённые орг не получают alias. Conflict name-keyed (корректно для модели); полное per-БИН вовлечение реконструируется на чтении в **Story 5.2**.
+- **Синоним-фолдинг только whole-string/word** (`normalize.CanonicalKey`) — multi-word орг-форма-префикс («Товарищество с ограниченной ответственностью «X»») не сворачивается к «тоо x» (фразовый синоним матчит лишь целую строку). Core-варианты (casefold/гомоглифы/пунктуация/однословные синонимы) работают. Substring-фолдинг орг-форм — лексикон-улучшение (новая версия лексикона).
+- **orgBool/orgString строгие type-assert** (`decode/organizations.go`) — числовой `participant_bin`/`"1"`-winner на живом ows → молча `""`/`false` (БИН теряется, победитель не подрядчик). Тот же класс, что value-robustness-defer Story 2.0 → **Story 2.1/2.2** (живой decode): принимать `json.Number`/строковые числа/булевы варианты.
+- **Apply не транзакционен** (`orgnorm/apply.go`) — org-upserts и alias-upserts раздельными `Exec` поверх пула; сбой в середине оставит орг без псевдонимов. Идемпотентно (ретрай чинит). Транзакция/атомарность импорта → **Story 2.4/2.6**.
+- **UpsertOrganization проекционные нюансы** (`queries/organizations.sql`) — (a) `name_ru = COALESCE(EXCLUDED, …)` = last-import-wins: отображаемое имя «мигает» по порядку батчей; (b) `is_deleted` не сбрасывается на DO UPDATE → реанимация soft-deleted орг скрыта; (c) `first_seen_at`/`source_url` никогда не заполняются (всегда NULL). Живое наполнение + политика → **Story 2.2**.
+- **alias FK на surrogate `organizations.id`** (`migrations/0013`) — truncate-rebuild проекции (`RESTART IDENTITY`) оборвёт `organization_id` кураторских строк. Безопасно под UPSERT (реальный механизм импортёра; id стабильны). Полная rebuild-устойчивость (rebind по БИН) → **Story 2.6** (S-0-приёмка «правка переживает ре-импорт» на реальных 2 импортах).
+- **CanonicalKey пунктуация-пробелы** (`normalize.CanonicalKey`) — не делит `()`, `/`, кавычки-ёлочки `„""`, апостроф → «ТОО Вода (Астана)» ≠ «ТОО Вода Астана». Направление безопасное (under-merge → отдельные/manual, не ложное слияние). Расширить разделители при тюнинге лексикона.
+
+## Deferred from: dev-story 5.2 (2026-06-27)
+
+- **Живая ссылка «Подрядчик» из карточки контракта → `/contractors/{bin}`** (закрытие defer 5-1) — требует выставить `supplier_bin` в контракт-DTO (join `organizations` по `supplier_org_id`). Прямой джойн в `GetContractByID` ломает тип (sqlc: SELECT перестаёт покрывать таблицу → Row-тип), поэтому нужен отдельный лёгкий запрос supplier-орг + поле DTO + OpenAPI + ContractCard-ссылка + контракт-тесты. Карточка подрядчика достижима по URL; кросс-ссылка — мелкий follow-up (наполнение supplier_org_id всё равно ждёт Story 2.2 — до неё ссылка была бы только на seed-связанных контрактах).
+
+## Deferred from: code review of story 5.2 (2026-06-27)
+
+- **tz day-boundary РНУ** (`httpapi/contractors.go resolveRNUMarks`) — `asOf.UTC().Truncate(24h)` сравнивает UTC-календарные дни; платформенный день — Астана (UTC+5/6). У полуночи метка может «мигнуть» ±1 день. Дата-колонки без tz (день-гранулярно). Снапшот единого `now`/tz при Epic 2.
+- **formatMoney точность >2^53** (`features/contractor/ContractorCard.tsx`) — деньги на проводе строкой (2^53-safe), но `formatMoney` парсит через Number → суммы >~9e15 ₸ теряют точность. Для Астана-пилота недостижимо.
+- **source_url без allowlist схемы** (`ContractorCard.tsx`) — `href` из данных без `https?:`-проверки; данные из офиц. импорта/оператора (риск низкий). Добавить allowlist при недоверенных источниках.
+- **`ListContractorFlags` без `subject_type='contractor'`** (`risk_flags.sql`) — partial-unique `(flag_type, organization_id)` гарантирует 1 строку/тип; фильтр defensive-only.
+- **unverified показывает агрегаты** (`contractors.go`) — при «профиль уточняется» флаги insufficient, но count/sum/regions всё ещё фактичны. Возможно by design (связи=факт, флаги=вывод о подрядчике); пересмотреть семантику при живой линковке Story 2.2.
+- **РНУ-метка с будущим start_date → active** (`resolveRNUMarks`) — реконструкция активности игнорирует `start_date`; запись «ещё не вступила» показалась бы active. Маловероятно в реальном РНУ.
+- **«недобросовестный»-цитата структурно не загейчена** (`contractorCardStrings.test.ts`) — нейтральность-тест ловит только taboo-корни; вынос слова из `contractor.rnu.registry_name` не поймался бы. Усилить assert «слово только в registry_name».
+- **методика-tap-through на флагах подрядчика** — карточка контракта (5-1) открывала методику по клику на non-raised флаг; карточка подрядчика проще (monopoly/rnu methodology-обвязка не подключена). Отдельный follow-up.

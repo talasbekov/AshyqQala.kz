@@ -164,6 +164,48 @@ func (q *Queries) ListContractFlags(ctx context.Context, contractID pgtype.Int8)
 	return items, nil
 }
 
+const listContractorFlags = `-- name: ListContractorFlags :many
+SELECT id, flag_type, subject_type, contract_id, organization_id, severity, evidence, is_active, detected_at, cleared_at, methodology_version
+FROM risk_flags
+WHERE organization_id = $1
+ORDER BY flag_type
+`
+
+// ВСЕ contractor-флаги (активные И снятые) по organization_id — для ЧЕСТНОЙ реконструкции состояния на ЧТЕНИИ
+// (Story 5.2, как ListContractFlags для карточки контракта). «Нет строки» ≠ «всё чисто» → читающий слой выводит
+// insufficient_data при отсутствии. Детерминированный порядок (flag_type) — стабильность wire.
+func (q *Queries) ListContractorFlags(ctx context.Context, organizationID pgtype.Int8) ([]RiskFlag, error) {
+	rows, err := q.db.Query(ctx, listContractorFlags, organizationID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []RiskFlag{}
+	for rows.Next() {
+		var i RiskFlag
+		if err := rows.Scan(
+			&i.ID,
+			&i.FlagType,
+			&i.SubjectType,
+			&i.ContractID,
+			&i.OrganizationID,
+			&i.Severity,
+			&i.Evidence,
+			&i.IsActive,
+			&i.DetectedAt,
+			&i.ClearedAt,
+			&i.MethodologyVersion,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const raiseContractFlag = `-- name: RaiseContractFlag :exec
 INSERT INTO risk_flags (flag_type, subject_type, contract_id, severity, evidence, is_active, methodology_version)
 VALUES ($1, 'contract', $2, $3, $4, TRUE, $5)

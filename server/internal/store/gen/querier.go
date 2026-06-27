@@ -17,6 +17,9 @@ type Querier interface {
 	// Авто-снятие: гасит АКТИВНЫЙ contractor-флаг (is_active=false + cleared_at). Идемпотентно (WHERE is_active —
 	// повтор на уже снятом = no-op). История строки сохраняется (не DELETE).
 	ClearContractorFlag(ctx context.Context, arg ClearContractorFlagParams) error
+	// Агрегаты подрядчика по supplier_org_id (FR-13): число контрактов, сумма ₸ (bigint), distinct регионы (КАТО).
+	// До наполнения связи (Story 2.2) вернёт нули/пусто → хендлер честно помечает «профиль неполный» (НЕ «0 контрактов»).
+	ContractorAggregates(ctx context.Context, supplierOrgID pgtype.Int8) (ContractorAggregatesRow, error)
 	// Число активных флагов данного типа (диагностика/тесты).
 	CountActiveContractFlags(ctx context.Context, flagType string) (int64, error)
 	// M — поднятые (активные) сигналы.
@@ -31,9 +34,14 @@ type Querier interface {
 	// X — активные сигналы, ПЕРЕСЧИТЫВАЕМЫЕ третьим лицом по опубликованной методике: непустые methodology_version
 	// и evidence (оба NOT NULL по схеме; вырожденные '' / '{}' не пересчитываемы). [Story 5.6 OQ#3 ✅ вариант (а)]
 	CountRecomputableFlags(ctx context.Context) (int64, error)
+	// Сколько у организации НЕ-auto псевдонимов (manual/conflict, привязанных оператором) — драйвер состояния
+	// «профиль уточняется» (FR-13/Story 2.3): при наличии таких флаги НЕ основание для выводов о подрядчике.
+	CountUnresolvedAliasesByOrg(ctx context.Context, organizationID pgtype.Int8) (int64, error)
 	// Очистка кэша перед публикацией нового снапшота. В ОДНОЙ транзакции с InsertPriceBenchmark = атомарный
 	// swap (читатель видит старый ИЛИ новый снапшот целиком — MVCC; полупересчёт невидим).
 	DeleteAllPriceBenchmarks(ctx context.Context) error
+	// Запись псевдонима по (raw_name, source) — для проверки статуса резолва / «профиль уточняется».
+	GetAlias(ctx context.Context, arg GetAliasParams) (OrgNameAlias, error)
 	// Читает контракт по публичному natural id (goszakup_contract_id); удалённые скрыты.
 	GetContractByID(ctx context.Context, goszakupContractID string) (Contract, error)
 	// Флаг данного типа по контракту (активный или снятый) — для чтения/тестов. Не найдено → pgx.ErrNoRows.
@@ -54,6 +62,8 @@ type Querier interface {
 	GetLotByID(ctx context.Context, goszakupLotID string) (Lot, error)
 	// Все пороги заданной версии (для evidence/пересчёта); порядок по ключу стабилен.
 	GetMethodologyParamsByVersion(ctx context.Context, version string) ([]MethodologyParam, error)
+	// Организация по natural bin (удалённые скрыты).
+	GetOrganizationByBIN(ctx context.Context, bin string) (Organization, error)
 	// Медиана группы по ключу сопоставимости. Отсутствие строки → читатель отдаёт not_comparable (нечего сравнивать).
 	GetPriceBenchmark(ctx context.Context, comparabilityKey string) (PriceBenchmark, error)
 	// Принимает публичное обращение об ошибке (FR-28, Story 5.4) в очередь error_reports (status=new по умолчанию).
@@ -68,11 +78,20 @@ type Querier interface {
 	// детерминированный порядок: агрегация per-org берёт последнюю активную (наибольший start_date)
 	// Вставка записи РНУ (seed-тесты / живой импорт Epic 2).
 	InsertRNUEntry(ctx context.Context, arg InsertRNUEntryParams) error
+	// Очередь оператору: псевдонимы заданного статуса (manual/conflict — «требует проверки»). Порядок стабилен.
+	ListAliasesByStatus(ctx context.Context, resolveStatus string) ([]OrgNameAlias, error)
 	// ВСЕ contract-флаги (активные И снятые) по contract_id — для ЧЕСТНОЙ реконструкции состояния на ЧТЕНИИ
 	// (Story 5.1, AC4). Стор хранит только raised (is_active) и снятые (is_active=false) строки; «нет строки» НЕ
 	// значит «всё чисто» → читающий слой выводит insufficient_data при отсутствии строки (см. resolveContractFlags).
 	// Детерминированный порядок (flag_type) — стабильность wire/golden.
 	ListContractFlags(ctx context.Context, contractID pgtype.Int8) ([]RiskFlag, error)
+	// ВСЕ contractor-флаги (активные И снятые) по organization_id — для ЧЕСТНОЙ реконструкции состояния на ЧТЕНИИ
+	// (Story 5.2, как ListContractFlags для карточки контракта). «Нет строки» ≠ «всё чисто» → читающий слой выводит
+	// insufficient_data при отсутствии. Детерминированный порядок (flag_type) — стабильность wire.
+	ListContractorFlags(ctx context.Context, organizationID pgtype.Int8) ([]RiskFlag, error)
+	// Список контрактов подрядчика (FR-13, AC-1) по supplier_org_id. До наполнения связи (Story 2.2) — пусто
+	// → карточка «профиль неполный». Публичный goszakup_contract_id (не суррогат); удалённые скрыты; порядок стабилен.
+	ListContractsBySupplierOrg(ctx context.Context, supplierOrgID pgtype.Int8) ([]ListContractsBySupplierOrgRow, error)
 	// Перечисление лотов для batch-обработки (геокодинг — Story 0.7); удалённые скрыты, порядок стабилен.
 	ListLots(ctx context.Context) ([]Lot, error)
 	// ⏳ ИНТЕРИМ (Story 0.8, трек «Парсер-мост»): лоты Астаны с интерим-гео для ранней карты.
@@ -80,11 +99,23 @@ type Querier interface {
 	// geocode_pending у потребителя); matched (auto + координата) → точка; unmatched → без точки (НЕ 0,0).
 	// Удалённые скрыты; порядок стабилен. Канонический geo_objects/кластеры/bbox — Epic 3 (3.1/3.4).
 	ListLotsWithGeo(ctx context.Context) ([]ListLotsWithGeoRow, error)
+	// Все неудалённые организации (движок нормализации строит из них кандидатов для матча). Порядок стабилен.
+	ListOrganizations(ctx context.Context) ([]Organization, error)
 	// Весь снапшот кэша; порядок по ключу стабилен (детерминизм чтения).
 	ListPriceBenchmarks(ctx context.Context) ([]PriceBenchmark, error)
+	// Записи РНУ конкретной организации (FR-14, карточка подрядчика, Story 5.2). Метка реконструируется на ЧТЕНИИ
+	// из дат (end_date NULL/в будущем = активна; авто-снятие по end_date), а не из булева «активна». Порядок стабилен.
+	ListRNUByOrg(ctx context.Context, organizationID int64) ([]RnuEntry, error)
 	// Все записи РНУ для пересчёта флага FR-22 (Story 4.5). Источник наполнения — живой /v2/rnu-импорт (Epic 2);
 	// на синтетике — seed. Пересчёт читает ВСЕ записи: активные → raised, истёкшие/будущие → not_raised (clock).
 	ListRNUEntries(ctx context.Context) ([]RnuEntry, error)
+	// Разрешённые псевдонимы (organization_id проставлен) + БИН организации. Движок может использовать как
+	// дополнительные известные написания (обратная связь резолва). Порядок стабилен.
+	ListResolvedAliases(ctx context.Context) ([]ListResolvedAliasesRow, error)
+	// Сырые написания псевдонимов в очереди (manual/conflict) — для детекта «профиль уточняется» по СОВПАДЕНИЮ
+	// ИМЕНИ (Story 5.2 review-фикс F1). conflict/неразрешённые-manual псевдонимы имеют organization_id=NULL (2.3 P1),
+	// поэтому привязка к орг — НЕ по FK, а по канонизированному имени (нормализация в Go). Порядок стабилен.
+	ListUnresolvedAliasNames(ctx context.Context) ([]string, error)
 	// Идемпотентно ставит/обновляет АКТИВНЫЙ contract-флаг (повтор не плодит дубли — UPSERT по (flag_type,
 	// contract_id)). Снятый ранее флаг ре-активируется (is_active=true, cleared_at=NULL); detected_at сохраняется
 	// (первое обнаружение). evidence/methodology_version обновляются (актуальный снапшот входов).
@@ -93,6 +124,16 @@ type Querier interface {
 	// по (flag_type, organization_id)). Снятый ранее флаг ре-активируется (is_active=true, cleared_at=NULL);
 	// detected_at сохраняется (первое обнаружение). evidence/methodology_version обновляются (актуальный снапшот).
 	RaiseContractorFlag(ctx context.Context, arg RaiseContractorFlagParams) error
+	// Оператор разрешает запись очереди: проставляет organization_id И статус 'manual' (берёт строку под
+	// кураторское владение). Статус 'manual' (не 'auto') гарантирует, что UpsertAlias-гейт `WHERE status='auto'`
+	// НЕ перезатрёт правку при ре-импорте — даже если оператор поправил бывшую auto-строку. Имитация Directus;
+	// полная S-0-приёмка «правка переживает ре-импорт» — Story 2.6.
+	ResolveAliasManually(ctx context.Context, arg ResolveAliasManuallyParams) error
+	// Запись решения нормализатора. ИДЕМПОТЕНТНО по (raw_name, source). Ре-импорт ПЕРЕ-выводит ТОЛЬКО авто-строки;
+	// ручные разрешения оператора (manual/conflict) НЕ затираются (WHERE-гейт) — кураторская правка переживает
+	// перезапись проекции (AR-4/AR-10). Авто может эскалировать в conflict при новых данных; conflict/manual «заморожены»
+	// для оператора. WHERE false → ON CONFLICT DO NOTHING (без ошибки).
+	UpsertAlias(ctx context.Context, arg UpsertAliasParams) error
 	// Идемпотентно фиксирует/обновляет диспут флага (один на risk_flag_id, AR-28). resolved_at вычисляется из
 	// статуса: NULL для raised/disputed, now() для confirmed/withdrawn (CHECK flag_disputes_resolved_chk). Повтор
 	// того же risk_flag_id → UPDATE статуса/заметки (не дубль). note/source_url через COALESCE: пустой вход (NULL)
@@ -103,6 +144,10 @@ type Querier interface {
 	UpsertGeoLot(ctx context.Context, arg UpsertGeoLotParams) error
 	// Идемпотентный UPSERT лота по natural goszakup_lot_id (импортёр перестраивает проекцию; повтор не плодит дубли).
 	UpsertLot(ctx context.Context, arg UpsertLotParams) error
+	// Идемпотентный UPSERT организации по natural bin (импортёр перестраивает проекцию; повтор не плодит дубли).
+	// Роли OR-ятся (одна орг бывает и заказчиком, и подрядчиком в разных контрактах). Наименования/КАТО —
+	// COALESCE (новый NULL НЕ затирает известное значение: честность над «last-write-wins» для отсутствующих).
+	UpsertOrganization(ctx context.Context, arg UpsertOrganizationParams) error
 }
 
 var _ Querier = (*Queries)(nil)

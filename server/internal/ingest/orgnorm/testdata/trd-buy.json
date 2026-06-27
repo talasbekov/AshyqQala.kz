@@ -1,0 +1,26 @@
+[
+  {
+    "trd_buy_id": "T-1",
+    "participant_bin": "222222222222",
+    "participant_name_ru": "ТОО \"Астана-Жoл\"",
+    "participant_name_kk": "Астана Жол ЖШС",
+    "participant_kato": "710000000",
+    "is_winner": true
+  },
+  {
+    "trd_buy_id": "T-2",
+    "participant_bin": "555555555555",
+    "participant_name_ru": "ТОО Дала",
+    "participant_name_kk": "Дала ЖШС",
+    "participant_kato": "710000000",
+    "is_winner": true
+  },
+  {
+    "trd_buy_id": "T-3",
+    "participant_bin": "",
+    "participant_name_ru": "ТОО Безбинная Фирма",
+    "participant_name_kk": "",
+    "participant_kato": "",
+    "is_winner": false
+  }
+]
