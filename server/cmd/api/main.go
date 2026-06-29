@@ -106,6 +106,12 @@ func main() {
 	h := httpapi.ContractsHandler{Store: gen.New(pool), Log: log, Version: params.MethodologyVersion}
 	r.Get("/api/contracts/{goszakup_id}", h.Get)
 
+	// Story 6.1 (FR-15): фасетная фильтрация списка контрактов (direction/period/amount/has_flag/supplier_bin)
+	// + keyset-пагинация. Статический /api/contracts и параметрический /api/contracts/{goszakup_id} в chi не
+	// конфликтуют (разная глубина пути). Токен-независимо: работает на проекции contracts + risk_flags + organizations.
+	clh := httpapi.ContractsListHandler{Store: gen.New(pool), Log: log}
+	r.Get("/api/contracts", clh.List)
+
 	// Story 5.2 (FR-13/FR-14): карточка подрядчика по натуральному БИН. Идентичность + агрегаты (по supplier_org_id,
 	// наполнение — Story 2.2) + агрегированные флаги (честная реконструкция) + метки РНУ (авто-снятие по end_date).
 	// Лексикон (Story 2.3) — для детекта «профиль уточняется» по совпадению имени с conflict/manual-псевдонимом.

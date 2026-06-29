@@ -1,0 +1,38 @@
+/* FilterChip (Story 6.1, AC2): ТОЛЬКО семантические токены (Story 1.5), без хардкода цветов.
+   Невыбранный — приглушённая пилюля (surface-sunken / text-secondary / border).
+   Выбранный — насыщённая заливка link-on-sunken (#0C6585; контраст с фоном 5.97:1; тёмная тема — авто-свап
+   через aq.dark) + белый текст on-primary + bold + глиф «✓» (НЕ-цветовой признак выбора, WCAG 1.4.1). */
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: var(--space-tap-target); /* хитбокс ≥44px по высоте независимо от кегля */
+  min-width: var(--space-tap-target); /* …и по ширине: для очень коротких подписей (AC2 — хитбокс ≥44px по обеим осям) [code review 6.1] */
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-sunken);
+  color: var(--color-text-secondary);
+  font-size: var(--type-meta-size);
+  font-weight: var(--type-meta-weight);
+  line-height: var(--type-meta-line-height);
+  cursor: pointer;
+}
+
+.filter-chip:focus-visible {
+  outline: var(--space-focus-ring-width) solid var(--color-focus-ring);
+  outline-offset: var(--space-focus-ring-offset);
+}
+
+.filter-chip--selected {
+  background: var(--color-link-on-sunken);
+  color: var(--color-on-primary);
+  border-color: var(--color-link-on-sunken);
+  font-weight: 700;
+}
+
+/* Глиф «✓» наследует цвет текста чипа (белый on-primary в выбранном) — не отдельный цвет-светофор. */
+.filter-chip .icon {
+  color: inherit;
+}

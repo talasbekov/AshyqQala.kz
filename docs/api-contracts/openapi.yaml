@@ -49,6 +49,40 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
 
+  /api/contracts:
+    get:
+      summary: Список контрактов с фасетной фильтрацией (FR-15, Story 6.1)
+      description: >
+        Фасеты комбинируются совместно (AND между типами; OR внутри direction). Окно медианы тут НЕ при чём:
+        signed_from/to — фасет поиска по дате подписания, НЕ скользящее окно 24 мес (AC4). has_active_flag —
+        «есть сигнал, требующий проверки» (нейтрально). Keyset-пагинация: next_cursor=null ⇒ последняя страница.
+      parameters:
+        - { name: direction, in: query, required: false, description: 'Направления через запятую: road,water,other', schema: { type: string } }
+        - { name: signed_from, in: query, required: false, description: 'Дата подписания ≥ (YYYY-MM-DD)', schema: { type: string, format: date } }
+        - { name: signed_to, in: query, required: false, description: 'Дата подписания ≤ (YYYY-MM-DD)', schema: { type: string, format: date } }
+        - { name: amount_min, in: query, required: false, description: 'Сумма ₸ ≥', schema: { type: integer, format: int64, minimum: 0 } }
+        - { name: amount_max, in: query, required: false, description: 'Сумма ₸ ≤', schema: { type: integer, format: int64, minimum: 0 } }
+        - { name: has_flag, in: query, required: false, description: 'Только контракты с активным сигналом', schema: { type: boolean } }
+        - { name: supplier_bin, in: query, required: false, description: 'БИН подрядчика (12 цифр); несуществующий → пустой список', schema: { type: string } }
+        - { name: limit, in: query, required: false, description: 'Размер страницы (дефолт 20, макс 100)', schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+        - { name: cursor, in: query, required: false, description: 'Непрозрачный keyset-курсор из next_cursor', schema: { type: string } }
+      responses:
+        '200':
+          description: отфильтрованная страница контрактов (пустой список — честный [], не null)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ContractListResponse' }
+        '400':
+          description: невалидный параметр фильтра/курсора
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          description: внутренняя ошибка
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
   /api/contractors/{bin}:
     get:
       summary: Карточка подрядчика по natural БИН (Story 5.2, FR-13/FR-14)
@@ -315,6 +349,36 @@ components:
         methodology_version: { $ref: '#/components/schemas/StringField' } # текущая каноническая версия (штамп ссылки/дисплей)
         as_of: { $ref: '#/components/schemas/StringField' }               # дата-штамп ссылки (detected_at raised / updated_at)
         methodology_drift: { $ref: '#/components/schemas/MethodologyDrift' } # present=true если ссылка под иной версией методики
+    ContractListItem:
+      type: object
+      additionalProperties: false
+      # Элемент списка фасетной фильтрации (FR-15, Story 6.1). Компактный карточка-айтем: публичный
+      # goszakup_contract_id; деньги строкой; nullable — честный конверт {value,state}. has_active_flag —
+      # «есть сигнал, требующий проверки» (нейтрально, AC6): есть ли активный contract-флаг.
+      required: [goszakup_contract_id, subject_ru, subject_kk, amount_tng, sign_date, status, direction, kato_code, has_active_flag]
+      properties:
+        goszakup_contract_id: { type: string }
+        subject_ru: { $ref: '#/components/schemas/StringField' }
+        subject_kk: { $ref: '#/components/schemas/StringField' }
+        amount_tng: { $ref: '#/components/schemas/StringField' }
+        sign_date: { $ref: '#/components/schemas/StringField' }
+        status: { $ref: '#/components/schemas/StringField' }
+        direction: { $ref: '#/components/schemas/StringField' }
+        kato_code: { $ref: '#/components/schemas/StringField' }
+        has_active_flag: { type: boolean }
+    ContractListResponse:
+      type: object
+      additionalProperties: false
+      # Страница фасетной фильтрации (Story 6.1). items — честный [] при пустоте (НЕ null, AC3). next_cursor —
+      # непрозрачный keyset-курсор следующей страницы; null ⇒ страниц больше нет.
+      required: [items, next_cursor]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ContractListItem' }
+        next_cursor:
+          type: string
+          nullable: true
     ContractorProfile:
       type: object
       additionalProperties: false

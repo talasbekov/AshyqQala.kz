@@ -106,6 +106,83 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/contracts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Список контрактов с фасетной фильтрацией (FR-15, Story 6.1)
+         * @description Фасеты комбинируются совместно (AND между типами; OR внутри direction). Окно медианы тут НЕ при чём: signed_from/to — фасет поиска по дате подписания, НЕ скользящее окно 24 мес (AC4). has_active_flag — «есть сигнал, требующий проверки» (нейтрально). Keyset-пагинация: next_cursor=null ⇒ последняя страница.
+         *
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Направления через запятую: road,water,other */
+                    direction?: string;
+                    /** @description Дата подписания ≥ (YYYY-MM-DD) */
+                    signed_from?: string;
+                    /** @description Дата подписания ≤ (YYYY-MM-DD) */
+                    signed_to?: string;
+                    /** @description Сумма ₸ ≥ */
+                    amount_min?: number;
+                    /** @description Сумма ₸ ≤ */
+                    amount_max?: number;
+                    /** @description Только контракты с активным сигналом */
+                    has_flag?: boolean;
+                    /** @description БИН подрядчика (12 цифр); несуществующий → пустой список */
+                    supplier_bin?: string;
+                    /** @description Размер страницы (дефолт 20, макс 100) */
+                    limit?: number;
+                    /** @description Непрозрачный keyset-курсор из next_cursor */
+                    cursor?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description отфильтрованная страница контрактов (пустой список — честный [], не null) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ContractListResponse"];
+                    };
+                };
+                /** @description невалидный параметр фильтра/курсора */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description внутренняя ошибка */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/contractors/{bin}": {
         parameters: {
             query?: never;
@@ -462,6 +539,21 @@ export interface components {
             methodology_version: components["schemas"]["StringField"];
             as_of: components["schemas"]["StringField"];
             methodology_drift: components["schemas"]["MethodologyDrift"];
+        };
+        ContractListItem: {
+            goszakup_contract_id: string;
+            subject_ru: components["schemas"]["StringField"];
+            subject_kk: components["schemas"]["StringField"];
+            amount_tng: components["schemas"]["StringField"];
+            sign_date: components["schemas"]["StringField"];
+            status: components["schemas"]["StringField"];
+            direction: components["schemas"]["StringField"];
+            kato_code: components["schemas"]["StringField"];
+            has_active_flag: boolean;
+        };
+        ContractListResponse: {
+            items: components["schemas"]["ContractListItem"][];
+            next_cursor: string | null;
         };
         ContractorProfile: {
             /** @enum {string} */

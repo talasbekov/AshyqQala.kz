@@ -1,0 +1,163 @@
+/* Story 6.1 search: ТОЛЬКО семантические токены (Story 1.5), без хардкода. */
+.search {
+  max-width: 64rem;
+  margin: var(--space-4) auto;
+  padding: var(--space-gutter);
+}
+.search__title {
+  font-size: var(--type-heading-size);
+  font-weight: var(--type-heading-weight);
+  margin: 0 0 var(--space-2);
+}
+.search__intro {
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-4);
+}
+.search__facets {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+.search__facet {
+  border: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.search__facet legend {
+  font-size: var(--type-label-caps-size);
+  font-weight: var(--type-label-caps-weight);
+  letter-spacing: var(--type-label-caps-letter-spacing);
+  color: var(--color-text-secondary);
+  margin-right: var(--space-2);
+  padding: 0;
+}
+.search__note {
+  flex-basis: 100%;
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--type-meta-size);
+}
+.search__amount {
+  min-height: var(--space-tap-target);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: var(--type-meta-size);
+  width: 8rem;
+}
+.search__amount:focus-visible,
+.search__reset:focus-visible,
+.search__more:focus-visible,
+.search__supplier-clear:focus-visible,
+.search__empty-reset:focus-visible {
+  outline: var(--space-focus-ring-width) solid var(--color-focus-ring);
+  outline-offset: var(--space-focus-ring-offset);
+}
+.search__reset {
+  align-self: flex-start;
+  min-height: var(--space-tap-target);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+.search__supplier {
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.search__supplier-clear {
+  min-height: var(--space-tap-target);
+  min-width: var(--space-tap-target);
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  line-height: 1;
+}
+.search__results-heading {
+  font-size: var(--type-body-strong-size);
+  font-weight: var(--type-body-strong-weight);
+  margin: var(--space-4) 0 var(--space-2);
+}
+.search__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.search__item {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.search__item-link {
+  font-weight: var(--type-body-strong-weight);
+}
+.search__item-meta,
+.search__item-signal,
+.search__error {
+  color: var(--color-text-secondary);
+  font-size: var(--type-meta-size);
+}
+.search__empty {
+  padding: var(--space-5);
+  text-align: center;
+}
+.search__empty-title {
+  font-weight: var(--type-body-strong-weight);
+  margin: 0 0 var(--space-1);
+}
+.search__empty-hint {
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+.search__empty-reset {
+  margin-top: var(--space-3);
+  min-height: var(--space-tap-target);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+.search__more-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+.search__more-error {
+  margin: var(--space-3) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--type-meta-size);
+}
+.search__more {
+  margin-top: var(--space-3);
+  min-height: var(--space-tap-target);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  cursor: pointer;
+}

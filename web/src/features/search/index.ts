@@ -1,0 +1,1 @@
+export { SearchRoute } from './SearchRoute';

@@ -7,6 +7,8 @@ package gen
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const getContractByID = `-- name: GetContractByID :one
@@ -57,4 +59,126 @@ func (q *Queries) GetContractByID(ctx context.Context, goszakupContractID string
 		&i.SupplierOrgID,
 	)
 	return i, err
+}
+
+const listContracts = `-- name: ListContracts :many
+SELECT
+    c.goszakup_contract_id,
+    c.subject_ru,
+    c.subject_kk,
+    c.amount_tng,
+    c.sign_date,
+    c.status,
+    c.direction,
+    c.kato_code,
+    EXISTS (SELECT 1 FROM risk_flags rf WHERE rf.contract_id = c.id AND rf.is_active) AS has_active_flag
+FROM contracts c
+WHERE NOT c.is_deleted
+  AND ($1::text[] IS NULL OR c.direction = ANY($1::text[]))
+  AND ($2::date IS NULL OR c.sign_date >= $2::date)
+  AND ($3::date IS NULL OR c.sign_date <= $3::date)
+  AND ($4::bigint IS NULL OR c.amount_tng >= $4::bigint)
+  AND ($5::bigint IS NULL OR c.amount_tng <= $5::bigint)
+  AND ($6::bigint IS NULL OR c.supplier_org_id = $6::bigint)
+  AND (NOT $7::bool OR EXISTS (
+        SELECT 1 FROM risk_flags rf WHERE rf.contract_id = c.id AND rf.is_active))
+  -- keyset-курсор (sign_date DESC NULLS LAST, goszakup_contract_id ASC). Нет курсора (cursor_gid IS NULL)
+  -- ⇒ первая страница. NULL-хвост обработан явно: при курсоре в хвосте берём только NULL-строки с бОльшим gid.
+  AND (
+    $8::text IS NULL
+    OR (CASE WHEN $9::date IS NULL
+          THEN (c.sign_date IS NULL AND c.goszakup_contract_id > $8::text)
+          ELSE (c.sign_date < $9::date
+                OR c.sign_date IS NULL
+                OR (c.sign_date = $9::date AND c.goszakup_contract_id > $8::text))
+        END)
+  )
+ORDER BY c.sign_date DESC NULLS LAST, c.goszakup_contract_id
+LIMIT $10::int
+`
+
+type ListContractsParams struct {
+	Directions    []string    `json:"directions"`
+	SignedFrom    pgtype.Date `json:"signed_from"`
+	SignedTo      pgtype.Date `json:"signed_to"`
+	AmountMin     pgtype.Int8 `json:"amount_min"`
+	AmountMax     pgtype.Int8 `json:"amount_max"`
+	SupplierOrgID pgtype.Int8 `json:"supplier_org_id"`
+	HasFlagOnly   bool        `json:"has_flag_only"`
+	CursorGid     pgtype.Text `json:"cursor_gid"`
+	CursorSd      pgtype.Date `json:"cursor_sd"`
+	Lim           int32       `json:"lim"`
+}
+
+type ListContractsRow struct {
+	GoszakupContractID string      `json:"goszakup_contract_id"`
+	SubjectRu          pgtype.Text `json:"subject_ru"`
+	SubjectKk          pgtype.Text `json:"subject_kk"`
+	AmountTng          pgtype.Int8 `json:"amount_tng"`
+	SignDate           pgtype.Date `json:"sign_date"`
+	Status             pgtype.Text `json:"status"`
+	Direction          pgtype.Text `json:"direction"`
+	KatoCode           pgtype.Text `json:"kato_code"`
+	HasActiveFlag      bool        `json:"has_active_flag"`
+}
+
+// Фасетная фильтрация контрактов (FR-15, Story 6.1). Условные фасеты: narg IS NULL ⇒ фасет не задан
+// (комбинации работают совместно — AND между типами; OR внутри направлений через ANY). Публичный
+// goszakup_contract_id (не суррогат); удалённые скрыты. has_active_flag — «есть сигнал, требующий
+// проверки» (нейтрально, AC6): EXISTS активного contract-флага. Порядок детерминирован
+// (sign_date DESC NULLS LAST, goszakup_contract_id) + keyset-курсор. Окно медианы тут НЕ при чём (AC4):
+// signed_from/to — это фасет поиска по дате подписания, а не скользящее окно 24 мес benchmark-движка.
+func (q *Queries) ListContracts(ctx context.Context, arg ListContractsParams) ([]ListContractsRow, error) {
+	rows, err := q.db.Query(ctx, listContracts,
+		arg.Directions,
+		arg.SignedFrom,
+		arg.SignedTo,
+		arg.AmountMin,
+		arg.AmountMax,
+		arg.SupplierOrgID,
+		arg.HasFlagOnly,
+		arg.CursorGid,
+		arg.CursorSd,
+		arg.Lim,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListContractsRow{}
+	for rows.Next() {
+		var i ListContractsRow
+		if err := rows.Scan(
+			&i.GoszakupContractID,
+			&i.SubjectRu,
+			&i.SubjectKk,
+			&i.AmountTng,
+			&i.SignDate,
+			&i.Status,
+			&i.Direction,
+			&i.KatoCode,
+			&i.HasActiveFlag,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const resolveSupplierOrgID = `-- name: ResolveSupplierOrgID :one
+SELECT id FROM organizations WHERE bin = $1
+`
+
+// Резолв фасета «подрядчик» (Story 6.1): канонический БИН → внутренний supplier org id (bigint). Нормализация
+// БИН — в Go (normalize.CanonicalBIN) ДО вызова; сюда приходит уже-канонический bin. Не найдено → pgx.ErrNoRows
+// (хендлер трактует как пустой список честно, не 500 — несуществующий подрядчик ≠ ошибка сервера).
+func (q *Queries) ResolveSupplierOrgID(ctx context.Context, bin string) (int64, error) {
+	row := q.db.QueryRow(ctx, resolveSupplierOrgID, bin)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }

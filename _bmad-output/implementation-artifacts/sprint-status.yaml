@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-06-19T18:38:34+0500
-last_updated: 2026-06-29T00:00:00+0500
+last_updated: 2026-06-29T21:35:00+0500
 project: AshyqQala.kz
 project_key: NOKEY
 tracking_system: file-system
@@ -80,7 +80,7 @@ development_status:
   2-4-атомарная-публикация-снапшота-постимпортный-хук-пересчёта: done
   2-5-устойчивость-к-недоступности-источника: backlog
   2-6-идемпотентность-импорта-и-выживание-курации-s-0-приёмка: done
-  2-7-transactional-outbox-loggingdispatcher: ready-for-dev
+  2-7-transactional-outbox-loggingdispatcher: done
   epic-2-retrospective: optional
 
   # Epic 3: Публичная карта и геопривязка (масштабирование до ≥70%)
@@ -117,8 +117,8 @@ development_status:
   epic-5-retrospective: optional
 
   # Epic 6: Поиск, фильтрация и страница района
-  epic-6: backlog
-  6-1-фильтрация-контрактов: backlog
+  epic-6: in-progress
+  6-1-фильтрация-контрактов: done
   6-2-поиск-по-бин-и-наименованию: backlog
   6-3-агрегаты-района: backlog
   6-4-медиана-км-района-и-сравнение-с-городом: backlog
