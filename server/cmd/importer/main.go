@@ -87,7 +87,11 @@ func main() {
 
 	runCtx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
-	if err := pipeline.RunPostImport(runCtx, nil, hook); err != nil {
+	// Одиночность постимпортного джоба ENFORCED через pg advisory-lock (Story 2.6, AC3): конкурентный второй
+	// importer честно отказывается, а не считает флаги против чужого/полупересчитанного снапшота.
+	if err := pipeline.WithSingleJobLock(runCtx, pool, pipeline.PostImportLockKey, func(c context.Context) error {
+		return pipeline.RunPostImport(c, nil, hook)
+	}); err != nil {
 		log.Error("post_import_failed", "error", err.Error())
 		os.Exit(1)
 	}

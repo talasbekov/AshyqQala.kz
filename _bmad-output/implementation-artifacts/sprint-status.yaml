@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-06-19T18:38:34+0500
-last_updated: 2026-06-27T00:00:00+0500
+last_updated: 2026-06-29T00:00:00+0500
 project: AshyqQala.kz
 project_key: NOKEY
 tracking_system: file-system
@@ -77,10 +77,10 @@ development_status:
   2-1-живая-граница-декодирования-ows_v2-schema_hash: backlog
   2-2-ежедневный-инкрементальный-импорт-через-v2-journal-идемпотентный: backlog
   2-3-нормализация-наименований-к-каноническому-бин: done
-  2-4-атомарная-публикация-снапшота-постимпортный-хук-пересчёта: backlog
+  2-4-атомарная-публикация-снапшота-постимпортный-хук-пересчёта: done
   2-5-устойчивость-к-недоступности-источника: backlog
-  2-6-идемпотентность-импорта-и-выживание-курации-s-0-приёмка: backlog
-  2-7-transactional-outbox-loggingdispatcher: backlog
+  2-6-идемпотентность-импорта-и-выживание-курации-s-0-приёмка: done
+  2-7-transactional-outbox-loggingdispatcher: ready-for-dev
   epic-2-retrospective: optional
 
   # Epic 3: Публичная карта и геопривязка (масштабирование до ≥70%)

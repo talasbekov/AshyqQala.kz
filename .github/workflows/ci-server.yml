@@ -3,10 +3,10 @@ name: ci-server
 # Path-фильтр: гоняется только при изменениях бэка/фикстур. Красный = блок merge.
 on:
   pull_request:
-    paths: ['server/**', 'fixtures/**', '.github/workflows/ci-server.yml']
+    paths: ['server/**', 'fixtures/**', 'migrations/**', '.github/workflows/ci-server.yml']
   push:
     branches: [main]
-    paths: ['server/**', 'fixtures/**', '.github/workflows/ci-server.yml']
+    paths: ['server/**', 'fixtures/**', 'migrations/**', '.github/workflows/ci-server.yml']
 
 permissions:
   contents: read
@@ -61,3 +61,37 @@ jobs:
         with:
           version: v2.5.0
           working-directory: server
+
+  # Story 2.6 (AC2): integration-гейт идемпотентности/выживания курации/atomic-публикации на ЧИСТОЙ
+  # (мигрированной БЕЗ seed) БД. Красный = блок merge. Конвенция репо — //go:build integration + DATABASE_URL
+  # (НЕ testcontainers): CI поднимает postgis/postgis сервисом. Пакеты импорта/нормализации/пересчёта;
+  # store/httpapi (seed-зависимы) — отдельный прогон (долг изоляции clean-vs-seed, deferred-work.md).
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: ashyqqala
+          POSTGRES_PASSWORD: ashyqqala
+          POSTGRES_DB: ashyqqala
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U ashyqqala -d ashyqqala"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgres://ashyqqala:ashyqqala@localhost:5432/ashyqqala?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
+
+      - name: migrate (goose, чистая БД) — из корня репо
+        run: go run github.com/pressly/goose/v3/cmd/goose@v3.27.1 -dir migrations postgres "$DATABASE_URL" up
+
+      - name: integration (импорт/нормализация/пересчёт; -p 1 — общая БД; красный = блок merge)
+        working-directory: server
+        run: go test -tags=integration -count=1 -p 1 ./internal/ingest/... ./internal/store/projection/...

@@ -10,14 +10,16 @@
 // (BenchmarkStore.ReplaceSnapshot, applyFlagOutcomes — MVCC), без глобальной таблицы-указателя/event-
 // sourcing (отложено до пилота). RunPostImport ЗАДУМАН как единственный постимпортный джоб (не запускать
 // конкурентно): порядок benchmark→flags зашит (recalc.Run), а одиночность СМЯГЧАЕТ долг «флаг против
-// устаревшего/полупересчитанного benchmark» (deferred-work.md:201). ВАЖНО: одиночность сейчас —
-// операционная конвенция, НЕ enforced (advisory-lock отсутствует); реальное enforcement под конкуренцией —
-// Story 2.6 (идемпотентность). До живого price-провайдера (Story 2.2) риск конкурентного benchmark moot.
+// устаревшего/полупересчитанного benchmark» (deferred-work.md:201). Одиночность ENFORCED через
+// WithSingleJobLock (pg advisory-lock, Story 2.6) в проводке cmd/importer — конкурентный второй джоб честно
+// отказывается. Сам RunPostImport лок НЕ берёт (оставлен композируемым/тестируемым без БД).
 package pipeline
 
 import (
 	"context"
 	"fmt"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"ashyqqala/server/internal/clock"
 	"ashyqqala/server/internal/recalc"
@@ -109,4 +111,34 @@ func FreezeClock(c clock.Clock) clock.Clock {
 		c = clock.Real{} // защита от nil: снимаем реальное «сейчас», а не паникуем
 	}
 	return clock.Fixed{T: c.Now()}
+}
+
+// PostImportLockKey — стабильный ключ pg advisory-lock одиночности постимпортного джоба (Story 2.6).
+// Константа (НЕ random) → детерминированная сериализация между процессами importer.
+const PostImportLockKey int64 = 0x4153485150535431 // "ASHQPST1"
+
+// WithSingleJobLock ENFORCE одиночность постимпортного джоба через pg advisory-lock (Story 2.6, AC3; долг
+// code-review 2.4): берёт ВЫДЕЛЕННОЕ соединение и pg_try_advisory_lock(key). Если лок занят другим джобом —
+// run НЕ выполняется, возвращается честная ошибка (а не молчаливый конкурентный пересчёт против чужого
+// снапшота). Lock/unlock на ОДНОМ соединении (advisory-lock сессионный); соединение держится на время run.
+func WithSingleJobLock(ctx context.Context, pool *pgxpool.Pool, key int64, run func(context.Context) error) error {
+	if pool == nil {
+		return fmt.Errorf("pipeline: WithSingleJobLock: pool не задан")
+	}
+	conn, err := pool.Acquire(ctx)
+	if err != nil {
+		return fmt.Errorf("pipeline: advisory-lock: захват соединения: %w", err)
+	}
+	defer conn.Release()
+	var got bool
+	if err := conn.QueryRow(ctx, "SELECT pg_try_advisory_lock($1)", key).Scan(&got); err != nil {
+		return fmt.Errorf("pipeline: pg_try_advisory_lock(%d): %w", key, err)
+	}
+	if !got {
+		return fmt.Errorf("pipeline: постимпортный джоб уже выполняется (advisory-lock %d занят) — одиночность джоба", key)
+	}
+	// Unlock через WithoutCancel: гарантированно освобождаем сессионный лок ДАЖЕ если run превысил ctx-таймаут
+	// (иначе release зависел бы от teardown соединения). Соединение всё равно вернётся в пул через conn.Release.
+	defer func() { _, _ = conn.Exec(context.WithoutCancel(ctx), "SELECT pg_advisory_unlock($1)", key) }()
+	return run(ctx)
 }
