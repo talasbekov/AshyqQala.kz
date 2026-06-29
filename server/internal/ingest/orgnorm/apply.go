@@ -3,9 +3,11 @@ package orgnorm
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"ashyqqala/server/internal/ingest/decode"
 	"ashyqqala/server/internal/normalize"
@@ -14,13 +16,28 @@ import (
 	"ashyqqala/server/internal/store/projection"
 )
 
-// Apply применяет план к БД: UPSERT организаций (проекция), затем UPSERT псевдонимов (кураторская таблица;
-// organization_id ищется по каноническому БИН). Авто-строки пере-выводятся при ре-импорте; ручные
-// разрешения оператора (manual/conflict) переживают (UpsertAlias гейтит по resolve_status='auto').
-func Apply(ctx context.Context, plan Plan, orgStore *projection.OrgStore, aliasStore *curation.AliasStore) error {
+// Apply применяет план к БД АТОМАРНО (Story 2.4: закрытие долга нетранзакционности, deferred-work.md:108,229):
+// все UPSERT организаций (проекция) и псевдонимов (кураторская таблица) идут в ОДНОЙ транзакции — сбой
+// посреди батча откатывает всё (не остаётся орг без псевдонимов). organization_id для auto-резолва ищется
+// по каноническому БИН в той же транзакции (read-your-writes: орг, записанная выше в этом же Apply, видна).
+// Авто-строки пере-выводятся при ре-импорте; ручные разрешения оператора (manual/conflict) переживают
+// (UpsertAlias гейтит по resolve_status='auto').
+func Apply(ctx context.Context, pool *pgxpool.Pool, plan Plan) error {
+	if pool == nil {
+		return fmt.Errorf("orgnorm apply: pool не задан")
+	}
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("orgnorm apply: begin: %w", err)
+	}
+	defer tx.Rollback(ctx) //nolint:errcheck // rollback после успешного commit — штатный no-op
+
+	orgStore := projection.NewOrgStore(tx)
+	aliasStore := curation.NewAliasStore(tx)
+
 	for _, o := range plan.Orgs {
 		if err := orgStore.UpsertOrganization(ctx, toOrgParams(o)); err != nil {
-			return err
+			return fmt.Errorf("orgnorm apply: upsert организации %s: %w", o.BIN, err)
 		}
 	}
 	for _, a := range plan.Aliases {
@@ -31,7 +48,7 @@ func Apply(ctx context.Context, plan Plan, orgStore *projection.OrgStore, aliasS
 		if a.Status == normalize.StatusAuto && a.BIN != "" {
 			org, err := orgStore.GetOrganizationByBIN(ctx, string(a.BIN))
 			if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-				return err
+				return fmt.Errorf("orgnorm apply: поиск организации по БИН %s: %w", a.BIN, err)
 			}
 			if err == nil {
 				orgID = pgtype.Int8{Int64: org.ID, Valid: true}
@@ -44,10 +61,10 @@ func Apply(ctx context.Context, plan Plan, orgStore *projection.OrgStore, aliasS
 			ResolveStatus:  string(a.Status),
 		}
 		if err := aliasStore.UpsertAlias(ctx, p); err != nil {
-			return err
+			return fmt.Errorf("orgnorm apply: upsert псевдонима %q (%s): %w", a.RawName, a.Source, err)
 		}
 	}
-	return nil
+	return tx.Commit(ctx)
 }
 
 // toOrgParams — маппинг доменной decode.Organization → sqlc-параметры (NULL для пустых: честное «нет данных»).

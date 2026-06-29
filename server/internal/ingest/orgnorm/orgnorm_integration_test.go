@@ -97,7 +97,7 @@ func TestOrgNorm_Integration(t *testing.T) {
 		t.Fatalf("ListOrganizations: %v", err)
 	}
 	plan := orgnorm.PlanNormalization(buildAppearances(t), orgnorm.BuildCandidates(existing, lex), lex)
-	if err := orgnorm.Apply(ctx, plan, orgStore, aliasStore); err != nil {
+	if err := orgnorm.Apply(ctx, pool, plan); err != nil {
 		t.Fatalf("Apply #1: %v", err)
 	}
 
@@ -159,7 +159,7 @@ func TestOrgNorm_Integration(t *testing.T) {
 	// --- Импорт #2 (ре-импорт): ручное разрешение должно ПЕРЕЖИТЬ ---
 	existing2, _ := orgStore.ListOrganizations(ctx)
 	plan2 := orgnorm.PlanNormalization(buildAppearances(t), orgnorm.BuildCandidates(existing2, lex), lex)
-	if err := orgnorm.Apply(ctx, plan2, orgStore, aliasStore); err != nil {
+	if err := orgnorm.Apply(ctx, pool, plan2); err != nil {
 		t.Fatalf("Apply #2: %v", err)
 	}
 
