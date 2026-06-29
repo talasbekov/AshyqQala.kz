@@ -11,6 +11,9 @@ import (
 )
 
 type Querier interface {
+	// Неудачная доставка (O-2/O-4): +1 к attempts и сдвиг видимости available_at = $2 (= $now + backoff(attempts),
+	// вычислено в Go из clock.Clock — детерминизм, НЕ now() в SQL). Строка вновь станет видимой после available_at.
+	BumpAttempt(ctx context.Context, arg BumpAttemptParams) error
 	// Авто-снятие: гасит АКТИВНЫЙ contract-флаг (is_active=false + cleared_at). Идемпотентно (WHERE is_active —
 	// повтор на уже снятом = no-op). История строки сохраняется (не DELETE).
 	ClearContractFlag(ctx context.Context, arg ClearContractFlagParams) error
@@ -30,6 +33,8 @@ type Querier interface {
 	// (синтетика/интерим/живой ows) штампуется артефактом, не выдаётся за пилотный результат.
 	// N — размеченные контракты (импортированы в проекцию, не помечены удалёнными).
 	CountMarkedContracts(ctx context.Context) (int64, error)
+	// Число строк в outbox (для тестов/диагностики дедупа O-3).
+	CountOutbox(ctx context.Context) (int64, error)
 	CountPriceBenchmarks(ctx context.Context) (int64, error)
 	// X — активные сигналы, ПЕРЕСЧИТЫВАЕМЫЕ третьим лицом по опубликованной методике: непустые methodology_version
 	// и evidence (оба NOT NULL по схеме; вырожденные '' / '{}' не пересчитываемы). [Story 5.6 OQ#3 ✅ вариант (а)]
@@ -40,6 +45,10 @@ type Querier interface {
 	// Очистка кэша перед публикацией нового снапшота. В ОДНОЙ транзакции с InsertPriceBenchmark = атомарный
 	// swap (читатель видит старый ИЛИ новый снапшот целиком — MVCC; полупересчёт невидим).
 	DeleteAllPriceBenchmarks(ctx context.Context) error
+	// Запись конверта события в outbox В ТРАНЗАКЦИИ ВЫЗЫВАЮЩЕГО (атомарно с бизнес-объектом — O-1: откат tx ⇒
+	// нет ни бизнес-строки, ни события). Дедуп (O-3): event_id UNIQUE + ON CONFLICT DO NOTHING — повторная
+	// вставка того же события no-op (не двоит у получателя). attempts/available_at — дефолты схемы (0 / now()).
+	EnqueueEvent(ctx context.Context, arg EnqueueEventParams) error
 	// Запись псевдонима по (raw_name, source) — для проверки статуса резолва / «профиль уточняется».
 	GetAlias(ctx context.Context, arg GetAliasParams) (OrgNameAlias, error)
 	// Читает контракт по публичному natural id (goszakup_contract_id); удалённые скрыты.
@@ -64,6 +73,8 @@ type Querier interface {
 	GetMethodologyParamsByVersion(ctx context.Context, version string) ([]MethodologyParam, error)
 	// Организация по natural bin (удалённые скрыты).
 	GetOrganizationByBIN(ctx context.Context, bin string) (Organization, error)
+	// Строка по event_id (для тестов: проверка sent_at/attempts/available_at после доставки/ретрая).
+	GetOutboxByEventID(ctx context.Context, eventID pgtype.UUID) (NotificationsOutbox, error)
 	// Медиана группы по ключу сопоставимости. Отсутствие строки → читатель отдаёт not_comparable (нечего сравнивать).
 	GetPriceBenchmark(ctx context.Context, comparabilityKey string) (PriceBenchmark, error)
 	// Принимает публичное обращение об ошибке (FR-28, Story 5.4) в очередь error_reports (status=new по умолчанию).
@@ -89,6 +100,13 @@ type Querier interface {
 	// (Story 5.2, как ListContractFlags для карточки контракта). «Нет строки» ≠ «всё чисто» → читающий слой выводит
 	// insufficient_data при отсутствии. Детерминированный порядок (flag_type) — стабильность wire.
 	ListContractorFlags(ctx context.Context, organizationID pgtype.Int8) ([]RiskFlag, error)
+	// Фасетная фильтрация контрактов (FR-15, Story 6.1). Условные фасеты: narg IS NULL ⇒ фасет не задан
+	// (комбинации работают совместно — AND между типами; OR внутри направлений через ANY). Публичный
+	// goszakup_contract_id (не суррогат); удалённые скрыты. has_active_flag — «есть сигнал, требующий
+	// проверки» (нейтрально, AC6): EXISTS активного contract-флага. Порядок детерминирован
+	// (sign_date DESC NULLS LAST, goszakup_contract_id) + keyset-курсор. Окно медианы тут НЕ при чём (AC4):
+	// signed_from/to — это фасет поиска по дате подписания, а не скользящее окно 24 мес benchmark-движка.
+	ListContracts(ctx context.Context, arg ListContractsParams) ([]ListContractsRow, error)
 	// Список контрактов подрядчика (FR-13, AC-1) по supplier_org_id. До наполнения связи (Story 2.2) — пусто
 	// → карточка «профиль неполный». Публичный goszakup_contract_id (не суррогат); удалённые скрыты; порядок стабилен.
 	ListContractsBySupplierOrg(ctx context.Context, supplierOrgID pgtype.Int8) ([]ListContractsBySupplierOrgRow, error)
@@ -116,6 +134,14 @@ type Querier interface {
 	// ИМЕНИ (Story 5.2 review-фикс F1). conflict/неразрешённые-manual псевдонимы имеют organization_id=NULL (2.3 P1),
 	// поэтому привязка к орг — НЕ по FK, а по канонизированному имени (нормализация в Go). Порядок стабилен.
 	ListUnresolvedAliasNames(ctx context.Context) ([]string, error)
+	// Успешная доставка (O-2): проставить sent_at (момент из clock.Clock). Строка больше не поллится
+	// (выпадает из частичного индекса notifications_outbox_unsent_idx).
+	MarkSent(ctx context.Context, arg MarkSentParams) error
+	// Воркер берёт неотправленные ВИДИМЫЕ строки: sent_at IS NULL AND available_at <= $1. $1 («сейчас») —
+	// момент из clock.Clock (O-4: граница видимости детерминирована инъекцией Clock, НЕ now() в SQL).
+	// FOR UPDATE SKIP LOCKED — два конкурентных воркера НЕ двоят одну строку (берут непересекающиеся наборы, O-2).
+	// Порядок (available_at, id) — детерминизм/справедливость FIFO. $2 — размер батча.
+	PollUnsent(ctx context.Context, arg PollUnsentParams) ([]NotificationsOutbox, error)
 	// Идемпотентно ставит/обновляет АКТИВНЫЙ contract-флаг (повтор не плодит дубли — UPSERT по (flag_type,
 	// contract_id)). Снятый ранее флаг ре-активируется (is_active=true, cleared_at=NULL); detected_at сохраняется
 	// (первое обнаружение). evidence/methodology_version обновляются (актуальный снапшот входов).
@@ -129,6 +155,10 @@ type Querier interface {
 	// НЕ перезатрёт правку при ре-импорте — даже если оператор поправил бывшую auto-строку. Имитация Directus;
 	// полная S-0-приёмка «правка переживает ре-импорт» — Story 2.6.
 	ResolveAliasManually(ctx context.Context, arg ResolveAliasManuallyParams) error
+	// Резолв фасета «подрядчик» (Story 6.1): канонический БИН → внутренний supplier org id (bigint). Нормализация
+	// БИН — в Go (normalize.CanonicalBIN) ДО вызова; сюда приходит уже-канонический bin. Не найдено → pgx.ErrNoRows
+	// (хендлер трактует как пустой список честно, не 500 — несуществующий подрядчик ≠ ошибка сервера).
+	ResolveSupplierOrgID(ctx context.Context, bin string) (int64, error)
 	// Запись решения нормализатора. ИДЕМПОТЕНТНО по (raw_name, source). Ре-импорт ПЕРЕ-выводит ТОЛЬКО авто-строки;
 	// ручные разрешения оператора (manual/conflict) НЕ затираются (WHERE-гейт) — кураторская правка переживает
 	// перезапись проекции (AR-4/AR-10). Авто может эскалировать в conflict при новых данных; conflict/manual «заморожены»

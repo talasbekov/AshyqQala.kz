@@ -1,6 +1,9 @@
+---
+baseline_commit: 87cb59538bf538d02b2ac09f29c825c11aa99af3
+---
 # Story 2.7: Transactional outbox (LoggingDispatcher)
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -30,23 +33,61 @@ so that **уведомления (Telegram, Epic 7) однократны и не
 
 ## Tasks / Subtasks
 
-- [ ] **T1. Таблица + конверт + транзакционный Enqueue (O-1)** (AC1)
-  - [ ] Миграция `0016_notifications_outbox.sql` (goose): `id` identity PK; `event_id` UUID **UNIQUE** (дедуп O-3); `type` TEXT; `occurred_at` TIMESTAMPTZ; `subject_ref` TEXT (URN); `payload` JSONB; `v` INT (версия payload); `sent_at` TIMESTAMPTZ NULL; `attempts` INT NOT NULL DEFAULT 0 (CHECK ≥0); `available_at` TIMESTAMPTZ NOT NULL DEFAULT now() (видимость O-4); `created_at`. Индекс для поллинга: `(available_at) WHERE sent_at IS NULL`.
-  - [ ] sqlc-запросы `internal/store/queries/notifications_outbox.sql` (`make gen-sqlc` через Docker; `store/gen` не править): `EnqueueEvent` (INSERT … `ON CONFLICT (event_id) DO NOTHING`), `PollUnsent` (FOR UPDATE SKIP LOCKED), `MarkSent`, `BumpAttempt`.
-  - [ ] `internal/outbox`: `Event` (конверт), `Enqueue(ctx, q gen.DBTX, e Event) error` — пишет в tx ВЫЗЫВАЮЩЕГО (атомарность с бизнес-объектом).
-  - [ ] Integration-тест O-1: бизнес-вставка+Enqueue в одной tx → rollback ⇒ НЕТ ни бизнес-строки, ни outbox-строки; commit ⇒ обе есть.
-- [ ] **T2. Dispatcher-контракт + LoggingDispatcher** (AC3)
-  - [ ] `Dispatcher` интерфейс `Send(ctx, Event) error`; `LoggingDispatcher{Log *slog.Logger}` (логирует, возвращает nil); `var _ Dispatcher = LoggingDispatcher{}`.
-  - [ ] Unit-тест: LoggingDispatcher.Send не ошибается, логирует id/type/subject_ref (нейтрально, без прозы флага).
-- [ ] **T3. Воркер доставки (O-2) + SKIP LOCKED** (AC2)
-  - [ ] `ProcessBatch(ctx, pool, d Dispatcher, clk clock.Clock, limit int) (sent int, err error)`: tx → `PollUnsent($now, limit)` (FOR UPDATE SKIP LOCKED) → для каждой `Dispatcher.Send`; успех → `MarkSent($now)`; ошибка Send → `BumpAttempt(attempts+1, available_at=$now+backoff)`; commit.
-  - [ ] Integration-тест O-2: enqueued событие → ProcessBatch → `sent_at` проставлен, Dispatcher вызван 1×. SKIP LOCKED: два конкурентных ProcessBatch не шлют одну строку дважды (counting-dispatcher).
-- [ ] **T4. Дедуп (O-3) + детерминизм retry/visibility (O-4)** (AC2)
-  - [ ] O-3: повторный Enqueue того же `event_id` — no-op (ON CONFLICT DO NOTHING); integration-тест: 2× Enqueue → 1 строка.
-  - [ ] O-4: backoff — чистая функция `backoff(attempts) time.Duration` (простая воспроизводимая, напр. `base * attempts` с потолком); воркер берёт «сейчас» из `clk` (НЕ `now()` в SQL для границы видимости). Unit-тест backoff детерминизм; integration: упавший Send → attempts=1 + available_at сдвинут (не виден до $now+backoff с `clock.Fixed`).
-- [ ] **T5. Гейты, CI, честность**
-  - [ ] Расширить CI-job `integration` (ci-server.yml, Story 2.6): добавить `./internal/outbox/...` в прогон (красный=блок merge).
-  - [ ] `make build`/`lint`/`check-core`(-count=1)/`check-registry` зелёные; negative-control на каждый страж (`-count=1`); честный конвейер без прозы флага.
+- [x] **T1. Таблица + конверт + транзакционный Enqueue (O-1)** (AC1)
+  - [x] Миграция `0016_notifications_outbox.sql` (goose): `id` identity PK; `event_id` UUID **UNIQUE** (дедуп O-3); `type` TEXT; `occurred_at` TIMESTAMPTZ; `subject_ref` TEXT (URN); `payload` JSONB; `v` INT (версия payload); `sent_at` TIMESTAMPTZ NULL; `attempts` INT NOT NULL DEFAULT 0 (CHECK ≥0); `available_at` TIMESTAMPTZ NOT NULL DEFAULT now() (видимость O-4); `created_at`. Индекс для поллинга: `(available_at) WHERE sent_at IS NULL`.
+  - [x] sqlc-запросы `internal/store/queries/notifications_outbox.sql` (`make gen-sqlc` через Docker; `store/gen` не править): `EnqueueEvent` (INSERT … `ON CONFLICT (event_id) DO NOTHING`), `PollUnsent` (FOR UPDATE SKIP LOCKED), `MarkSent`, `BumpAttempt` (+ `CountOutbox`/`GetOutboxByEventID` для тестов).
+  - [x] `internal/outbox`: `Event` (конверт), `Enqueue(ctx, q gen.DBTX, e Event) error` — пишет в tx ВЫЗЫВАЮЩЕГО (атомарность с бизнес-объектом).
+  - [x] Integration-тест O-1: бизнес-вставка+Enqueue в одной tx → rollback ⇒ НЕТ ни бизнес-строки, ни outbox-строки; commit ⇒ обе есть.
+- [x] **T2. Dispatcher-контракт + LoggingDispatcher** (AC3)
+  - [x] `Dispatcher` интерфейс `Send(ctx, Event) error`; `LoggingDispatcher{Log *slog.Logger}` (логирует, возвращает nil); `var _ Dispatcher = LoggingDispatcher{}`.
+  - [x] Unit-тест: LoggingDispatcher.Send не ошибается, логирует id/type/subject_ref (нейтрально, без прозы флага — табу-слова проверены).
+- [x] **T3. Воркер доставки (O-2) + SKIP LOCKED** (AC2)
+  - [x] `ProcessBatch(ctx, pool, d Dispatcher, clk clock.Clock, limit int) (sent int, err error)`: tx → `PollUnsent($now, limit)` (FOR UPDATE SKIP LOCKED) → для каждой `Dispatcher.Send`; успех → `MarkSent($now)`; ошибка Send → `BumpAttempt(attempts+1, available_at=$now+backoff)`; commit.
+  - [x] Integration-тест O-2: enqueued событие → ProcessBatch → `sent_at` проставлен, Dispatcher вызван 1×; повторный проход не передоставляет. SKIP LOCKED: пока tx1 держит FOR UPDATE-лок, tx2 пропускает строку (0 строк) — двойной доставки нет.
+- [x] **T4. Дедуп (O-3) + детерминизм retry/visibility (O-4)** (AC2)
+  - [x] O-3: повторный Enqueue того же `event_id` — no-op (ON CONFLICT DO NOTHING); integration-тест: 2× Enqueue → 1 строка (negative-control: другой event_id → 2 строки).
+  - [x] O-4: backoff — чистая функция `backoff(attempts) time.Duration` (линейная `base*attempts` с потолком); воркер берёт «сейчас» из `clk` (НЕ `now()` в SQL для границы видимости). Unit-тест backoff детерминизм/монотонность/потолок; integration: упавший Send → attempts=1 + available_at сдвинут (скрыт до $now+backoff с `clock.Fixed`; со сдвинутым clk — доставлен).
+- [x] **T5. Гейты, CI, честность**
+  - [x] Расширить CI-job `integration` (ci-server.yml, Story 2.6): добавить `./internal/outbox/...` в прогон (красный=блок merge).
+  - [x] `build`/`lint`/`check-core`(-count=1)/`check-registry` зелёные; negative-control на каждый страж (`-count=1`); честный конвейер без прозы флага. Red-proof: дубль event_id → UNIQUE-violation; миграция реверсивна (down/up).
+
+### Review Findings
+
+> Адверсариальное код-ревью 2026-06-29 (3 слоя: Blind/Edge/Acceptance). Все 3 AC + O-1..O-4 + оба гардрейла + скоуп-дисциплина — PASS. Триаж: 0 decision / 7 patch / 4 defer / 5 dismiss.
+
+**Patch (ПРИМЕНЕНЫ 2026-06-29 — валидация конверта + честность воркера, всё в новом коде):**
+- [x] [Review][Patch] Валидировать нулевой `OccurredAt` в Enqueue (иначе `0001-01-01` в NOT NULL) [server/internal/outbox/enqueue.go] — blind+edge+auditor
+- [x] [Review][Patch] Валидировать пустой `SubjectRef` в Enqueue (load-bearing поле AC1; валидация асимметрична) [server/internal/outbox/enqueue.go] — blind+edge+auditor
+- [x] [Review][Patch] Payload-гард по `len(payload)==0`→`{}` + отвергать невалидный JSON (пустой/битый slice сейчас минует `==nil` → ошибка JSONB) [server/internal/outbox/enqueue.go] — edge
+- [x] [Review][Patch] Валидировать `limit <= 0` в ProcessBatch (LIMIT 0 = вечный idle / LIMIT -1 = DB-ошибка) [server/internal/outbox/worker.go] — blind+edge
+- [x] [Review][Patch] Возвращать `0` (не `sent`) на пред-commit error-путях ProcessBatch (rollback отменил всё → честная метрика) [server/internal/outbox/worker.go] — blind+edge
+- [x] [Review][Patch] Клампить верхний край `backoff` до умножения (overflow int64 при огромном attempts → отрицательная задержка) [server/internal/outbox/worker.go] — blind+edge
+- [x] [Review][Patch] Усилить страж нейтральности: событие с проза-payload → проверить, что её НЕТ в логе (доказывает «payload не логируется») [server/internal/outbox/outbox_test.go] — auditor
+
+**Defer (Epic 7 — реальная эмиссия/Telegram/сетевая доставка; в S-0 эмиттеров нет):**
+- [x] [Review][Defer] Нет dead-letter/max-attempts: poison-строка ретраится вечно + overflow `attempts` [server/internal/outbox/worker.go] — defer → Epic 7
+- [x] [Review][Defer] `Dispatcher.Send` под FOR UPDATE-локом всего батча (lock-across-IO для сетевой доставки) [server/internal/outbox/worker.go] — defer → Epic 7 (текущий батч-в-tx соответствует AC2 для S-0)
+- [x] [Review][Defer] Откат всего батча при поздней DB-ошибке передоставляет уже-Send-нутые строки (at-least-once amplification) [server/internal/outbox/worker.go] — defer → Epic 7 (ограничить/дедуп у получателя)
+- [x] [Review][Defer] `NewEventID()` без/с пустыми частями коллапсирует в один не-нулевой id (тихое склеивание событий) [server/internal/outbox/event.go] — defer → Epic 7 (эмиттер обязан давать стабильный непустой дискриминатор)
+
+**Dismiss (5):** `clk.Now()`-zero stall (прод = `clock.Real`, не возвращает zero); negative/huge `V` (emitter-controlled, нет эмиттеров, `v` — внутренняя версия); «детерминизм overstated» (O-4 — про poll/retry-границу, она clock-injected; enqueue-`now()` намеренно делает событие сразу видимым); EnqueueEvent без insert-vs-dedup сигнала (идемпотентность = контракт O-3); ctx-cancel инфлирует attempts (само-корректируется: BumpAttempt на том же отменённом ctx тоже падает → rollback).
+
+### Review Findings — повторное ревью (2026-06-29)
+
+> Независимый повторный прогон (3 слоя: Blind/Edge/Acceptance, Opus). Подтвердил тщательность ревью #1: тяжёлые пункты (lock-across-IO, dead-letter, at-least-once, NewEventID) уже отловлены/отложены ранее. HIGH нет; все 3 AC + O-1..O-4 — PASS. Триаж: 0 decision / 3 patch / 5 defer (3 повтор + 2 новых) / 3 dismiss.
+
+**Patch (ПРИМЕНЕНЫ 2026-06-29 — дополняют патчи ревью #1; gofmt/vet/build/`go test -count=1 ./...` зелёные):**
+- [x] [Review][Patch] Дополнить гард `limit` верхней границей (`limit > math.MaxInt32` → int32-каст оборачивается в отрицательный/мусорный LIMIT); ревью #1 закрыло только `limit <= 0` [server/internal/outbox/worker.go] — blind+edge
+- [x] [Review][Patch] Требовать JSON-ОБЪЕКТ в payload: валидный не-объект (`123`/`[1,2]`/`"x"`) минует `json.Valid` и тихо пишется в JSONB, хотя конверт по контракту — объект `{...}` [server/internal/outbox/enqueue.go] — edge (+ negative-control в TestEnqueue_ValidatesEnvelope)
+- [x] [Review][Patch] Страж нейтральности: табу теперь из канона `registry.FindTaboo` (casefold + homoglyph-fold, ru+kk) вместо хардкод-подмножества — `assertNoTaboo` + proves-red `TestNeutralityGuard_CanonicalMatcher_ProvesRed` [server/internal/outbox/outbox_test.go] — auditor
+
+**Defer — НОВЫЕ (Epic 7; добавлены в deferred-work.md):**
+- [x] [Review][Defer] Батч-старт `now` переиспользован для планирования ретрая (`available_at=now+backoff`) и `sent_at` → при долгих/медленных батчах (Epic 7) эрозия backoff + ранний `sent_at` [server/internal/outbox/worker.go] — blind (бандл с lock-across-IO)
+- [x] [Review][Defer] `SubjectURN` с пустыми частями (`SubjectURN("contract","")→"contract:"`) проходит проверку непустоты → URN без public_id [server/internal/outbox/enqueue.go, event.go] — edge (бандл с NewEventID-гардом)
+
+**Defer — повторно подтверждены (уже в deferred-work.md:269-272, ревью #1):** dead-letter/max-attempts; `Dispatcher.Send` под локом батча (lock-across-IO); at-least-once amplification; `NewEventID()` пустые части.
+
+**Dismiss (3):** `available_at DEFAULT now()` на вставке против `clk.Now()` (намеренно/задокументировано — enqueue-`now()` делает событие сразу видимым; O-4 — про poll/retry-границу; ops-нюанс: skew app↔БД → мониторить в Epic 7); `ORDER BY (available_at,id)` шире индекса `(available_at)` (perf-only, пренебрежимо на масштабе MVP); во frontmatter спеки нет `context:` (References присутствуют inline, на код не влияет).
 
 ## Dev Notes
 
@@ -118,10 +159,41 @@ Go 1.25 · pgx v5 · sqlc 1.31 (Docker; `store/gen` не править) · Post
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+claude-opus-4-8[1m] (Claude Opus 4.8, 1M context)
 
 ### Debug Log References
 
+- `make gen-sqlc` (Docker `sqlc/sqlc:1.31.0`) → `event_id`→`pgtype.UUID`, timestamptz→`pgtype.Timestamptz`, jsonb→`[]byte`.
+- Unit: `go test -count=1 ./internal/outbox/...` → ok.
+- Integration (dev DB :55432, миграция 0016 применена): `go test -tags=integration -count=1 -p 1 ./internal/outbox/...` → ok (6 тестов).
+- Полный CI-набор на ЧИСТОЙ эфемерной БД (postgis :55433, миграции 0001-0016): `./internal/ingest/... ./internal/store/projection/... ./internal/outbox/...` → ok (без регрессий, outbox зелён на чистой БД).
+- Red-proof стражей: сырой дубль `event_id` → UNIQUE-violation (`already exists`); миграция реверсивна (goose down→up). Negative-control встроен в каждый integration-страж.
+- Гейты: `make lint` (go vet + gofmt), `make check-core` (-count=1), `make check-registry`, `go build ./...`, `go test ./...` — все зелёные.
+
 ### Completion Notes List
 
+- **AC1 (O-1):** конверт `{event_id, type, occurred_at, subject_ref, payload, v}` в `notifications_outbox` (миграция 0016). `Enqueue(ctx, q gen.DBTX, e Event)` пишет в tx ВЫЗЫВАЮЩЕГО (атомарность с бизнес-объектом — прецедент `orgnorm.Apply`). `subject_ref` = URN `<entity>:<public_id>` (публичный goszakup id через `SubjectURN`, не bigint). `event_id` детерминируется эмиттером (`NewEventID` — UUIDv5/SHA-1, stdlib-only, без uuid-зависимости) → повтор дедуплицируем.
+- **AC2 (O-2/O-3/O-4):** `ProcessBatch` — одна tx: `PollUnsent` (FOR UPDATE SKIP LOCKED) → `Dispatcher.Send` → `MarkSent`/`BumpAttempt`. O-3 = `event_id` UNIQUE + `ON CONFLICT DO NOTHING`. O-4 = «сейчас» только из `clock.Clock` (граница видимости `available_at`, НЕ `now()` в SQL); `backoff(attempts)` — чистая линейная формула `30s*attempts` с потолком 30m.
+- **AC3:** `Dispatcher` зафиксирован контрактом; `LoggingDispatcher` логирует нейтральный конверт (id/type/subject_ref/v) и возвращает nil; `var _ Dispatcher = LoggingDispatcher{}`. Telegram + fan-out по подпискам — Epic 7.
+- **Гардрейл нейтральности:** конверт не несёт прозу флага; unit-тест проверяет отсутствие табу-слов в логе. Проза — через `render` на поверхности (Epic 7).
+- **Вопросы владельцу (рекомендации приняты как дефолт, не блокируют):** №1 — имена событий КОНСТАНТАМИ в `internal/outbox` (`TypeFlagRaised`/`TypeContractCreated`); реестр `event_types` + cross-test — forward на Epic 7 (в S-0 эмиттеров нет). №2 — АРХИТЕКТУРНЫЙ конверт без `subscription_id` (fan-out — Epic 7). №3 — линейный backoff с потолком. №4 — 2-7 несёт МЕХАНИЗМ + LoggingDispatcher, без живой эмиссии/Telegram.
+
 ### File List
+
+- `migrations/0016_notifications_outbox.sql` (new)
+- `server/internal/store/queries/notifications_outbox.sql` (new)
+- `server/internal/store/gen/notifications_outbox.sql.go` (new, sqlc-генерат)
+- `server/internal/store/gen/models.go` (modified, sqlc-генерат — добавлен `NotificationsOutbox`)
+- `server/internal/store/gen/querier.go` (modified, sqlc-генерат)
+- `server/internal/outbox/event.go` (new — `EventID`/`NewEventID`/`Event`/`SubjectURN`/type-константы)
+- `server/internal/outbox/dispatcher.go` (new — `Dispatcher`/`LoggingDispatcher`)
+- `server/internal/outbox/enqueue.go` (new — транзакционный `Enqueue`)
+- `server/internal/outbox/worker.go` (new — `ProcessBatch`/`backoff`)
+- `server/internal/outbox/outbox_test.go` (new — unit: eventid/backoff/dispatcher/enqueue-валидация)
+- `server/internal/outbox/outbox_integration_test.go` (new — O-1/O-2/O-3/O-4 + SKIP LOCKED)
+- `.github/workflows/ci-server.yml` (modified — `./internal/outbox/...` в job `integration`)
+
+### Change Log
+
+- 2026-06-29: Story 2.7 реализована — транзакционный outbox (`notifications_outbox` 0016) + `internal/outbox` (Enqueue/ProcessBatch/Dispatcher/LoggingDispatcher), O-1..O-4 покрыты unit+integration (negative-control, -count=1), CI-job `integration` расширен outbox-пакетом. Status → review.
+- 2026-06-29: Код-ревью (3 слоя Blind/Edge/Acceptance) — 0 decision / 7 patch / 4 defer / 5 dismiss; все AC + O-1..O-4 + гардрейлы PASS. 7 патчей применены: валидация конверта (occurred_at/subject_ref/payload), `limit>0`-гард, честный `sent=0` на error-путях, overflow-кламп `backoff`, усиление стража нейтральности (payload-проза не логируется). 4 defer → Epic 7 (dead-letter, lock-across-IO, at-least-once amplification, NewEventID-коллизия). Все гейты + integration на чистой БД зелёные. Status → done.

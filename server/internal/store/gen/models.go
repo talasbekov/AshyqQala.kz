@@ -101,6 +101,20 @@ type MethodologyParam struct {
 	EffectiveFrom pgtype.Timestamptz `json:"effective_from"`
 }
 
+type NotificationsOutbox struct {
+	ID          int64              `json:"id"`
+	EventID     pgtype.UUID        `json:"event_id"`
+	Type        string             `json:"type"`
+	OccurredAt  pgtype.Timestamptz `json:"occurred_at"`
+	SubjectRef  string             `json:"subject_ref"`
+	Payload     []byte             `json:"payload"`
+	V           int32              `json:"v"`
+	SentAt      pgtype.Timestamptz `json:"sent_at"`
+	Attempts    int32              `json:"attempts"`
+	AvailableAt pgtype.Timestamptz `json:"available_at"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
 type OrgNameAlias struct {
 	ID             int64              `json:"id"`
 	OrganizationID pgtype.Int8        `json:"organization_id"`

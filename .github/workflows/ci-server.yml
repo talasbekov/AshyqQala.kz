@@ -92,6 +92,6 @@ jobs:
       - name: migrate (goose, чистая БД) — из корня репо
         run: go run github.com/pressly/goose/v3/cmd/goose@v3.27.1 -dir migrations postgres "$DATABASE_URL" up
 
-      - name: integration (импорт/нормализация/пересчёт; -p 1 — общая БД; красный = блок merge)
+      - name: integration (импорт/нормализация/пересчёт/outbox; -p 1 — общая БД; красный = блок merge)
         working-directory: server
-        run: go test -tags=integration -count=1 -p 1 ./internal/ingest/... ./internal/store/projection/...
+        run: go test -tags=integration -count=1 -p 1 ./internal/ingest/... ./internal/store/projection/... ./internal/outbox/...
