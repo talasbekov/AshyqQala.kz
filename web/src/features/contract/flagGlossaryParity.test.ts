@@ -45,7 +45,9 @@ describe('Проза флага: единый источник registry↔web (S
           const regVal = g[`flag.${id}.${field}`];
           const webVal = getKey(chrome, `flag.${id}.${field}`);
           expect(typeof regVal, `registry glossary-${lang}: flag.${id}.${field}`).toBe('string');
-          expect(webVal, `web ${lang}: flag.${id}.${field} должен совпадать с registry`).toBe(regVal);
+          expect(webVal, `web ${lang}: flag.${id}.${field} должен совпадать с registry`).toBe(
+            regVal,
+          );
         }
       }
     }

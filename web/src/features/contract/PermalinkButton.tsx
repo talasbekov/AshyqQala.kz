@@ -26,8 +26,7 @@ export function PermalinkButton({ href }: { href: string }) {
       </button>
       {state === 'failed' ? (
         <span className="contract-permalink__fallback">
-          {t('methodology.permalink_failed')}:{' '}
-          <a href={href}>{abs}</a>
+          {t('methodology.permalink_failed')}: <a href={href}>{abs}</a>
         </span>
       ) : null}
     </div>

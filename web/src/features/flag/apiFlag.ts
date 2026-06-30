@@ -33,7 +33,10 @@ function intNum(v: unknown): number | undefined {
 
 // thresholdPerKm = медиана × deviation_factor, ТОЧНО через BigInt (1.5 = 1500/1000) — публичная
 // пересчитываемость (FR-23). Каноничная строка целых для formatMoney. undefined, если входов нет.
-function thresholdPerKm(medianStr: string | undefined, factor: number | undefined): string | undefined {
+function thresholdPerKm(
+  medianStr: string | undefined,
+  factor: number | undefined,
+): string | undefined {
   if (medianStr === undefined || factor === undefined || !Number.isFinite(factor)) return undefined;
   const scaled = Math.round(factor * 1000);
   return ((BigInt(medianStr) * BigInt(scaled)) / 1000n).toString();
@@ -44,7 +47,9 @@ function thresholdPerKm(medianStr: string | undefined, factor: number | undefine
 function mapEvidence(f: ApiContractFlag): FlagEvidence {
   const raw = f.evidence;
   const ev: Record<string, unknown> =
-    raw !== null && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+    raw !== null && typeof raw === 'object' && !Array.isArray(raw)
+      ? (raw as Record<string, unknown>)
+      : {};
   const out: FlagEvidence = {};
   if (f.flag_id === 'single_participant') {
     const pc = intNum(ev.participant_count);

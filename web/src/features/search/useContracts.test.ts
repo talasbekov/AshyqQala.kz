@@ -63,7 +63,9 @@ describe('useContracts фасет-маппинг (Story 6.1)', () => {
   });
 
   it('filtersFromParams: мусорные значения отброшены (закрытые списки direction/period)', () => {
-    const f = filtersFromParams(new URLSearchParams('direction=road,plane&period=99y&has_flag=maybe'));
+    const f = filtersFromParams(
+      new URLSearchParams('direction=road,plane&period=99y&has_flag=maybe'),
+    );
     expect(f.directions).toEqual(['road']); // 'plane' вне enum → отброшен
     expect(f.period).toBe('all'); // '99y' → дефолт
     expect(f.hasFlag).toBe(false); // не 'true'

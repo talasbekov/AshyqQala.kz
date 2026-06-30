@@ -5,7 +5,8 @@ import { test, expect, type Page } from '@playwright/test';
 // выбранный чип несёт «✓» (AC2), узкий фильтр → «Ничего не найдено» (AC3).
 
 type Field = { value: string | null; state: string };
-const f = (v: string | null): Field => (v === null ? { value: null, state: 'no_data' } : { value: v, state: 'ok' });
+const f = (v: string | null): Field =>
+  v === null ? { value: null, state: 'no_data' } : { value: v, state: 'ok' };
 
 interface Item {
   goszakup_contract_id: string;

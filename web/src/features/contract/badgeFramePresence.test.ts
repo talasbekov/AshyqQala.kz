@@ -14,10 +14,26 @@ function getKey(dict: Record<string, unknown>, path: string): unknown {
 
 // golden — ЛИТЕРАЛ == OG render.FlagLine (raised). Собранный из web-i18n бейдж ОБЯЗАН совпасть → web↔OG равенство.
 const GOLDEN: { lang: 'ru' | 'kk'; flag: string; badge: string }[] = [
-  { lang: 'ru', flag: 'single_participant', badge: 'Зафиксирован один участник — сигнал, требующий проверки' },
-  { lang: 'kk', flag: 'single_participant', badge: 'Бір қатысушы тіркелді — тексеруді талап ететін сигнал' },
-  { lang: 'ru', flag: 'price_per_km', badge: 'Цена за км выше медианы — сигнал, требующий проверки' },
-  { lang: 'kk', flag: 'price_per_km', badge: 'Шақырым құны медианадан жоғары — тексеруді талап ететін сигнал' },
+  {
+    lang: 'ru',
+    flag: 'single_participant',
+    badge: 'Зафиксирован один участник — сигнал, требующий проверки',
+  },
+  {
+    lang: 'kk',
+    flag: 'single_participant',
+    badge: 'Бір қатысушы тіркелді — тексеруді талап ететін сигнал',
+  },
+  {
+    lang: 'ru',
+    flag: 'price_per_km',
+    badge: 'Цена за км выше медианы — сигнал, требующий проверки',
+  },
+  {
+    lang: 'kk',
+    flag: 'price_per_km',
+    badge: 'Шақырым құны медианадан жоғары — тексеруді талап ететін сигнал',
+  },
 ];
 
 describe('Cross-surface: web-бейдж == OG golden + рамка-токен (Story 5.7 AC-1/AC-2)', () => {
@@ -33,7 +49,9 @@ describe('Cross-surface: web-бейдж == OG golden + рамка-токен (St
       // КЛЮЧЕВОЕ: web-бейдж == golden-литерал OG → ядро web↔OG идентично; расхождение summary/рамки краснеет.
       expect(badge, `${g.lang}/${g.flag}: web-бейдж должен совпасть с OG golden`).toBe(g.badge);
       // Позитив присутствия рамки-токена.
-      expect(badge.includes(frame as string), `${g.lang}/${g.flag}: рамка-токен в бейдже`).toBe(true);
+      expect(badge.includes(frame as string), `${g.lang}/${g.flag}: рамка-токен в бейдже`).toBe(
+        true,
+      );
     }
   });
 

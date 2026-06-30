@@ -178,9 +178,7 @@ test('карточка 5.1: честное «нет данных» + видим�
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText('1.5'); // формула из /api/methodology, не из evidence
-  await expect(
-    dialog.getByText(/Сигнал не выставлен|Сигнал қойылмады/).first(),
-  ).toBeVisible();
+  await expect(dialog.getByText(/Сигнал не выставлен|Сигнал қойылмады/).first()).toBeVisible();
 });
 
 // review-фикс 5.3 (per-field degrade): prefix-валидная, но битая дата (`2026-13-45`) НЕ роняет весь экран

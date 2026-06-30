@@ -15,13 +15,21 @@ function apiFlag(
 describe('apiToViewFlag (Story 5.1: API-флаг → view-модель)', () => {
   it('НЕ-raised → null (бейдж не публикуется; рисуется строкой статуса)', () => {
     expect(apiToViewFlag(apiFlag({ flag_id: 'price_per_km', state: 'not_raised' }))).toBeNull();
-    expect(apiToViewFlag(apiFlag({ flag_id: 'price_per_km', state: 'insufficient_data' }))).toBeNull();
-    expect(apiToViewFlag(apiFlag({ flag_id: 'single_participant', state: 'not_published' }))).toBeNull();
+    expect(
+      apiToViewFlag(apiFlag({ flag_id: 'price_per_km', state: 'insufficient_data' })),
+    ).toBeNull();
+    expect(
+      apiToViewFlag(apiFlag({ flag_id: 'single_participant', state: 'not_published' })),
+    ).toBeNull();
   });
 
   it('raised single_participant → participants из evidence; версия/дата проброшены', () => {
     const f = apiToViewFlag(
-      apiFlag({ flag_id: 'single_participant', state: 'raised', evidence: { participant_count: 1 } }),
+      apiFlag({
+        flag_id: 'single_participant',
+        state: 'raised',
+        evidence: { participant_count: 1 },
+      }),
     )!;
     expect(f.flagId).toBe('single_participant');
     expect(f.flagState).toBe('raised');
@@ -35,7 +43,12 @@ describe('apiToViewFlag (Story 5.1: API-флаг → view-модель)', () => 
       apiFlag({
         flag_id: 'price_per_km',
         state: 'raised',
-        evidence: { price_per_km: 71000000, median: 38400000, sample_size: 9, deviation_factor: 1.5 },
+        evidence: {
+          price_per_km: 71000000,
+          median: 38400000,
+          sample_size: 9,
+          deviation_factor: 1.5,
+        },
       }),
     )!;
     expect(f.evidence.medianPerKm).toBe('38400000');
@@ -54,7 +67,11 @@ describe('apiToViewFlag (Story 5.1: API-флаг → view-модель)', () => 
 
   it('неканоничные числа отбрасываются (formatMoney строг — кормим только ^-?\\d+$)', () => {
     const f = apiToViewFlag(
-      apiFlag({ flag_id: 'price_per_km', state: 'raised', evidence: { median: '38 400 000', price_per_km: 'x' } }),
+      apiFlag({
+        flag_id: 'price_per_km',
+        state: 'raised',
+        evidence: { median: '38 400 000', price_per_km: 'x' },
+      }),
     )!;
     expect(f.evidence.medianPerKm).toBeUndefined();
     expect(f.evidence.thisPerKm).toBeUndefined();
@@ -65,7 +82,11 @@ describe('apiToViewFlag (Story 5.1: API-флаг → view-модель)', () => 
     // Number.MAX_SAFE_INTEGER + N — небезопасное целое (через выражение, без неточного литерала).
     const unsafe = Number.MAX_SAFE_INTEGER + 2;
     const f = apiToViewFlag(
-      apiFlag({ flag_id: 'price_per_km', state: 'raised', evidence: { median: unsafe, price_per_km: unsafe } }),
+      apiFlag({
+        flag_id: 'price_per_km',
+        state: 'raised',
+        evidence: { median: unsafe, price_per_km: unsafe },
+      }),
     )!;
     expect(f.evidence.medianPerKm).toBeUndefined();
     expect(f.evidence.thisPerKm).toBeUndefined();
@@ -74,7 +95,11 @@ describe('apiToViewFlag (Story 5.1: API-флаг → view-модель)', () => 
 
   it('review-фикс: evidence-массив (не объект) → поля честно отсутствуют, бейдж не падает', () => {
     const f = apiToViewFlag(
-      apiFlag({ flag_id: 'single_participant', state: 'raised', evidence: [1, 2, 3] as unknown as ApiContractFlag['evidence'] }),
+      apiFlag({
+        flag_id: 'single_participant',
+        state: 'raised',
+        evidence: [1, 2, 3] as unknown as ApiContractFlag['evidence'],
+      }),
     )!;
     expect(f.flagState).toBe('raised');
     expect(f.evidence.participants).toBeUndefined();
@@ -99,7 +124,12 @@ describe('apiToMethodologyTarget (Story 5.3: методика достижима
       apiFlag({
         flag_id: 'price_per_km',
         state: 'raised',
-        evidence: { median: 38400000, sample_size: 9, deviation_factor: 1.5, price_per_km: 71000000 },
+        evidence: {
+          median: 38400000,
+          sample_size: 9,
+          deviation_factor: 1.5,
+          price_per_km: 71000000,
+        },
       }),
     );
     expect(t.state).toBe('raised');

@@ -14,7 +14,8 @@ const TABOO_ROOTS = [...taboo.ru, ...taboo.kk];
 
 function collectStrings(obj: unknown, out: string[] = []): string[] {
   if (typeof obj === 'string') out.push(obj);
-  else if (obj && typeof obj === 'object') for (const v of Object.values(obj)) collectStrings(v, out);
+  else if (obj && typeof obj === 'object')
+    for (const v of Object.values(obj)) collectStrings(v, out);
   return out;
 }
 
@@ -84,7 +85,10 @@ describe('ContractCard строки (Story 5.1)', () => {
 
   it('флаг-состояния (строка статуса) имеют нейтральные метки в обеих локалях', () => {
     for (const lang of LANGS) {
-      const fs = (resources[lang].chrome as Record<string, unknown>).flag_state as Record<string, string>;
+      const fs = (resources[lang].chrome as Record<string, unknown>).flag_state as Record<
+        string,
+        string
+      >;
       for (const st of ['raised', 'not_raised', 'insufficient_data', 'not_published']) {
         expect(fs[st], `${lang}:flag_state.${st}`).toBeTruthy();
       }

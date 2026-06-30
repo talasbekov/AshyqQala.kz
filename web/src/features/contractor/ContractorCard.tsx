@@ -38,7 +38,8 @@ export function ContractorCard({ contractor, lang }: { contractor: Contractor; l
   const clearedRnu = c.rnu_marks.filter((m) => !m.active);
 
   // Источник орг (реестр первоисточника) — служит {source-link} для агрегированных флагов (AC-3: своя ссылка на метку).
-  const orgSrc = c.source_url.state === 'ok' && c.source_url.value !== null ? c.source_url.value : null;
+  const orgSrc =
+    c.source_url.state === 'ok' && c.source_url.value !== null ? c.source_url.value : null;
 
   return (
     <article className="contractor-card" aria-labelledby="contractor-name">
@@ -85,7 +86,10 @@ export function ContractorCard({ contractor, lang }: { contractor: Contractor; l
       </dl>
 
       {/* Список контрактов подрядчика (FR-13). Пусто до наполнения связи (Story 2.2) → честная плашка. */}
-      <section className="contractor-card__contracts" aria-label={t('contractor.contracts.heading')}>
+      <section
+        className="contractor-card__contracts"
+        aria-label={t('contractor.contracts.heading')}
+      >
         <h3 className="contractor-card__contracts-heading">{t('contractor.contracts.heading')}</h3>
         {c.contracts.length > 0 ? (
           <ul className="contractor-card__contract-list">
@@ -93,7 +97,10 @@ export function ContractorCard({ contractor, lang }: { contractor: Contractor; l
               const subj = lang === 'kk' ? ct.subject_kk : ct.subject_ru;
               return (
                 <li key={ct.goszakup_contract_id} className="contractor-card__contract-item">
-                  <Link to={`/contracts/${encodeURIComponent(ct.goszakup_contract_id)}`} lang={lang}>
+                  <Link
+                    to={`/contracts/${encodeURIComponent(ct.goszakup_contract_id)}`}
+                    lang={lang}
+                  >
                     <Value field={subj} />
                   </Link>
                   <span className="contractor-card__contract-amount">
@@ -121,7 +128,9 @@ export function ContractorCard({ contractor, lang }: { contractor: Contractor; l
 
         {raised.map((f) => (
           <div key={f.flag_id} className="contractor-card__flag" data-testid={`flag-${f.flag_id}`}>
-            <span className="contractor-card__flag-name">{t(`contractor.flag.${f.flag_id}.name`)}</span>
+            <span className="contractor-card__flag-name">
+              {t(`contractor.flag.${f.flag_id}.name`)}
+            </span>
             <span className="contractor-card__flag-state">{t(`flag_state.${f.state}`)}</span>
             {/* AC-3: у КАЖДОЙ метки СВОЯ {source-link} (первоисточник для проверки) + СВОЯ «Сообщить об ошибке». */}
             {orgSrc !== null ? (
@@ -136,7 +145,9 @@ export function ContractorCard({ contractor, lang }: { contractor: Contractor; l
             ) : null}
             <a
               className="contractor-card__report"
-              href={reportErrorMailto(t('contractor.report_subject', { bin: c.bin, mark: f.flag_id }))}
+              href={reportErrorMailto(
+                t('contractor.report_subject', { bin: c.bin, mark: f.flag_id }),
+              )}
             >
               {t('report_error.link')}
             </a>
@@ -144,7 +155,10 @@ export function ContractorCard({ contractor, lang }: { contractor: Contractor; l
         ))}
 
         {nonRaised.length > 0 ? (
-          <ul className="contractor-card__flag-status" aria-label={t('contract.signals_status_heading')}>
+          <ul
+            className="contractor-card__flag-status"
+            aria-label={t('contract.signals_status_heading')}
+          >
             {nonRaised.map((f) => (
               <li key={f.flag_id} className="contractor-card__flag-status-row">
                 <span>{t(`contractor.flag.${f.flag_id}.name`)}</span>
@@ -160,8 +174,14 @@ export function ContractorCard({ contractor, lang }: { contractor: Contractor; l
         <section className="contractor-card__rnu" aria-label={t('contractor.rnu.heading')}>
           <h3 className="contractor-card__rnu-heading">{t('contractor.rnu.heading')}</h3>
           {activeRnu.map((m, i) => {
-            const src = m.source_url.state === 'ok' && m.source_url.value !== null ? m.source_url.value : null;
-            const markKey = m.registry_id.state === 'ok' && m.registry_id.value !== null ? m.registry_id.value : `rnu-${i}`;
+            const src =
+              m.source_url.state === 'ok' && m.source_url.value !== null
+                ? m.source_url.value
+                : null;
+            const markKey =
+              m.registry_id.state === 'ok' && m.registry_id.value !== null
+                ? m.registry_id.value
+                : `rnu-${i}`;
             return (
               <div key={markKey} className="contractor-card__rnu-mark" data-testid="rnu-mark">
                 <p className="contractor-card__rnu-cite">{t('contractor.rnu.registry_name')}</p>
@@ -181,7 +201,9 @@ export function ContractorCard({ contractor, lang }: { contractor: Contractor; l
                 ) : null}
                 <a
                   className="contractor-card__report"
-                  href={reportErrorMailto(t('contractor.report_subject', { bin: c.bin, mark: 'rnu' }))}
+                  href={reportErrorMailto(
+                    t('contractor.report_subject', { bin: c.bin, mark: 'rnu' }),
+                  )}
                 >
                   {t('report_error.link')}
                 </a>

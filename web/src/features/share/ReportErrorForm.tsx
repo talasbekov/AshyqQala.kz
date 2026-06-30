@@ -15,7 +15,13 @@ import './report-error.css';
 // idle/filling → submitting (кнопка заблокирована — защита от двойной) → success | error (текст НЕ теряется).
 // Привязка к объекту — из контекста (target), не вводится руками. role=dialog, базовый фокус + Escape
 // (полный focus-trap — Epic 3 Story 3.5). Mailto — no-JS фолбэк в действиях.
-export function ReportErrorForm({ target, onClose }: { target: ReportTarget; onClose: () => void }) {
+export function ReportErrorForm({
+  target,
+  onClose,
+}: {
+  target: ReportTarget;
+  onClose: () => void;
+}) {
   const { t } = useTranslation('chrome');
   const [message, setMessage] = useState('');
   const [contact, setContact] = useState('');
@@ -29,7 +35,8 @@ export function ReportErrorForm({ target, onClose }: { target: ReportTarget; onC
   }, []);
 
   const mutation = useMutation({
-    mutationFn: () => postErrorReport(buildErrorReportRequest(target, { message, contact, leaveBlank })),
+    mutationFn: () =>
+      postErrorReport(buildErrorReportRequest(target, { message, contact, leaveBlank })),
   });
 
   const trimmed = message.trim();
@@ -39,7 +46,11 @@ export function ReportErrorForm({ target, onClose }: { target: ReportTarget; onC
     e.preventDefault();
     if (!canSubmit || inFlight.current) return; // защита от двойной/пустой отправки (синхронно)
     inFlight.current = true;
-    mutation.mutate(undefined, { onSettled: () => { inFlight.current = false; } });
+    mutation.mutate(undefined, {
+      onSettled: () => {
+        inFlight.current = false;
+      },
+    });
   };
 
   const errCode = (mutation.error as ReportErrorFailure | null)?.code;
@@ -130,7 +141,9 @@ export function ReportErrorForm({ target, onClose }: { target: ReportTarget; onC
 
             <div className="aq-meth__actions">
               <button type="submit" className="aq-report__submit" disabled={!canSubmit}>
-                {mutation.isPending ? t('report_error.form.submitting') : t('report_error.form.submit')}
+                {mutation.isPending
+                  ? t('report_error.form.submitting')
+                  : t('report_error.form.submit')}
               </button>
               <a
                 className="aq-meth__link"

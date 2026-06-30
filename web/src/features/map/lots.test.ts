@@ -82,7 +82,7 @@ describe('splitLots', () => {
 
   // P5: geocode_state='ok' без координат — нарушение контракта источника; точку не выдумываем,
   // но аномалию делаем видимой (console.warn), а не глотаем молча.
-  it("ok без координат → console.warn (видимый сигнал нарушения контракта), а не молчаливый дроп", () => {
+  it('ok без координат → console.warn (видимый сигнал нарушения контракта), а не молчаливый дроп', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     try {
       splitLots([lot({ goszakup_lot_id: 'broken', geocode_state: 'ok', lon: null, lat: null })]);
@@ -93,7 +93,7 @@ describe('splitLots', () => {
     }
   });
 
-  it("честный (geocode_failed/pending) лот без координат НЕ шумит в console.warn", () => {
+  it('честный (geocode_failed/pending) лот без координат НЕ шумит в console.warn', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     try {
       splitLots([

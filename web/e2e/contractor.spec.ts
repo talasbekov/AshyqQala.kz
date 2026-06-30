@@ -16,8 +16,20 @@ function base(bin: string) {
     regions: [] as string[],
     contracts: [] as unknown[],
     flags: [
-      { flag_id: 'monopoly', state: 'insufficient_data', methodology_version: { value: null, state: 'no_data' }, detected_at: { value: null, state: 'no_data' }, evidence: null },
-      { flag_id: 'rnu', state: 'insufficient_data', methodology_version: { value: null, state: 'no_data' }, detected_at: { value: null, state: 'no_data' }, evidence: null },
+      {
+        flag_id: 'monopoly',
+        state: 'insufficient_data',
+        methodology_version: { value: null, state: 'no_data' },
+        detected_at: { value: null, state: 'no_data' },
+        evidence: null,
+      },
+      {
+        flag_id: 'rnu',
+        state: 'insufficient_data',
+        methodology_version: { value: null, state: 'no_data' },
+        detected_at: { value: null, state: 'no_data' },
+        evidence: null,
+      },
     ],
     rnu_marks: [] as unknown[],
     source_url: { value: 'https://goszakup.gov.kz/ru/registry', state: 'ok' },
@@ -26,7 +38,9 @@ function base(bin: string) {
   };
 }
 
-test('подрядчик: «профиль неполный» (нет связанных контрактов) — count честный no_data', async ({ page }) => {
+test('подрядчик: «профиль неполный» (нет связанных контрактов) — count честный no_data', async ({
+  page,
+}) => {
   const dto = base('222222222222');
   await page.route('**/api/contractors/222222222222', (route) => route.fulfill({ json: dto }));
   await page.goto('/contractors/222222222222');
@@ -34,7 +48,9 @@ test('подрядчик: «профиль неполный» (нет связа
   await expect(page.getByTestId('contractor-profile')).toBeVisible();
 });
 
-test('подрядчик: полный — монополия raised + активная РНУ-метка со своим source-link + список контрактов', async ({ page }) => {
+test('подрядчик: полный — монополия raised + активная РНУ-метка со своим source-link + список контрактов', async ({
+  page,
+}) => {
   const dto = base('222222222222');
   dto.profile = { state: 'partial' };
   dto.contract_count = { value: '2', state: 'ok' };
@@ -51,8 +67,20 @@ test('подрядчик: полный — монополия raised + акти�
     },
   ];
   dto.flags = [
-    { flag_id: 'monopoly', state: 'raised', methodology_version: { value: 'v1.0', state: 'ok' }, detected_at: { value: '2026-06-10T10:00:00Z', state: 'ok' }, evidence: { share: 0.648 } },
-    { flag_id: 'rnu', state: 'insufficient_data', methodology_version: { value: null, state: 'no_data' }, detected_at: { value: null, state: 'no_data' }, evidence: null },
+    {
+      flag_id: 'monopoly',
+      state: 'raised',
+      methodology_version: { value: 'v1.0', state: 'ok' },
+      detected_at: { value: '2026-06-10T10:00:00Z', state: 'ok' },
+      evidence: { share: 0.648 },
+    },
+    {
+      flag_id: 'rnu',
+      state: 'insufficient_data',
+      methodology_version: { value: null, state: 'no_data' },
+      detected_at: { value: null, state: 'no_data' },
+      evidence: null,
+    },
   ];
   dto.rnu_marks = [
     {
@@ -86,7 +114,10 @@ test('подрядчик: «профиль уточняется» (manual/confli
 
 test('подрядчик: 404 → честное «нет данных по подрядчику»', async ({ page }) => {
   await page.route('**/api/contractors/999999999999', (route) =>
-    route.fulfill({ status: 404, json: { error: { code: 'NOT_FOUND', message: 'contractor not found' } } }),
+    route.fulfill({
+      status: 404,
+      json: { error: { code: 'NOT_FOUND', message: 'contractor not found' } },
+    }),
   );
   await page.goto('/contractors/999999999999');
   await expect(page.getByRole('alert')).toBeVisible();

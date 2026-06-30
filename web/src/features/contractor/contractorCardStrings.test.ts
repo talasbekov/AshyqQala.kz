@@ -15,7 +15,8 @@ const TABOO_ROOTS = [...taboo.ru, ...taboo.kk];
 
 function collectStrings(obj: unknown, out: string[] = []): string[] {
   if (typeof obj === 'string') out.push(obj);
-  else if (obj && typeof obj === 'object') for (const v of Object.values(obj)) collectStrings(v, out);
+  else if (obj && typeof obj === 'object')
+    for (const v of Object.values(obj)) collectStrings(v, out);
   return out;
 }
 

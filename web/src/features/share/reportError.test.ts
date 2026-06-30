@@ -16,7 +16,11 @@ const target: ReportTarget = {
 
 describe('buildErrorReportRequest (Story 5.4: сборка wire-запроса)', () => {
   it('trim message/contact; пустой contact → НЕ отправляется (не «»)', () => {
-    const req = buildErrorReportRequest(target, { message: '  завышено  ', contact: '   ', leaveBlank: '' });
+    const req = buildErrorReportRequest(target, {
+      message: '  завышено  ',
+      contact: '   ',
+      leaveBlank: '',
+    });
     expect(req.message).toBe('завышено');
     expect('contact' in req).toBe(false);
     expect(req.source_url).toBe(target.sourceUrl);
@@ -27,7 +31,11 @@ describe('buildErrorReportRequest (Story 5.4: сборка wire-запроса)'
   });
 
   it('contact и honeypot включаются, когда непусты', () => {
-    const req = buildErrorReportRequest(target, { message: 'm', contact: ' me@x.kz ', leaveBlank: 'bot' });
+    const req = buildErrorReportRequest(target, {
+      message: 'm',
+      contact: ' me@x.kz ',
+      leaveBlank: 'bot',
+    });
     expect(req.contact).toBe('me@x.kz');
     expect(req.leave_blank).toBe('bot');
   });
@@ -58,7 +66,9 @@ describe('postErrorReport (клиент write-эндпоинта)', () => {
       'fetch',
       vi.fn(async () => ({ ok: true, json: async () => ({ id: 7, status: 'received' }) })),
     );
-    const r = await postErrorReport(buildErrorReportRequest(target, { message: 'm', contact: '', leaveBlank: '' }));
+    const r = await postErrorReport(
+      buildErrorReportRequest(target, { message: 'm', contact: '', leaveBlank: '' }),
+    );
     expect(r).toEqual({ id: 7, status: 'received' });
   });
 
@@ -72,7 +82,9 @@ describe('postErrorReport (клиент write-эндпоинта)', () => {
       })),
     );
     await expect(
-      postErrorReport(buildErrorReportRequest(target, { message: 'm', contact: '', leaveBlank: '' })),
+      postErrorReport(
+        buildErrorReportRequest(target, { message: 'm', contact: '', leaveBlank: '' }),
+      ),
     ).rejects.toMatchObject({ status: 429, code: 'RATE_LIMITED' });
   });
 });
@@ -95,10 +107,21 @@ describe('i18n: report_error.* парны kk↔ru (нет тихого ru-фол
     expect([...kk].sort()).toEqual([...ru].sort());
     // несущие новые ключи присутствуют
     for (const lang of LANGS) {
-      const re = (resources[lang].chrome as Record<string, unknown>).report_error as Record<string, unknown>;
+      const re = (resources[lang].chrome as Record<string, unknown>).report_error as Record<
+        string,
+        unknown
+      >;
       const form = re.form as Record<string, string>;
       expect(typeof re.geo_link, `${lang}:geo_link`).toBe('string');
-      for (const k of ['title', 'message_label', 'submit', 'submitting', 'success', 'error', 'mailto_fallback']) {
+      for (const k of [
+        'title',
+        'message_label',
+        'submit',
+        'submitting',
+        'success',
+        'error',
+        'mailto_fallback',
+      ]) {
         expect(typeof form[k], `${lang}:form.${k}`).toBe('string');
       }
     }

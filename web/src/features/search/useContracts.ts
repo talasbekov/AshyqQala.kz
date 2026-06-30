@@ -77,7 +77,9 @@ export function filtersFromParams(sp: URLSearchParams): SearchFilters {
     ? dirRaw.split(',').filter((d) => (DIRECTIONS as readonly string[]).includes(d))
     : [];
   const periodRaw = sp.get('period') ?? 'all';
-  const period = (PERIODS as readonly string[]).includes(periodRaw) ? (periodRaw as PeriodPreset) : 'all';
+  const period = (PERIODS as readonly string[]).includes(periodRaw)
+    ? (periodRaw as PeriodPreset)
+    : 'all';
   return {
     directions,
     period,
@@ -104,7 +106,11 @@ export interface ContractsFetchError extends Error {
   code: string;
 }
 
-async function fetchContracts(f: SearchFilters, cursor?: string, now?: Date): Promise<ContractListResponse> {
+async function fetchContracts(
+  f: SearchFilters,
+  cursor?: string,
+  now?: Date,
+): Promise<ContractListResponse> {
   const res = await fetch(`/api/contracts${buildQuery(f, cursor, now)}`);
   if (!res.ok) {
     let code = 'INTERNAL';
