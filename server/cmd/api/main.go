@@ -15,6 +15,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"ashyqqala/server/internal/config"
+	"ashyqqala/server/internal/district"
 	"ashyqqala/server/internal/httpapi"
 	"ashyqqala/server/internal/lexicon"
 	"ashyqqala/server/internal/methodology"
@@ -129,6 +130,27 @@ func main() {
 	}
 	ch := httpapi.ContractorsHandler{Store: gen.New(pool), Log: log, Lexicon: lex}
 	r.Get("/api/contractors/{bin}", ch.Get)
+
+	// Story 6.3 (FR-17): агрегаты района по КАТО (префикс-матч kato_code, независимо от геопривязки —
+	// негеопривязанные учтены). Каталог имён районов — registry/values/astana_districts.json (имена
+	// зафиксированы; КАТО-коды подтверждает Story 0.1 → пока имя честно no_data). container_state (AR-17)
+	// отдельной строкой. Статический /api/districts/{kato} не конфликтует с прочими (разные пути).
+	// Токен-независимо: проекция contracts + risk_flags.
+	districts, err := district.Load(cfg.RegistryRoot)
+	if err != nil {
+		log.Error("districts_load_failed", "error", err.Error())
+		os.Exit(1)
+	}
+	// NewDistrictStore: запросы 6.3 (*gen.Queries) + ₸/км-шов 6.4 (PricePerKMSamples). Window/Version —
+	// из methodology_params (НЕ хардкод окна/версии); Clock=nil → реальные часы (прод).
+	dh := httpapi.DistrictsHandler{
+		Store:              httpapi.NewDistrictStore(gen.New(pool)),
+		Districts:          districts,
+		Window:             params.ComparabilityWindowMonths,
+		MethodologyVersion: params.MethodologyVersion,
+		Log:                log,
+	}
+	r.Get("/api/districts/{kato}", dh.Get)
 
 	// Story 5.5 (FR-27/UX-DR36): серверный OG-рендер карточки из ТОЙ ЖЕ проекции (h.Projection) — OG-`<meta>`-теги
 	// + версионированный по methodology_version URL картинки (cache-bust, AR-20). PNG-картинку добавит T5.

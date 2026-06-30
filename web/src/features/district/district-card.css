@@ -1,0 +1,193 @@
+/* Страница района (Story 6.3). Только семантические токены (1.5), без хардкода. Зеркалит contractor-card. */
+.district-card {
+  box-sizing: border-box;
+  max-width: 640px;
+  margin: var(--space-4) auto;
+  padding: var(--space-gutter);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+.district-card__overlabel {
+  margin: 0 0 var(--space-2);
+  font-size: var(--type-label-caps-size);
+  font-weight: var(--type-label-caps-weight);
+  letter-spacing: var(--type-label-caps-letter-spacing);
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.district-card__name {
+  margin: 0 0 var(--space-2);
+  font-size: var(--type-heading-size);
+  font-weight: var(--type-heading-weight);
+  line-height: var(--type-heading-line-height);
+}
+
+.district-card__kato {
+  margin: 0 0 var(--space-2);
+  color: var(--color-text-secondary);
+}
+
+.district-card__name-note {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-secondary);
+}
+
+.district-card__stats {
+  display: grid;
+  gap: var(--space-row-gap);
+  margin: 0 0 var(--space-4);
+}
+
+.district-card__stat {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.district-card__stat dt {
+  color: var(--color-text-secondary);
+}
+
+/* container_state (AR-17): каждое — отдельной строкой; не «всё чисто» по умолчанию. */
+.district-card__container-state {
+  list-style: none;
+  margin: 0 0 var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-sunken, var(--color-surface));
+  color: var(--color-text-secondary);
+}
+
+.district-card__container-state li {
+  padding: var(--space-1) 0;
+}
+
+.district-card__signals,
+.district-card__medians,
+.district-card__objects {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.district-card__signals-heading,
+.district-card__medians-heading,
+.district-card__objects-heading {
+  margin: 0 0 var(--space-2);
+  font-size: var(--type-subheading-size, var(--type-heading-size));
+  font-weight: var(--type-heading-weight);
+}
+
+/* Медиана ₸/км · район vs город (FR-18): две полосы (район --primary, город --muted) + % дельта. */
+.district-card__median {
+  margin: 0 0 var(--space-4);
+}
+
+.district-card__median-heading {
+  margin: 0 0 var(--space-2);
+  font-size: var(--type-label-caps-size);
+  font-weight: var(--type-label-caps-weight);
+  letter-spacing: var(--type-label-caps-letter-spacing);
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.district-card__median-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-1) 0;
+}
+
+.district-card__median-label {
+  flex: 0 0 35%;
+  color: var(--color-text-secondary);
+}
+
+.district-card__median-bar {
+  flex: 1 1 auto;
+  height: 0.55rem;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-sunken);
+  overflow: hidden;
+}
+
+.district-card__median-bar i {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-full);
+}
+
+.district-card__median-bar--district i {
+  background: var(--color-primary);
+}
+
+.district-card__median-bar--city i {
+  background: var(--color-muted);
+}
+
+.district-card__median-val {
+  flex: 0 0 auto;
+  font-weight: var(--type-heading-weight);
+}
+
+.district-card__median-cmp {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-secondary);
+}
+
+.district-card__median-note {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: var(--type-label-caps-size);
+  color: var(--color-text-secondary);
+}
+
+.district-card__signals-note {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-secondary);
+}
+
+.district-card__flag-list,
+.district-card__object-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.district-card__flag,
+.district-card__object {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+}
+
+.district-card__flag-name {
+  flex: 1;
+}
+
+.district-card__flag-count,
+.district-card__object-amount {
+  font-weight: var(--type-heading-weight);
+}
+
+.district-card__object-flag {
+  color: var(--color-text-secondary);
+}
+
+.district-card--skeleton .district-card__sk-line {
+  height: 1rem;
+  margin: var(--space-3) 0;
+  border-radius: var(--radius-card);
+  background: var(--color-border);
+}
+
+.district-card--skeleton .district-card__sk-line--title {
+  height: 1.6rem;
+  width: 60%;
+}

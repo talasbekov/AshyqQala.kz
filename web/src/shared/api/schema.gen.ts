@@ -537,6 +537,67 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/districts/{kato}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Агрегаты района по КАТО (FR-17, Story 6.3)
+         * @description Сводка района: число объектов, сумма ₸, число активных флагов (+ разбивка по типам), список объектов. Район определяется КАТО из пути НЕЗАВИСИМО от геопривязки (префикс-матч kato_code; негеопривязанные ВКЛЮЧЕНЫ в агрегат — гео-фильтра нет). container_state виден отдельной строкой (AR-17): no_contracts / no_flags_raised / not_geocoded — тишина пустого экрана не читается как «всё чисто». Имя района (name_ru/name_kk) — no_data, пока КАТО-код района не подтверждён (Story 0.1; коды не выдумываем). Невалидный КАТО (не цифры 2..11) → 400; неизвестный-но-валидный КАТО → честные пустые агрегаты (no_contracts), НЕ 404 (нет авторитетного списка районов для отказа).
+         *
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description КАТО-код/префикс района (цифры, 2..11). Город Астаны — префикс «71». */
+                    kato: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description агрегаты района (возможно пустые — честный container_state) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DistrictAggregates"];
+                    };
+                };
+                /** @description невалидный КАТО-код */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description внутренняя ошибка */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -741,6 +802,43 @@ export interface components {
             id?: number;
             /** @enum {string} */
             status: "received";
+        };
+        DistrictFlagCount: {
+            flag_type: string;
+            count: string;
+        };
+        DistrictObject: {
+            goszakup_contract_id: string;
+            subject_ru: components["schemas"]["StringField"];
+            subject_kk: components["schemas"]["StringField"];
+            amount_tng: components["schemas"]["StringField"];
+            kato_code: components["schemas"]["StringField"];
+            direction: components["schemas"]["StringField"];
+            has_active_flag: boolean;
+        };
+        DistrictDirectionMedian: {
+            /** @enum {string} */
+            direction: "road" | "water";
+            district_median_tng: components["schemas"]["StringField"];
+            city_median_tng: components["schemas"]["StringField"];
+            comparison_pct: components["schemas"]["StringField"];
+            district_sample_size: string;
+            city_sample_size: string;
+            district_comparability_key: string;
+            city_comparability_key: string;
+        };
+        DistrictAggregates: {
+            kato: string;
+            name_ru: components["schemas"]["StringField"];
+            name_kk: components["schemas"]["StringField"];
+            contract_count: string;
+            total_amount_tng: components["schemas"]["StringField"];
+            active_flags_count: string;
+            flags_by_type: components["schemas"]["DistrictFlagCount"][];
+            container_state: ("no_contracts" | "no_flags_raised" | "not_geocoded")[];
+            objects: components["schemas"]["DistrictObject"][];
+            medians: components["schemas"]["DistrictDirectionMedian"][];
+            median_methodology_version: string;
         };
         Error: {
             error: {

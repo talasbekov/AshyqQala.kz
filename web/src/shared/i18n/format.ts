@@ -17,6 +17,13 @@ export function formatMoney(amountTng: string, lang: Lang): string {
   return `${new Intl.NumberFormat(LOCALE[lang]).format(n)} ₸`;
 }
 
+// formatPricePerKm — медиана ₸/км (FR-18): та же группировка, что formatMoney, но юнит «₸/км»
+// (ставка за километр, не полная сумма). «км» locale-инвариантна, как «₸» — единственный санкционированный
+// путь юнита. Заголовок секции уже несёт ₸/км, но строка-значение иначе читается как полный ₸. review-патч 6.4.
+export function formatPricePerKm(amountTng: string, lang: Lang): string {
+  return `${formatMoney(amountTng, lang)}/км`;
+}
+
 // formatDate — ISO8601 → локализованная дата (язык chrome) через Intl. Требуем ПОЛНУЮ дату
 // (YYYY-MM-DD…): частичный ISO ('2026' → 1 янв) фабрикует день/месяц. timeZone:UTC убирает
 // off-by-one (дата-без-времени парсится как UTC-полночь, а Intl иначе рендерит в локальной TZ).

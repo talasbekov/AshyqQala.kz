@@ -45,6 +45,17 @@ type Querier interface {
 	// Очистка кэша перед публикацией нового снапшота. В ОДНОЙ транзакции с InsertPriceBenchmark = атомарный
 	// swap (читатель видит старый ИЛИ новый снапшот целиком — MVCC; полупересчёт невидим).
 	DeleteAllPriceBenchmarks(ctx context.Context) error
+	// Активные флаги контрактов района по типу (FR-17 «число активных флагов»; разбивка для блока
+	// «Сигналы района»). JOIN risk_flags→contracts по КАТО-префиксу; ТОЛЬКО is_active (инвариант
+	// is_active = (cleared_at IS NULL), снятые не считаются). Порядок по flag_type — стабильность wire.
+	DistrictActiveFlagsByType(ctx context.Context, katoPrefix string) ([]DistrictActiveFlagsByTypeRow, error)
+	// Агрегаты района по КАТО-ПРЕФИКСУ (FR-17, Story 6.3). Район = contracts.kato_code НЕЗАВИСИМО от
+	// геопривязки: гео-джойна нет → негеопривязанные объекты ВКЛЮЧЕНЫ в агрегат (AC1). $1 (kato_prefix) —
+	// LIKE-паттерн вида '710%', собирается в Go из валидированного цифрами КАТО (LIKE-метасимволов нет).
+	// amount_known_count: сколько контрактов с непустой суммой → хендлер честно отдаёт no_data (НЕ «0 ₸»),
+	// если контракты есть, а сумм нет (честность над домыслом, epic-4-retro). 0 контрактов = честный ноль
+	// района (container_state no_contracts), не «нет данных».
+	DistrictAggregates(ctx context.Context, katoPrefix string) (DistrictAggregatesRow, error)
 	// Запись конверта события в outbox В ТРАНЗАКЦИИ ВЫЗЫВАЮЩЕГО (атомарно с бизнес-объектом — O-1: откат tx ⇒
 	// нет ни бизнес-строки, ни события). Дедуп (O-3): event_id UNIQUE + ON CONFLICT DO NOTHING — повторная
 	// вставка того же события no-op (не двоит у получателя). attempts/available_at — дефолты схемы (0 / now()).
@@ -107,6 +118,11 @@ type Querier interface {
 	// (sign_date DESC NULLS LAST, goszakup_contract_id) + keyset-курсор. Окно медианы тут НЕ при чём (AC4):
 	// signed_from/to — это фасет поиска по дате подписания, а не скользящее окно 24 мес benchmark-движка.
 	ListContracts(ctx context.Context, arg ListContractsParams) ([]ListContractsRow, error)
+	// Список объектов района (FR-17 AC1), bounded (LIMIT). Публичный goszakup_contract_id (→ карточка
+	// контракта); удалённые скрыты. has_active_flag — нейтральный признак «есть сигнал» (как ListContracts).
+	// Порядок детерминирован (sign_date DESC NULLS LAST, goszakup_contract_id). Агрегаты считаются отдельными
+	// запросами по ВСЕМ объектам — этот список лишь bounded-срез для отображения.
+	ListContractsByDistrict(ctx context.Context, arg ListContractsByDistrictParams) ([]ListContractsByDistrictRow, error)
 	// Список контрактов подрядчика (FR-13, AC-1) по supplier_org_id. До наполнения связи (Story 2.2) — пусто
 	// → карточка «профиль неполный». Публичный goszakup_contract_id (не суррогат); удалённые скрыты; порядок стабилен.
 	ListContractsBySupplierOrg(ctx context.Context, supplierOrgID pgtype.Int8) ([]ListContractsBySupplierOrgRow, error)

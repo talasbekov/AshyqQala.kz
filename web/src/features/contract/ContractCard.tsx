@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { components } from '../../shared/api/schema.gen';
 import type { Lang } from '../../shared/i18n';
@@ -18,6 +19,11 @@ import './contract-card.css';
 
 type Contract = components['schemas']['Contract'];
 type StringField = components['schemas']['StringField'];
+
+// KATO_LINKABLE — зеркало backend district.ValidKATO (^[0-9]{2,11}$). Страница района отвечает 400 на
+// иной формат КАТО, поэтому ссылку на район строим только для линкуемого кода — иначе мёртвая ссылка
+// (нейтральная ошибка вместо значения). review-патч 6.4.
+const KATO_LINKABLE = /^[0-9]{2,11}$/;
 
 // Value — честный рендер поля: значение при state=ok, иначе явное состояние (никогда «0»/пусто).
 function Value({ field, format }: { field: StringField; format?: (v: string) => string }) {
@@ -138,7 +144,20 @@ export function ContractCard({
         <div className="contract-card__row">
           <dt>{t('contract.field.kato_code')}</dt>
           <dd>
-            <Value field={contract.kato_code} />
+            {/* Story 6.3: КАТО ведёт на страницу района (агрегаты по КАТО). Линк при наличии кода; страница
+                района работает для любого валидного КАТО (имя уточняется до Story 0.1). Wire не меняется. */}
+            {contract.kato_code.state === 'ok' &&
+            contract.kato_code.value !== null &&
+            KATO_LINKABLE.test(contract.kato_code.value) ? (
+              <Link
+                to={`/districts/${contract.kato_code.value}`}
+                data-testid="contract-district-link"
+              >
+                {contract.kato_code.value}
+              </Link>
+            ) : (
+              <Value field={contract.kato_code} />
+            )}
           </dd>
         </div>
       </dl>
@@ -224,7 +243,10 @@ export function ContractCard({
         {/* Честная реконструкция видимой строкой (AC4): «проверено, сигнала нет» ≠ «недостаточно данных».
             Story 5.3 (AC-2): строка кликабельна → открывает методику (формула/пороги + какого порога не хватило). */}
         {nonRaised.length > 0 ? (
-          <ul className="contract-card__flag-status" aria-label={t('contract.signals_status_heading')}>
+          <ul
+            className="contract-card__flag-status"
+            aria-label={t('contract.signals_status_heading')}
+          >
             {nonRaised.map((f) => (
               <li key={f.flag_id}>
                 <button
@@ -244,10 +266,7 @@ export function ContractCard({
         {/* AC5: монополия/РНУ — contractor-субъект → карточка подрядчика (здесь вне охвата, честно). */}
         <p className="contract-card__contractor-note">{t('contract.contractor_signals_note')}</p>
 
-        <ReportError
-          contractId={contract.goszakup_contract_id}
-          className="contract-card__report"
-        />
+        <ReportError contractId={contract.goszakup_contract_id} className="contract-card__report" />
       </section>
 
       {methTarget && (
