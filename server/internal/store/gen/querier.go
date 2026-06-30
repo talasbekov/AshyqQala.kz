@@ -159,6 +159,20 @@ type Querier interface {
 	// БИН — в Go (normalize.CanonicalBIN) ДО вызова; сюда приходит уже-канонический bin. Не найдено → pgx.ErrNoRows
 	// (хендлер трактует как пустой список честно, не 500 — несуществующий подрядчик ≠ ошибка сервера).
 	ResolveSupplierOrgID(ctx context.Context, bin string) (int64, error)
+	// Поиск контрактов по предмету (subject_ru/subject_kk, нечёткий substring, pg_trgm GIN). FR-16, Story 6.2.
+	// Только ветка имени (БИН в предмете не ищем — это идентификатор организации). Колонки совпадают с
+	// ListContracts (переиспользуем маппинг в хендлере). has_active_flag — «есть сигнал, требующий проверки»
+	// (нейтрально): EXISTS активного contract-флага. Порядок ДЕТЕРМИНИРОВАН: релевантность DESC, затем
+	// sign_date DESC NULLS LAST, затем goszakup_contract_id (UNIQUE тай-брейк, как 6.1). Удалённые скрыты.
+	SearchContracts(ctx context.Context, arg SearchContractsParams) ([]SearchContractsRow, error)
+	// Поиск организаций по БИН (точный) ИЛИ наименованию (нечёткий substring, pg_trgm GIN). FR-16, Story 6.2.
+	// Ветвление БИН/имя — в Go (normalize.CanonicalBIN до вызова): валидный 12-зн БИН → @bin_exact задан →
+	// ТОЛЬКО точный матч по UNIQUE bin (мусорный «БИН» канонизируется в "" и сюда приходит как NULL bin_exact →
+	// ветка имени, без фантомной орг — FR-2/AC3). @q — исходный терм для ILIKE по имени (в БИН-ветке игнорируется
+	// CASE-ом, но передаётся всегда: required-параметр). ILIKE регистронезависим по коллации БД (case-fold
+	// казахских букв — integration-тест). Порядок ДЕТЕРМИНИРОВАН: релевантность (trgm similarity) DESC, затем
+	// стабильный тай-брейк по bin (UNIQUE, NOT NULL). Удалённые скрыты.
+	SearchOrganizations(ctx context.Context, arg SearchOrganizationsParams) ([]SearchOrganizationsRow, error)
 	// Запись решения нормализатора. ИДЕМПОТЕНТНО по (raw_name, source). Ре-импорт ПЕРЕ-выводит ТОЛЬКО авто-строки;
 	// ручные разрешения оператора (manual/conflict) НЕ затираются (WHERE-гейт) — кураторская правка переживает
 	// перезапись проекции (AR-4/AR-10). Авто может эскалировать в conflict при новых данных; conflict/manual «заморожены»

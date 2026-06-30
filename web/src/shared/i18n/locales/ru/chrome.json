@@ -44,7 +44,14 @@
     "load_more_retry": "Повторить",
     "signal_present": "сигнал, требующий проверки",
     "period_note": "Период — фасет поиска, не окно медианы (медиана всегда 24 мес).",
-    "item_no_subject": "Без названия"
+    "item_no_subject": "Без названия",
+    "query_placeholder": "Поиск по БИН или наименованию",
+    "query_min_hint": "Введите минимум 3 символа или 12-значный БИН",
+    "query_results_heading": "Результаты поиска",
+    "query_empty_title": "Ничего не найдено по запросу",
+    "result_kind_org": "Организация",
+    "result_kind_contract": "Контракт",
+    "result_bin": "БИН {{bin}}"
   },
   "map": {
     "title": "Карта",

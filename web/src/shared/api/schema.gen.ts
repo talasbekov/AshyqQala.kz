@@ -183,6 +183,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Поиск по БИН и наименованию (FR-16, Story 6.2)
+         * @description Текстовый поиск организаций (БИН точный + наименование нечёткий substring, pg_trgm) и контрактов (по предмету). Единый список items с дискриминатором kind (organization|contract); организации ведут в карточку подрядчика, контракты — в карточку контракта. Негеопривязанные объекты доступны и помечены has_geo=false («без точки на карте»; до канонического геокодинга Epic 3 — равномерно false, честное состояние, не выдуманная точка). Порядок детерминирован (релевантность + стабильный тай-брейк), организации перечислены раньше контрактов. Пагинация: единая relevance-ранжированная страница (LIMIT); next_cursor всегда null — relevance-порядок НЕ keyset-дружелюбен, глубокая пагинация отложена (open-q №3 / Dev Notes 6.2). q короче минимума → 400 VALIDATION_FAILED (не seq-scan по всей таблице).
+         *
+         */
+        get: {
+            parameters: {
+                query: {
+                    /** @description Поисковый терм. Валидный 12-значный БИН (после канонизации) → точный матч организации; иначе — нечёткий поиск по имени/предмету (мин. длина 3 символа, ниже → 400).
+                     *      */
+                    q: string;
+                    /** @description Размер выдачи (дефолт 20, макс 100) */
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description результаты поиска (пустой — честный [], не null) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SearchResponse"];
+                    };
+                };
+                /** @description невалидный/слишком короткий запрос */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description внутренняя ошибка */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/contractors/{bin}": {
         parameters: {
             query?: never;
@@ -553,6 +617,40 @@ export interface components {
         };
         ContractListResponse: {
             items: components["schemas"]["ContractListItem"][];
+            next_cursor: string | null;
+        };
+        OrganizationSearchItem: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "organization";
+            bin: string;
+            name_ru: components["schemas"]["StringField"];
+            name_kk: components["schemas"]["StringField"];
+            reg_kato: components["schemas"]["StringField"];
+            has_geo: boolean;
+        };
+        ContractSearchItem: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "contract";
+            goszakup_contract_id: string;
+            subject_ru: components["schemas"]["StringField"];
+            subject_kk: components["schemas"]["StringField"];
+            amount_tng: components["schemas"]["StringField"];
+            sign_date: components["schemas"]["StringField"];
+            status: components["schemas"]["StringField"];
+            direction: components["schemas"]["StringField"];
+            kato_code: components["schemas"]["StringField"];
+            has_active_flag: boolean;
+            has_geo: boolean;
+        };
+        SearchResultItem: components["schemas"]["OrganizationSearchItem"] | components["schemas"]["ContractSearchItem"];
+        SearchResponse: {
+            items: components["schemas"]["SearchResultItem"][];
             next_cursor: string | null;
         };
         ContractorProfile: {

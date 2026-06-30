@@ -161,3 +161,37 @@
   background: var(--color-surface);
   cursor: pointer;
 }
+
+/* Story 6.2: текстовый поиск (поле + результаты). Только семантические токены. */
+.search__textfield {
+  margin: 0 0 var(--space-4);
+}
+.search__query {
+  width: 100%;
+  min-height: var(--space-tap-target);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: var(--type-body-size);
+}
+.search__query:focus-visible {
+  outline: var(--space-focus-ring-width) solid var(--color-focus-ring);
+  outline-offset: var(--space-focus-ring-offset);
+}
+.search__query-hint {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--type-meta-size);
+}
+.search__item-kind {
+  font-size: var(--type-label-caps-size);
+  font-weight: var(--type-label-caps-weight);
+  letter-spacing: var(--type-label-caps-letter-spacing);
+  color: var(--color-text-secondary);
+}
+.search__item-ungeocoded {
+  color: var(--color-text-secondary);
+  font-size: var(--type-meta-size);
+}

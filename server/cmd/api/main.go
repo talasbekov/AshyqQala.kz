@@ -112,6 +112,13 @@ func main() {
 	clh := httpapi.ContractsListHandler{Store: gen.New(pool), Log: log}
 	r.Get("/api/contracts", clh.List)
 
+	// Story 6.2 (FR-16): поиск по БИН (точный) и наименованию (нечёткий substring, pg_trgm). Единая выдача
+	// организаций (→ карточка подрядчика) и контрактов (→ карточка контракта) с дискриминатором kind.
+	// Статический /api/search не конфликтует с /api/contracts* (разные пути). Токен-независимо: проекция
+	// organizations + contracts + trgm-индексы (миграция 0017).
+	sh := httpapi.SearchHandler{Store: gen.New(pool), Log: log}
+	r.Get("/api/search", sh.Search)
+
 	// Story 5.2 (FR-13/FR-14): карточка подрядчика по натуральному БИН. Идентичность + агрегаты (по supplier_org_id,
 	// наполнение — Story 2.2) + агрегированные флаги (честная реконструкция) + метки РНУ (авто-снятие по end_date).
 	// Лексикон (Story 2.3) — для детекта «профиль уточняется» по совпадению имени с conflict/manual-псевдонимом.

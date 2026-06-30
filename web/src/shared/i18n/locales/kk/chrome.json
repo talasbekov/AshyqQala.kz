@@ -44,7 +44,14 @@
     "load_more_retry": "Қайталау",
     "signal_present": "тексеруді қажет ететін сигнал",
     "period_note": "Кезең — іздеу фасеті, медиана терезесі емес (медиана әрқашан 24 ай).",
-    "item_no_subject": "Атауы жоқ"
+    "item_no_subject": "Атауы жоқ",
+    "query_placeholder": "БСН немесе атау бойынша іздеу",
+    "query_min_hint": "Кемінде 3 таңба немесе 12 таңбалы БСН енгізіңіз",
+    "query_results_heading": "Іздеу нәтижелері",
+    "query_empty_title": "Сұраныс бойынша ешнәрсе табылмады",
+    "result_kind_org": "Ұйым",
+    "result_kind_contract": "Келісімшарт",
+    "result_bin": "БСН {{bin}}"
   },
   "map": {
     "title": "Картада",

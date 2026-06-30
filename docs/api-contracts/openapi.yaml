@@ -83,6 +83,44 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
 
+  /api/search:
+    get:
+      summary: Поиск по БИН и наименованию (FR-16, Story 6.2)
+      description: >
+        Текстовый поиск организаций (БИН точный + наименование нечёткий substring, pg_trgm) и контрактов
+        (по предмету). Единый список items с дискриминатором kind (organization|contract); организации
+        ведут в карточку подрядчика, контракты — в карточку контракта. Негеопривязанные объекты доступны
+        и помечены has_geo=false («без точки на карте»; до канонического геокодинга Epic 3 — равномерно false,
+        честное состояние, не выдуманная точка). Порядок детерминирован (релевантность + стабильный тай-брейк),
+        организации перечислены раньше контрактов. Пагинация: единая relevance-ранжированная страница (LIMIT);
+        next_cursor всегда null — relevance-порядок НЕ keyset-дружелюбен, глубокая пагинация отложена
+        (open-q №3 / Dev Notes 6.2). q короче минимума → 400 VALIDATION_FAILED (не seq-scan по всей таблице).
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: >
+            Поисковый терм. Валидный 12-значный БИН (после канонизации) → точный матч организации; иначе —
+            нечёткий поиск по имени/предмету (мин. длина 3 символа, ниже → 400).
+          schema: { type: string }
+        - { name: limit, in: query, required: false, description: 'Размер выдачи (дефолт 20, макс 100)', schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+      responses:
+        '200':
+          description: результаты поиска (пустой — честный [], не null)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SearchResponse' }
+        '400':
+          description: невалидный/слишком короткий запрос
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          description: внутренняя ошибка
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
   /api/contractors/{bin}:
     get:
       summary: Карточка подрядчика по natural БИН (Story 5.2, FR-13/FR-14)
@@ -376,6 +414,63 @@ components:
         items:
           type: array
           items: { $ref: '#/components/schemas/ContractListItem' }
+        next_cursor:
+          type: string
+          nullable: true
+    OrganizationSearchItem:
+      type: object
+      additionalProperties: false
+      # Результат-организация поиска (FR-16, Story 6.2). kind=organization — дискриминатор выдачи. bin —
+      # публичная ссылка на карточку подрядчика. has_geo — есть ли каноническая геоточка (Epic 3); до её
+      # наполнения равномерно false («без точки на карте», честное состояние, не выдуманная точка).
+      required: [kind, bin, name_ru, name_kk, reg_kato, has_geo]
+      properties:
+        kind: { type: string, enum: [organization] }
+        bin: { type: string }
+        name_ru: { $ref: '#/components/schemas/StringField' }
+        name_kk: { $ref: '#/components/schemas/StringField' }
+        reg_kato: { $ref: '#/components/schemas/StringField' }
+        has_geo: { type: boolean }
+    ContractSearchItem:
+      type: object
+      additionalProperties: false
+      # Результат-контракт поиска (FR-16, Story 6.2). kind=contract — дискриминатор выдачи. Форма совпадает
+      # с ContractListItem (6.1) + kind + has_geo. goszakup_contract_id — публичная ссылка на карточку контракта.
+      required: [kind, goszakup_contract_id, subject_ru, subject_kk, amount_tng, sign_date, status, direction, kato_code, has_active_flag, has_geo]
+      properties:
+        kind: { type: string, enum: [contract] }
+        goszakup_contract_id: { type: string }
+        subject_ru: { $ref: '#/components/schemas/StringField' }
+        subject_kk: { $ref: '#/components/schemas/StringField' }
+        amount_tng: { $ref: '#/components/schemas/StringField' }
+        sign_date: { $ref: '#/components/schemas/StringField' }
+        status: { $ref: '#/components/schemas/StringField' }
+        direction: { $ref: '#/components/schemas/StringField' }
+        kato_code: { $ref: '#/components/schemas/StringField' }
+        has_active_flag: { type: boolean }
+        has_geo: { type: boolean }
+    SearchResultItem:
+      # Гетерогенный элемент выдачи поиска: организация ИЛИ контракт. Дискриминатор kind (ветки взаимоисключающи
+      # по kind-enum + additionalProperties:false). Фронт переключает рендер/ссылку по kind.
+      oneOf:
+        - $ref: '#/components/schemas/OrganizationSearchItem'
+        - $ref: '#/components/schemas/ContractSearchItem'
+      discriminator:
+        propertyName: kind
+        mapping:
+          organization: '#/components/schemas/OrganizationSearchItem'
+          contract: '#/components/schemas/ContractSearchItem'
+    SearchResponse:
+      type: object
+      additionalProperties: false
+      # Страница поиска (FR-16, Story 6.2). items — честный [] при пустоте (НЕ null). next_cursor — задел
+      # контракта (как 6.1); в MVP всегда null: relevance-порядок не keyset-дружелюбен, глубокая пагинация
+      # отложена (Dev Notes 6.2 / open-q №3). limit ограничивает размер единой relevance-ранжированной страницы.
+      required: [items, next_cursor]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/SearchResultItem' }
         next_cursor:
           type: string
           nullable: true

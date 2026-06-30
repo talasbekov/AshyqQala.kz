@@ -14,7 +14,8 @@ const TABOO_ROOTS = [...taboo.ru, ...taboo.kk];
 
 function collectStrings(obj: unknown, out: string[] = []): string[] {
   if (typeof obj === 'string') out.push(obj);
-  else if (obj && typeof obj === 'object') for (const v of Object.values(obj)) collectStrings(v, out);
+  else if (obj && typeof obj === 'object')
+    for (const v of Object.values(obj)) collectStrings(v, out);
   return out;
 }
 function keyPaths(obj: unknown, prefix = '', out: string[] = []): string[] {
@@ -49,6 +50,26 @@ describe('search строки (Story 6.1)', () => {
     for (const lang of LANGS) {
       const s = (resources[lang].chrome as Record<string, Record<string, unknown>>).search;
       for (const k of ['empty_title', 'empty_hint', 'has_flag', 'period_note', 'signal_present']) {
+        expect(typeof s[k], `${lang}.search.${k}`).toBe('string');
+        expect((s[k] as string).trim().length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  // Story 6.2 (AC7): строки текстового поиска присутствуют и нейтральны (общий taboo/парность-страж выше уже
+  // покрывает их generically; здесь — явная фиксация ключей 6.2, чтобы их удаление/пропуск падал тестом).
+  it('строки текстового поиска (Story 6.2) присутствуют в обеих локалях', () => {
+    for (const lang of LANGS) {
+      const s = (resources[lang].chrome as Record<string, Record<string, unknown>>).search;
+      for (const k of [
+        'query_placeholder',
+        'query_min_hint',
+        'query_results_heading',
+        'query_empty_title',
+        'result_kind_org',
+        'result_kind_contract',
+        'result_bin',
+      ]) {
         expect(typeof s[k], `${lang}.search.${k}`).toBe('string');
         expect((s[k] as string).trim().length).toBeGreaterThan(0);
       }
