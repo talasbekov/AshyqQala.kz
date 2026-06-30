@@ -41,6 +41,28 @@ func backoff(attempts int) time.Duration {
 	return d
 }
 
+// DefaultMaxAttempts — потолок попыток доставки до dead-letter (Story 7.1, закрывает долг 2.7). После
+// стольких неудачных TRANSIENT доставок строка помечается dead_at и выпадает из поллинга (не ре-поллится
+// вечно; attempts не растёт бесконечно). Постоянный отказ chat (заблокирован/удалён) обрабатывается раньше
+// деактивацией подписки (bot, 7.2-шов), НЕ dead-letter.
+const DefaultMaxAttempts = 10
+
+// shouldDeadLetter — ЧИСТАЯ политика потолка попыток: достигнут ли он текущей (attempts+1) попыткой.
+// maxAttempts ≤ 0 → «без потолка» (false): случайный 0 не убивает очередь молча.
+func shouldDeadLetter(attempts, maxAttempts int) bool {
+	return maxAttempts > 0 && attempts+1 >= maxAttempts
+}
+
+// clampReason обрезает причину dead-letter до разумного предела (диагностика, не лог-дамп), по границе руны.
+func clampReason(s string) string {
+	const max = 500
+	r := []rune(s)
+	if len(r) > max {
+		return string(r[:max])
+	}
+	return s
+}
+
 // ProcessBatch — один проход воркера доставки (O-2). В ОДНОЙ транзакции: PollUnsent (FOR UPDATE SKIP LOCKED —
 // два конкурентных воркера НЕ двоят одну строку) видимых неотправленных строк → для каждой Dispatcher.Send;
 // успех → MarkSent($now); ошибка Send → BumpAttempt (+1 attempts, available_at = $now + backoff(attempts) —
@@ -48,6 +70,13 @@ func backoff(attempts int) time.Duration {
 // границы видимости). Возвращает число УСПЕШНО отправленных за проход. Ошибка Send одной строки НЕ валит
 // батч (растим attempts и продолжаем); ошибка БД/commit — валит (откат всего прохода).
 func ProcessBatch(ctx context.Context, pool *pgxpool.Pool, d Dispatcher, clk clock.Clock, limit int) (int, error) {
+	return ProcessBatchN(ctx, pool, d, clk, limit, DefaultMaxAttempts)
+}
+
+// ProcessBatchN — ProcessBatch с настраиваемым потолком попыток maxAttempts (dead-letter, Story 7.1). При
+// неудачной TRANSIENT доставке: attempts+1 < maxAttempts → BumpAttempt (backoff, O-4); иначе → MarkDead
+// (строка выпадает из поллинга, не ре-поллится вечно). maxAttempts ≤ 0 → без потолка (как до 7.1).
+func ProcessBatchN(ctx context.Context, pool *pgxpool.Pool, d Dispatcher, clk clock.Clock, limit, maxAttempts int) (int, error) {
 	if pool == nil {
 		return 0, fmt.Errorf("outbox ProcessBatch: pool не задан")
 	}
@@ -90,7 +119,19 @@ func ProcessBatch(ctx context.Context, pool *pgxpool.Pool, d Dispatcher, clk clo
 			V:          int(r.V),
 		}
 		if serr := d.Send(ctx, e); serr != nil {
-			// Доставка не удалась → растим attempts и сдвигаем видимость на backoff (O-4 через clk).
+			if shouldDeadLetter(int(r.Attempts), maxAttempts) {
+				// Потолок попыток достигнут → dead-letter (Story 7.1, долг 2.7): строка выпадает из
+				// поллинга (PollUnsent: dead_at IS NULL), не ре-поллится вечно, attempts не переполняется.
+				if derr := q.MarkDead(ctx, gen.MarkDeadParams{
+					ID:         r.ID,
+					DeadAt:     pgtype.Timestamptz{Time: now, Valid: true},
+					DeadReason: pgtype.Text{String: clampReason(serr.Error()), Valid: true},
+				}); derr != nil {
+					return 0, fmt.Errorf("outbox ProcessBatch: mark dead id=%d: %w", r.ID, derr)
+				}
+				continue
+			}
+			// Доставка не удалась (под потолком) → растим attempts и сдвигаем видимость на backoff (O-4 через clk).
 			next := now.Add(backoff(int(r.Attempts) + 1))
 			if berr := q.BumpAttempt(ctx, gen.BumpAttemptParams{
 				ID:          r.ID,

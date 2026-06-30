@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-06-19T18:38:34+0500
-last_updated: 2026-06-30T16:40:00+0500
+last_updated: 2026-06-30T18:10:00+0500
 project: AshyqQala.kz
 project_key: NOKEY
 tracking_system: file-system
@@ -125,8 +125,8 @@ development_status:
   epic-6-retrospective: done
 
   # Epic 7: Telegram-подписки и уведомления
-  epic-7: backlog
-  7-1-telegram-dispatcher-outbox-telegram-и-per-surface-нейтральность: backlog
+  epic-7: in-progress
+  7-1-telegram-dispatcher-outbox-telegram-и-per-surface-нейтральность: done
   7-2-полная-подписка-на-район-и-уведомления-о-контракте-флаге-fr-24: backlog
   7-3-смена-района-и-отписка-fr-25: backlog
   7-4-антифлуд-и-дайджест-fr-26: backlog

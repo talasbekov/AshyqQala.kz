@@ -84,7 +84,7 @@ type Querier interface {
 	GetMethodologyParamsByVersion(ctx context.Context, version string) ([]MethodologyParam, error)
 	// Организация по natural bin (удалённые скрыты).
 	GetOrganizationByBIN(ctx context.Context, bin string) (Organization, error)
-	// Строка по event_id (для тестов: проверка sent_at/attempts/available_at после доставки/ретрая).
+	// Строка по event_id (для тестов: проверка sent_at/attempts/available_at/dead_at после доставки/ретрая/dead-letter).
 	GetOutboxByEventID(ctx context.Context, eventID pgtype.UUID) (NotificationsOutbox, error)
 	// Медиана группы по ключу сопоставимости. Отсутствие строки → читатель отдаёт not_comparable (нечего сравнивать).
 	GetPriceBenchmark(ctx context.Context, comparabilityKey string) (PriceBenchmark, error)
@@ -150,14 +150,19 @@ type Querier interface {
 	// ИМЕНИ (Story 5.2 review-фикс F1). conflict/неразрешённые-manual псевдонимы имеют organization_id=NULL (2.3 P1),
 	// поэтому привязка к орг — НЕ по FK, а по канонизированному имени (нормализация в Go). Порядок стабилен.
 	ListUnresolvedAliasNames(ctx context.Context) ([]string, error)
+	// Dead-letter (Story 7.1, закрывает долг 2.7): poison-строка достигла потолка attempts (Telegram надолго
+	// недоступен) → пометить dead_at=$2 (момент из clock.Clock) и dead_reason=$3 (последняя transient-ошибка).
+	// Строка выпадает из частичного индекса/поллинга (PollUnsent: dead_at IS NULL) — не ре-поллится вечно.
+	MarkDead(ctx context.Context, arg MarkDeadParams) error
 	// Успешная доставка (O-2): проставить sent_at (момент из clock.Clock). Строка больше не поллится
 	// (выпадает из частичного индекса notifications_outbox_unsent_idx).
 	MarkSent(ctx context.Context, arg MarkSentParams) error
-	// Воркер берёт неотправленные ВИДИМЫЕ строки: sent_at IS NULL AND available_at <= $1. $1 («сейчас») —
-	// момент из clock.Clock (O-4: граница видимости детерминирована инъекцией Clock, НЕ now() в SQL).
+	// Воркер берёт ЖИВЫЕ неотправленные ВИДИМЫЕ строки: sent_at IS NULL AND dead_at IS NULL AND available_at <= $1.
+	// dead_at IS NULL — dead-letter строки (Story 7.1, долг 2.7) выпадают из поллинга (не ре-поллятся вечно).
+	// $1 («сейчас») — момент из clock.Clock (O-4: граница видимости детерминирована инъекцией Clock, НЕ now() в SQL).
 	// FOR UPDATE SKIP LOCKED — два конкурентных воркера НЕ двоят одну строку (берут непересекающиеся наборы, O-2).
 	// Порядок (available_at, id) — детерминизм/справедливость FIFO. $2 — размер батча.
-	PollUnsent(ctx context.Context, arg PollUnsentParams) ([]NotificationsOutbox, error)
+	PollUnsent(ctx context.Context, arg PollUnsentParams) ([]PollUnsentRow, error)
 	// Идемпотентно ставит/обновляет АКТИВНЫЙ contract-флаг (повтор не плодит дубли — UPSERT по (flag_type,
 	// contract_id)). Снятый ранее флаг ре-активируется (is_active=true, cleared_at=NULL); detected_at сохраняется
 	// (первое обнаружение). evidence/methodology_version обновляются (актуальный снапшот входов).

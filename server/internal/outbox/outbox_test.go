@@ -115,6 +115,29 @@ func TestBackoff_Deterministic(t *testing.T) {
 	}
 }
 
+// TestShouldDeadLetter — ЧИСТАЯ политика потолка попыток (Story 7.1, dead-letter): под потолком → false; на
+// потолке (attempts+1 ≥ max) → true; без потолка (max ≤ 0) → никогда (случайный 0 не убивает очередь молча).
+func TestShouldDeadLetter(t *testing.T) {
+	cases := []struct {
+		attempts, max int
+		want          bool
+	}{
+		{0, 10, false}, // 1-я попытка
+		{8, 10, false}, // 9-я < 10
+		{9, 10, true},  // 10-я == потолок → dead
+		{10, 10, true}, // сверх потолка
+		{0, 2, false},  // граница для интеграционного теста
+		{1, 2, true},   // потолок 2 достигнут
+		{100, 0, false},
+		{100, -1, false},
+	}
+	for _, c := range cases {
+		if got := shouldDeadLetter(c.attempts, c.max); got != c.want {
+			t.Errorf("shouldDeadLetter(%d,%d) = %v; want %v", c.attempts, c.max, got, c.want)
+		}
+	}
+}
+
 func TestLoggingDispatcher_Send_NeutralAndSucceeds(t *testing.T) {
 	var buf bytes.Buffer
 	d := LoggingDispatcher{Log: slog.New(slog.NewJSONHandler(&buf, nil))}

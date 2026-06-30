@@ -70,12 +70,12 @@ func (q *Queries) EnqueueEvent(ctx context.Context, arg EnqueueEventParams) erro
 }
 
 const getOutboxByEventID = `-- name: GetOutboxByEventID :one
-SELECT id, event_id, type, occurred_at, subject_ref, payload, v, sent_at, attempts, available_at, created_at
+SELECT id, event_id, type, occurred_at, subject_ref, payload, v, sent_at, attempts, available_at, created_at, dead_at, dead_reason
 FROM notifications_outbox
 WHERE event_id = $1
 `
 
-// Строка по event_id (для тестов: проверка sent_at/attempts/available_at после доставки/ретрая).
+// Строка по event_id (для тестов: проверка sent_at/attempts/available_at/dead_at после доставки/ретрая/dead-letter).
 func (q *Queries) GetOutboxByEventID(ctx context.Context, eventID pgtype.UUID) (NotificationsOutbox, error) {
 	row := q.db.QueryRow(ctx, getOutboxByEventID, eventID)
 	var i NotificationsOutbox
@@ -91,8 +91,28 @@ func (q *Queries) GetOutboxByEventID(ctx context.Context, eventID pgtype.UUID) (
 		&i.Attempts,
 		&i.AvailableAt,
 		&i.CreatedAt,
+		&i.DeadAt,
+		&i.DeadReason,
 	)
 	return i, err
+}
+
+const markDead = `-- name: MarkDead :exec
+UPDATE notifications_outbox SET dead_at = $2, dead_reason = $3 WHERE id = $1
+`
+
+type MarkDeadParams struct {
+	ID         int64              `json:"id"`
+	DeadAt     pgtype.Timestamptz `json:"dead_at"`
+	DeadReason pgtype.Text        `json:"dead_reason"`
+}
+
+// Dead-letter (Story 7.1, закрывает долг 2.7): poison-строка достигла потолка attempts (Telegram надолго
+// недоступен) → пометить dead_at=$2 (момент из clock.Clock) и dead_reason=$3 (последняя transient-ошибка).
+// Строка выпадает из частичного индекса/поллинга (PollUnsent: dead_at IS NULL) — не ре-поллится вечно.
+func (q *Queries) MarkDead(ctx context.Context, arg MarkDeadParams) error {
+	_, err := q.db.Exec(ctx, markDead, arg.ID, arg.DeadAt, arg.DeadReason)
+	return err
 }
 
 const markSent = `-- name: MarkSent :exec
@@ -114,7 +134,7 @@ func (q *Queries) MarkSent(ctx context.Context, arg MarkSentParams) error {
 const pollUnsent = `-- name: PollUnsent :many
 SELECT id, event_id, type, occurred_at, subject_ref, payload, v, sent_at, attempts, available_at, created_at
 FROM notifications_outbox
-WHERE sent_at IS NULL AND available_at <= $1
+WHERE sent_at IS NULL AND dead_at IS NULL AND available_at <= $1
 ORDER BY available_at, id
 FOR UPDATE SKIP LOCKED
 LIMIT $2
@@ -125,19 +145,34 @@ type PollUnsentParams struct {
 	Limit       int32              `json:"limit"`
 }
 
-// Воркер берёт неотправленные ВИДИМЫЕ строки: sent_at IS NULL AND available_at <= $1. $1 («сейчас») —
-// момент из clock.Clock (O-4: граница видимости детерминирована инъекцией Clock, НЕ now() в SQL).
+type PollUnsentRow struct {
+	ID          int64              `json:"id"`
+	EventID     pgtype.UUID        `json:"event_id"`
+	Type        string             `json:"type"`
+	OccurredAt  pgtype.Timestamptz `json:"occurred_at"`
+	SubjectRef  string             `json:"subject_ref"`
+	Payload     []byte             `json:"payload"`
+	V           int32              `json:"v"`
+	SentAt      pgtype.Timestamptz `json:"sent_at"`
+	Attempts    int32              `json:"attempts"`
+	AvailableAt pgtype.Timestamptz `json:"available_at"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
+// Воркер берёт ЖИВЫЕ неотправленные ВИДИМЫЕ строки: sent_at IS NULL AND dead_at IS NULL AND available_at <= $1.
+// dead_at IS NULL — dead-letter строки (Story 7.1, долг 2.7) выпадают из поллинга (не ре-поллятся вечно).
+// $1 («сейчас») — момент из clock.Clock (O-4: граница видимости детерминирована инъекцией Clock, НЕ now() в SQL).
 // FOR UPDATE SKIP LOCKED — два конкурентных воркера НЕ двоят одну строку (берут непересекающиеся наборы, O-2).
 // Порядок (available_at, id) — детерминизм/справедливость FIFO. $2 — размер батча.
-func (q *Queries) PollUnsent(ctx context.Context, arg PollUnsentParams) ([]NotificationsOutbox, error) {
+func (q *Queries) PollUnsent(ctx context.Context, arg PollUnsentParams) ([]PollUnsentRow, error) {
 	rows, err := q.db.Query(ctx, pollUnsent, arg.AvailableAt, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []NotificationsOutbox{}
+	items := []PollUnsentRow{}
 	for rows.Next() {
-		var i NotificationsOutbox
+		var i PollUnsentRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.EventID,

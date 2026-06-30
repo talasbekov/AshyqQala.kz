@@ -4,7 +4,8 @@
 // //go:build integration + DATABASE_URL + t.Skip; миграции применяются внешне; -p 1 (общая БД). Каждый страж
 // краснеет (negative-control): O-1 без tx — бизнес-строка пережила бы откат; O-3 без UNIQUE — 2 строки;
 // SKIP LOCKED без него — tx2 взял бы залоченную строку (двойная доставка); O-4 без сдвига — строка видна сразу.
-// Гоняется: `go test -tags=integration ./internal/outbox/...` с DATABASE_URL (миграции 0001-0016). [[guards-must-prove-red]]
+// Гоняется: `go test -tags=integration ./internal/outbox/...` с DATABASE_URL (миграции 0001-0019;
+// dead-letter тест требует 0019: dead_at/dead_reason). [[guards-must-prove-red]]
 package outbox_test
 
 import (
@@ -361,5 +362,69 @@ func TestProcessBatch_RetryVisibility_O4(t *testing.T) {
 	}
 	if !row2.SentAt.Valid {
 		t.Error("sent_at не проставлен после успешного ретрая")
+	}
+}
+
+// TestProcessBatchN_DeadLetter — dead-letter (Story 7.1, закрывает долг 2.7): персистентный TRANSIENT-сбой
+// доставки при достижении потолка maxAttempts помечает строку dead_at/dead_reason → она ВЫПАДАЕТ из поллинга
+// (не ре-поллится вечно, attempts не растёт бесконечно). КОНТРОЛЬ: 3-й проход НЕ вызывает Send (мёртвая
+// строка не видна) — иначе dead-letter фиктивен ([[guards-must-prove-red]]).
+func TestProcessBatchN_DeadLetter(t *testing.T) {
+	pool := integrationPool(t)
+	defer pool.Close()
+	ctx := context.Background()
+	resetOutbox(t, pool)
+
+	ev := outbox.Event{
+		EventID:    outbox.NewEventID("contract", "deadletter"),
+		Type:       outbox.TypeContractCreated,
+		OccurredAt: time.Unix(1_700_000_000, 0).UTC(),
+		SubjectRef: outbox.SubjectURN("contract", "deadletter"),
+	}
+	if err := outbox.Enqueue(ctx, pool, ev); err != nil {
+		t.Fatalf("Enqueue: %v", err)
+	}
+	q := gen.New(pool)
+	disp := &failingDispatcher{}
+	const maxAttempts = 2
+
+	// Проход 1: attempts 0 → под потолком → BumpAttempt (attempts=1, видимость сдвинута на backoff).
+	row, err := q.GetOutboxByEventID(ctx, uid(ev))
+	if err != nil {
+		t.Fatalf("read 0: %v", err)
+	}
+	now := row.AvailableAt.Time.Add(time.Second)
+	if _, err := outbox.ProcessBatchN(ctx, pool, disp, clock.Fixed{T: now}, 10, maxAttempts); err != nil {
+		t.Fatalf("проход 1: %v", err)
+	}
+	row, err = q.GetOutboxByEventID(ctx, uid(ev))
+	if err != nil {
+		t.Fatalf("read 1: %v", err)
+	}
+	if row.Attempts != 1 || row.DeadAt.Valid {
+		t.Fatalf("после прохода 1: attempts=%d dead=%v, ожидалось 1/живая", row.Attempts, row.DeadAt.Valid)
+	}
+
+	// Проход 2: attempts 1 → на потолке (1+1==2) → MarkDead (dead_at/dead_reason).
+	now = row.AvailableAt.Time.Add(time.Second)
+	if _, err := outbox.ProcessBatchN(ctx, pool, disp, clock.Fixed{T: now}, 10, maxAttempts); err != nil {
+		t.Fatalf("проход 2: %v", err)
+	}
+	row, err = q.GetOutboxByEventID(ctx, uid(ev))
+	if err != nil {
+		t.Fatalf("read 2: %v", err)
+	}
+	if !row.DeadAt.Valid || !row.DeadReason.Valid || row.DeadReason.String == "" {
+		t.Fatalf("после прохода 2: строка не dead (dead_at=%v reason=%q)", row.DeadAt.Valid, row.DeadReason.String)
+	}
+	dispatchedBefore := disp.n
+
+	// Проход 3 (КОНТРОЛЬ): мёртвая строка НЕ поллится → Send не вызывается (даже спустя час).
+	now = row.AvailableAt.Time.Add(time.Hour)
+	if _, err := outbox.ProcessBatchN(ctx, pool, disp, clock.Fixed{T: now}, 10, maxAttempts); err != nil {
+		t.Fatalf("проход 3: %v", err)
+	}
+	if disp.n != dispatchedBefore {
+		t.Errorf("мёртвая строка ре-поллилась: Send вызван ещё (%d→%d) — dead-letter фиктивен", dispatchedBefore, disp.n)
 	}
 }

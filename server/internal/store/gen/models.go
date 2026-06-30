@@ -113,6 +113,8 @@ type NotificationsOutbox struct {
 	Attempts    int32              `json:"attempts"`
 	AvailableAt pgtype.Timestamptz `json:"available_at"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	DeadAt      pgtype.Timestamptz `json:"dead_at"`
+	DeadReason  pgtype.Text        `json:"dead_reason"`
 }
 
 type OrgNameAlias struct {
