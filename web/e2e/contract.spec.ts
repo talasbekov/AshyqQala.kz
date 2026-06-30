@@ -44,6 +44,10 @@ const DEMO = {
   ],
   imported_at: { value: '2026-03-15T10:00:00Z', state: 'ok' },
   updated_at: { value: '2026-03-15T10:00:00Z', state: 'ok' },
+  // Story 5.6 (AR-29): перманентная ссылка-на-дату — ContractRoute читает эти поля верхнего уровня.
+  methodology_version: { value: 'v1.0', state: 'ok' },
+  as_of: { value: '2026-03-15T10:00:00Z', state: 'ok' },
+  methodology_drift: { present: false, requested_version: '', current_version: '' },
 };
 
 test('сквозной путь: маршрут карточки → фетч → реальная строка видна', async ({ page }) => {

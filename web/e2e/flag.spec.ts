@@ -64,6 +64,10 @@ const DEMO2 = {
   ],
   imported_at: { value: '2026-02-10T10:00:00Z', state: 'ok' },
   updated_at: { value: '2026-02-10T10:00:00Z', state: 'ok' },
+  // Story 5.6 (AR-29): поля верхнего уровня для перманентной ссылки (ContractRoute).
+  methodology_version: { value: 'v1.0', state: 'ok' },
+  as_of: { value: '2026-02-10T10:00:00Z', state: 'ok' },
+  methodology_drift: { present: false, requested_version: '', current_version: '' },
 };
 
 test('карточка 1.9: нейтральный флаг → методика → дверь + первоисточник', async ({ page }) => {
@@ -147,6 +151,10 @@ const DEMO3 = {
   ],
   imported_at: { value: '2026-04-05T10:00:00Z', state: 'ok' },
   updated_at: { value: '2026-04-05T10:00:00Z', state: 'ok' },
+  // Story 5.6 (AR-29): поля верхнего уровня для перманентной ссылки (ContractRoute).
+  methodology_version: { value: 'v1.0', state: 'ok' },
+  as_of: { value: '2026-04-05T10:00:00Z', state: 'ok' },
+  methodology_drift: { present: false, requested_version: '', current_version: '' },
 };
 
 test('карточка 5.1: честное «нет данных» + видимая реконструкция (insufficient ≠ «всё чисто»)', async ({
