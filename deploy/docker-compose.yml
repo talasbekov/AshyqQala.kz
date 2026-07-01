@@ -54,11 +54,12 @@ services:
   api:
     profiles: ['app']
     build:
-      context: ../server
-      dockerfile: Dockerfile
+      context: .. # корень репо: образу нужны server/ (сборка) + registry/ (запекается, config рантайма)
+      dockerfile: server/Dockerfile
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER:-ashyqqala}:${POSTGRES_PASSWORD:-ashyqqala}@db:5432/${POSTGRES_DB:-ashyqqala}?sslmode=disable
       API_ADDR: ':8080'
+      # REGISTRY_ROOT=/registry запечён в образ (server/Dockerfile ENV) — registry не монтируется.
     depends_on:
       db:
         condition: service_healthy

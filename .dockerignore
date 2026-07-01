@@ -1,0 +1,7 @@
+# Build-контекст api = КОРЕНЬ РЕПО (deploy/docker-compose.yml → server/Dockerfile: нужны server/ + registry/).
+# Allow-list: игнорируем ВСЁ, затем разрешаем только необходимое образу api — иначе в демон улетают
+# web/node_modules (~214M), .git (~55M), _bmad-output и пр. (медленный/жирный контекст).
+# ПРИМЕЧАНИЕ: web/caddy-образ собирается из контекста web/ со своим web/.dockerignore — этот файл его НЕ касается.
+*
+!server
+!registry
