@@ -1,0 +1,142 @@
+/* Глобальный base + chrome-каркас (шапка/дом/404/ошибка маршрута). Story 1.7 (walking skeleton)
+   доставил разметку App.tsx БЕЗ стилей — страница падала на дефолт браузера (Times, белый фон, синие
+   ссылки), пока фичи-экраны красили себя сами. Здесь приводим каркас к дизайн-системе.
+   ТОЛЬКО семантические токены (Story 1.5), без хардкода — тема-агностично (light/dark). */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-family-sans);
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-line-height);
+  background: var(--color-surface-sunken);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--color-link);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+:focus-visible {
+  outline: var(--space-focus-ring-width) solid var(--color-focus-ring);
+  outline-offset: var(--space-focus-ring-offset);
+  border-radius: var(--radius-sm);
+}
+
+/* ---- Шапка (chrome) ---- */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.app-header > a {
+  font-size: var(--type-heading-size);
+  font-weight: var(--type-display-weight);
+  letter-spacing: var(--type-display-letter-spacing);
+  color: var(--color-text-primary);
+}
+
+.app-header > a:hover {
+  text-decoration: none;
+  color: var(--color-primary);
+}
+
+.app-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.app-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--space-tap-target);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--color-link);
+  font-weight: var(--type-body-strong-weight);
+}
+
+.app-nav a:hover {
+  text-decoration: none;
+  background: var(--color-surface-sunken);
+}
+
+/* ---- Домашняя (индекс, сквозной путь) ---- */
+.home {
+  max-width: 640px;
+  margin: var(--space-10) auto;
+  padding: var(--space-6) var(--space-gutter);
+  text-align: center;
+}
+
+.home p {
+  margin: 0 0 var(--space-6);
+  font-size: var(--type-subheading-size);
+  color: var(--color-text-secondary);
+}
+
+.home a {
+  display: inline-block;
+  min-height: var(--space-tap-target);
+  padding: var(--space-3) var(--space-6);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-weight: var(--type-body-strong-weight);
+  border-radius: var(--radius-default);
+}
+
+.home a:hover {
+  text-decoration: none;
+  background: var(--color-primary-strong);
+}
+
+/* ---- 404 / ошибка маршрута (нейтральные заглушки, App.tsx) ---- */
+.notfound,
+.route-error {
+  max-width: 640px;
+  margin: var(--space-8) auto;
+  padding: var(--space-6) var(--space-gutter);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  text-align: center;
+}
+
+.notfound h2,
+.route-error h2 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--type-heading-size);
+  font-weight: var(--type-heading-weight);
+}
+
+.notfound p,
+.route-error p {
+  margin: 0 0 var(--space-4);
+  color: var(--color-text-secondary);
+}
