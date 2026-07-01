@@ -119,4 +119,5 @@ go run . -source file -data-dir ./data -geocoder nominatim -geo-sample 200 \
 ---
 
 *Связанные:* `docs/ops/stage0-access.md` (Story 0.1), `docs/ops/interim-scrape-bridge.md` (Парсер-мост),
+`docs/ops/legal-preflight.md` (Story 0.5 — юр-предполётная проверка),
 `docs/ops/stage0-verdict-20260620.json` (пример вердикта), `stage0-audit/verdict.go` (провенанс частичного Go).

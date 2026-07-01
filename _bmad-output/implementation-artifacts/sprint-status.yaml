@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-06-19T18:38:34+0500
-last_updated: 2026-06-30T18:10:00+0500
+last_updated: 2026-07-01T12:00:00+0500
 project: AshyqQala.kz
 project_key: NOKEY
 tracking_system: file-system
@@ -48,12 +48,12 @@ development_status:
   0-2-машиночитаемый-go-no-go-вердикт-stage0-audit: done
   0-3-прогон-гейта-на-живых-данных-распределение-пропусков: backlog
   0-4-предполётные-решения-идемпотентность-частичный-go-демо-схема: done
-  0-5-юридическая-предполётная-проверка-параллельно: backlog
+  0-5-юридическая-предполётная-проверка-параллельно: done
   # ⏳ Трек «Парсер-мост» (ВРЕМЕННЫЙ, до получения токена) — Sprint Change Proposal 2026-06-20
   0-6-временный-scrape-источник-лотов-за-флагом: done
   0-7-гео-привязка-scraped-лотов-batch-nominatim: done
   0-8-ранняя-карта-астаны-на-реальных-лотах: done
-  0-9-эскалация-юридической-проверки-парсинга: backlog
+  0-9-эскалация-юридической-проверки-парсинга: done
   epic-0-retrospective: optional
 
   # Epic 1: Каркас, ядро-контракты и первый читаемый контракт-история
