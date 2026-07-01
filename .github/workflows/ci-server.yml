@@ -64,8 +64,9 @@ jobs:
 
   # Story 2.6 (AC2): integration-гейт идемпотентности/выживания курации/atomic-публикации на ЧИСТОЙ
   # (мигрированной БЕЗ seed) БД. Красный = блок merge. Конвенция репо — //go:build integration + DATABASE_URL
-  # (НЕ testcontainers): CI поднимает postgis/postgis сервисом. Пакеты импорта/нормализации/пересчёта;
-  # store/httpapi (seed-зависимы) — отдельный прогон (долг изоляции clean-vs-seed, deferred-work.md).
+  # (НЕ testcontainers): CI поднимает postgis/postgis сервисом. CLEAN-группа (импорт/нормализация/пересчёт/
+  # outbox). SEED-группа (store/httpapi) гоняется отдельным job `integration-seed` ниже — долг изоляции
+  # clean-vs-seed закрыт разделением (deferred-work.md), теперь ОБЕ группы — гейты merge.
   integration:
     runs-on: ubuntu-latest
     services:
@@ -95,3 +96,43 @@ jobs:
       - name: integration (импорт/нормализация/пересчёт/outbox; -p 1 — общая БД; красный = блок merge)
         working-directory: server
         run: go test -tags=integration -count=1 -p 1 ./internal/ingest/... ./internal/store/projection/... ./internal/outbox/...
+
+  # SEED-группа (долг изоляции clean-vs-seed, deferred-work.md): store/httpapi читают DEMO-данные (Story
+  # 5.1/5.2) → гоняются на МИГРИРОВАННОЙ + ЗАСЕЯННОЙ БД (свежий postgis-сервис, изолирован от CLEAN-группы).
+  # Красный = блок merge. Дополняет job `integration` выше (обе группы теперь — гейты).
+  integration-seed:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: ashyqqala
+          POSTGRES_PASSWORD: ashyqqala
+          POSTGRES_DB: ashyqqala
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U ashyqqala -d ashyqqala"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgres://ashyqqala:ashyqqala@localhost:5432/ashyqqala?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
+
+      - name: migrate (goose, чистая БД) — из корня репо
+        run: go run github.com/pressly/goose/v3/cmd/goose@v3.27.1 -dir migrations postgres "$DATABASE_URL" up
+
+      - name: seed (DEMO-фикстуры Story 5.1/5.2; порядок FK contracts→acts→organizations→rnu_entries→risk_flags)
+        # Все фикстуры идемпотентны (ON CONFLICT/NOT EXISTS). psql предустановлен на ubuntu-latest.
+        run: |
+          for f in contracts acts organizations rnu_entries risk_flags; do
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "fixtures/seed/$f.sql"
+          done
+
+      - name: integration-seed (store/httpapi на засеянной БД; -p 1; красный = блок merge)
+        working-directory: server
+        run: go test -tags=integration -count=1 -p 1 ./internal/store ./internal/httpapi/...

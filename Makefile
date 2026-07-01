@@ -46,14 +46,27 @@ gen-tokens: ## tokens.json (DTCG) → tokens.css + tokens.ts (свой codegen) 
 	cd $(WEB_DIR) && npm run gen-tokens
 
 # ---- проверки ----
-.PHONY: test test-integration lint build check-registry check-core
-test: ## go test (server) — unit/property/golden/go-list; integration за тегом (см. test-integration)
+.PHONY: test test-integration test-integration-clean test-integration-seed lint build check-registry check-core
+test: ## go test (server) — unit/property/golden/go-list; integration за тегом (см. test-integration*)
 	cd $(SERVER_DIR) && go test ./...
 
-test-integration: ## go test -tags=integration (Story 2.4): нужен DATABASE_URL + применённые миграции; -p 1 (общая БД).
-	# ВНИМАНИЕ: projection/orgnorm/pipeline ожидают ЧИСТУЮ (мигрированную, БЕЗ seed) БД; store/httpapi — c db-seed.
-	# Прогон обоих против одного состояния несовместим (долг изоляции, deferred-work.md). Дефолт — чистая БД.
-	cd $(SERVER_DIR) && DATABASE_URL="$(DATABASE_URL)" go test -tags=integration -count=1 -p 1 ./...
+# ---- integration-пакеты по требуемому состоянию БД ----
+# Долг изоляции clean-vs-seed закрыт РАЗДЕЛЕНИЕМ на две группы (deferred-work.md): один прогон `./...`
+# против одного состояния БД невозможен, т.к. группы противоречивы по требованиям к данным.
+#   CLEAN: импорт/нормализация/пересчёт/outbox — часть тестов считает флаги ГЛОБАЛЬНО (CountActive) и/или
+#          TRUNCATE-ит → требует ЧИСТУЮ мигрированную БД БЕЗ seed.
+#   SEED:  store/httpapi — читают DEMO-данные (db-seed, Story 5.1/5.2). Само-содержащиеся store-тесты
+#          (facets/districts/search) терпят seed (якорь-изоляция), поэтому вся группа гоняется на засеянной БД.
+INTEG_CLEAN_PKGS := ./internal/ingest/... ./internal/store/projection/... ./internal/outbox/...
+INTEG_SEED_PKGS  := ./internal/store ./internal/httpapi/...
+
+test-integration: test-integration-clean ## alias → test-integration-clean (ЧИСТАЯ БД). SEED-группа — отдельно: test-integration-seed.
+
+test-integration-clean: ## integration на ЧИСТОЙ мигрированной БД (импорт/нормализация/пересчёт/outbox). Нужен DATABASE_URL + migrate-up. -p 1.
+	cd $(SERVER_DIR) && DATABASE_URL="$(DATABASE_URL)" go test -tags=integration -count=1 -p 1 $(INTEG_CLEAN_PKGS)
+
+test-integration-seed: ## integration на БД С SEED (store/httpapi — DEMO-данные). Сначала migrate-up + db-seed. -p 1.
+	cd $(SERVER_DIR) && DATABASE_URL="$(DATABASE_URL)" go test -tags=integration -count=1 -p 1 $(INTEG_SEED_PKGS)
 
 check-registry: ## Сторожа registry (Story 1.4/4.1/2.3): перекрёстный тест registry↔OpenAPI↔Go + doc-нейтральность + single-source methodology_params + lexicon нормализации
 	cd $(SERVER_DIR) && go test -count=1 ./internal/registry/... ./internal/render/... ./internal/methodology/... ./internal/lexicon/...
