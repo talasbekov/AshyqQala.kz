@@ -44,3 +44,20 @@ WHERE c.kato_code LIKE sqlc.arg('kato_prefix')::text
   AND NOT c.is_deleted
 ORDER BY c.sign_date DESC NULLS LAST, c.goszakup_contract_id
 LIMIT sqlc.arg('lim')::int;
+
+-- name: PricePerKMSamplesByDirection :many
+-- ₸/км-выборка группы сопоставимости (направление × КАТО-префикс) для медианы района/города (FR-18).
+-- ШОВ Story 6.4 НАПОЛНЕН Story 3.1: цена/км = amount_tng / geo_objects.length_km для дорог с известной
+-- длиной (LINESTRING, 3.1). Целочисленная (bigint) — детерминизм без float (ядро benchmark.Sample.PricePerKM).
+-- Только контракты с суммой И геообъектом length_km > 0. sign_date → unix (скользящее окно в GroupMedian).
+SELECT
+    (c.amount_tng / g.length_km)::bigint                 AS price_per_km,
+    coalesce(extract(epoch FROM c.sign_date), 0)::bigint AS sign_date_unix
+FROM contracts c
+JOIN geo_objects g ON g.contract_id = c.id
+WHERE c.direction = sqlc.arg('direction')::text
+  AND c.kato_code LIKE sqlc.arg('kato_prefix')::text
+  AND NOT c.is_deleted
+  AND c.amount_tng IS NOT NULL
+  AND g.length_km IS NOT NULL
+  AND g.length_km > 0;

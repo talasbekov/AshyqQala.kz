@@ -102,15 +102,25 @@ type districtStore struct {
 // NewDistrictStore оборачивает gen.Queries адаптером района (запросы 6.3 + ₸/км-шов 6.4 PricePerKMSamples).
 func NewDistrictStore(q *gen.Queries) DistrictStore { return districtStore{Queries: q} }
 
-// PricePerKMSamples — ШОВ сбора ₸/км-выборки группы (Story 6.4, FR-18). СЕЙЧАС: geo_objects.length_km
-// (Epic 3 / Story 3.1) НЕТ → ₸/км = amount_tng / length_km НЕвычислима → возвращает (nil, false): ядро даст
-// not_comparable (нечего сравнивать), НЕ insufficient (это не «мало контрактов», а отсутствие измеримой базы
-// ₸/км). Прецедент 4.3 (RecalcBenchmarks → пустой снапшот): движок реален, живые числа ждут length_km.
-// Когда появится length_km — ЗДЕСЬ будет sqlc-запрос (JOIN geo_objects, price_per_km = amount/length, фильтр
-// direction × kato_prefix, non-null) → (samples, true); benchmark.Evaluate/GroupMedian заработают БЕЗ
-// изменения формы DTO/хендлера/тестов (шов). Запрос НЕ пишется сейчас: ссылка на length_km сломала бы codegen.
-func (districtStore) PricePerKMSamples(_ context.Context, _, _ string) ([]benchmark.Sample, bool, error) {
-	return nil, false, nil
+// PricePerKMSamples — ШОВ сбора ₸/км-выборки группы (Story 6.4, FR-18), НАПОЛНЕН Story 3.1. Теперь
+// `geo_objects.length_km` СУЩЕСТВУЕТ (миграция 0020) → цена/км = `amount_tng / length_km` СТРУКТУРНО вычислима.
+// Запрос JOIN'ит geo_objects (direction × КАТО-префикс, length_km > 0) → возвращает (samples, true): база
+// измерима (computable=true), а `benchmark.GroupMedian` решает ok-с-медианой vs insufficient_sample по размеру
+// выборки. not_comparable теперь только на ошибке запроса — структурно база есть. Форма DTO/хендлера/тестов
+// НЕ изменилась (это и есть шов 6.4). [Source: queries/districts.sql PricePerKMSamplesByDirection; benchmark.Sample]
+func (s districtStore) PricePerKMSamples(ctx context.Context, direction, katoPrefix string) ([]benchmark.Sample, bool, error) {
+	rows, err := s.PricePerKMSamplesByDirection(ctx, gen.PricePerKMSamplesByDirectionParams{
+		Direction:  direction,
+		KatoPrefix: katoPrefix,
+	})
+	if err != nil {
+		return nil, false, err
+	}
+	samples := make([]benchmark.Sample, 0, len(rows))
+	for _, r := range rows {
+		samples = append(samples, benchmark.Sample{PricePerKM: r.PricePerKm, SignDateUnix: r.SignDateUnix})
+	}
+	return samples, true, nil
 }
 
 // medianDirections — направления MVP сравнения медиан (FR-18 scope: дорога и водоснабжение; «other» вне

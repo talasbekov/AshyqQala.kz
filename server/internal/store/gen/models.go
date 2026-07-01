@@ -39,6 +39,15 @@ type Contract struct {
 	SupplierOrgID      pgtype.Int8        `json:"supplier_org_id"`
 }
 
+type District struct {
+	ID         int64              `json:"id"`
+	KatoCode   pgtype.Text        `json:"kato_code"`
+	NameRu     string             `json:"name_ru"`
+	NameKk     string             `json:"name_kk"`
+	Geom       interface{}        `json:"geom"`
+	ImportedAt pgtype.Timestamptz `json:"imported_at"`
+}
+
 type ErrorReport struct {
 	ID          int64              `json:"id"`
 	Kind        string             `json:"kind"`
@@ -63,6 +72,20 @@ type FlagDispute struct {
 	SourceUrl   pgtype.Text        `json:"source_url"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	ResolvedAt  pgtype.Timestamptz `json:"resolved_at"`
+}
+
+type GeoObject struct {
+	ID            int64              `json:"id"`
+	PublicID      pgtype.UUID        `json:"public_id"`
+	ContractID    pgtype.Int8        `json:"contract_id"`
+	DistrictID    pgtype.Int8        `json:"district_id"`
+	Geom          interface{}        `json:"geom"`
+	AddressText   pgtype.Text        `json:"address_text"`
+	LengthKm      pgtype.Float8      `json:"length_km"`
+	GeocodeStatus string             `json:"geocode_status"`
+	Confidence    pgtype.Float8      `json:"confidence"`
+	GeocodedBy    pgtype.Text        `json:"geocoded_by"`
+	GeocodedAt    pgtype.Timestamptz `json:"geocoded_at"`
 }
 
 type InterimGeoLot struct {

@@ -103,6 +103,6 @@ migrate-status: ## goose: статус миграций
 db-seed: ## Применить seed (данные, не схема). Бьёт в COMPOSE-db (НЕ DATABASE_URL!); сначала migrate-up.
 	# Порядок важен (FK): contracts → acts → organizations(+link+aliases) → rnu_entries → risk_flags
 	# (Story 5.1/5.2). Все файлы идемпотентны (ON CONFLICT / NOT EXISTS).
-	for f in contracts acts organizations rnu_entries risk_flags; do \
+	for f in contracts acts organizations rnu_entries risk_flags geo_objects; do \
 		docker compose -f deploy/docker-compose.yml exec -T db psql -v ON_ERROR_STOP=1 -U $(POSTGRES_USER) -d $(POSTGRES_DB) < fixtures/seed/$$f.sql; \
 	done

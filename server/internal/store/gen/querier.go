@@ -163,6 +163,11 @@ type Querier interface {
 	// FOR UPDATE SKIP LOCKED — два конкурентных воркера НЕ двоят одну строку (берут непересекающиеся наборы, O-2).
 	// Порядок (available_at, id) — детерминизм/справедливость FIFO. $2 — размер батча.
 	PollUnsent(ctx context.Context, arg PollUnsentParams) ([]PollUnsentRow, error)
+	// ₸/км-выборка группы сопоставимости (направление × КАТО-префикс) для медианы района/города (FR-18).
+	// ШОВ Story 6.4 НАПОЛНЕН Story 3.1: цена/км = amount_tng / geo_objects.length_km для дорог с известной
+	// длиной (LINESTRING, 3.1). Целочисленная (bigint) — детерминизм без float (ядро benchmark.Sample.PricePerKM).
+	// Только контракты с суммой И геообъектом length_km > 0. sign_date → unix (скользящее окно в GroupMedian).
+	PricePerKMSamplesByDirection(ctx context.Context, arg PricePerKMSamplesByDirectionParams) ([]PricePerKMSamplesByDirectionRow, error)
 	// Идемпотентно ставит/обновляет АКТИВНЫЙ contract-флаг (повтор не плодит дубли — UPSERT по (flag_type,
 	// contract_id)). Снятый ранее флаг ре-активируется (is_active=true, cleared_at=NULL); detected_at сохраняется
 	// (первое обнаружение). evidence/methodology_version обновляются (актуальный снапшот входов).

@@ -141,3 +141,51 @@ func (q *Queries) ListContractsByDistrict(ctx context.Context, arg ListContracts
 	}
 	return items, nil
 }
+
+const pricePerKMSamplesByDirection = `-- name: PricePerKMSamplesByDirection :many
+SELECT
+    (c.amount_tng / g.length_km)::bigint                 AS price_per_km,
+    coalesce(extract(epoch FROM c.sign_date), 0)::bigint AS sign_date_unix
+FROM contracts c
+JOIN geo_objects g ON g.contract_id = c.id
+WHERE c.direction = $1::text
+  AND c.kato_code LIKE $2::text
+  AND NOT c.is_deleted
+  AND c.amount_tng IS NOT NULL
+  AND g.length_km IS NOT NULL
+  AND g.length_km > 0
+`
+
+type PricePerKMSamplesByDirectionParams struct {
+	Direction  string `json:"direction"`
+	KatoPrefix string `json:"kato_prefix"`
+}
+
+type PricePerKMSamplesByDirectionRow struct {
+	PricePerKm   int64 `json:"price_per_km"`
+	SignDateUnix int64 `json:"sign_date_unix"`
+}
+
+// ₸/км-выборка группы сопоставимости (направление × КАТО-префикс) для медианы района/города (FR-18).
+// ШОВ Story 6.4 НАПОЛНЕН Story 3.1: цена/км = amount_tng / geo_objects.length_km для дорог с известной
+// длиной (LINESTRING, 3.1). Целочисленная (bigint) — детерминизм без float (ядро benchmark.Sample.PricePerKM).
+// Только контракты с суммой И геообъектом length_km > 0. sign_date → unix (скользящее окно в GroupMedian).
+func (q *Queries) PricePerKMSamplesByDirection(ctx context.Context, arg PricePerKMSamplesByDirectionParams) ([]PricePerKMSamplesByDirectionRow, error) {
+	rows, err := q.db.Query(ctx, pricePerKMSamplesByDirection, arg.Direction, arg.KatoPrefix)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []PricePerKMSamplesByDirectionRow{}
+	for rows.Next() {
+		var i PricePerKMSamplesByDirectionRow
+		if err := rows.Scan(&i.PricePerKm, &i.SignDateUnix); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

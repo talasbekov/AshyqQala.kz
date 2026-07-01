@@ -45,7 +45,7 @@ services:
       [
         'sh',
         '-c',
-        'psql -h db -U ${POSTGRES_USER:-ashyqqala} -d ${POSTGRES_DB:-ashyqqala} -v ON_ERROR_STOP=1 -f /fixtures/seed/contracts.sql',
+        'psql -h db -U ${POSTGRES_USER:-ashyqqala} -d ${POSTGRES_DB:-ashyqqala} -v ON_ERROR_STOP=1 -f /fixtures/seed/contracts.sql -f /fixtures/seed/geo_objects.sql',
       ]
     depends_on:
       migrate:
