@@ -1,9 +1,11 @@
-# Канонический геокодинг (Story 3.1)
+# Канонический геокодинг (Story 3.1) и ручная курация (Story 3.2)
 
 > **Статус:** КАНОН (не интерим — в отличие от `interim-scrape-bridge.md`). Реализовано в
 > `server/cmd/geocode` (batch-команда) + `server/internal/geo` (клиент Nominatim) +
-> `server/internal/store/curation/geo_objects.go` (запись). Пишет в канонические таблицы
-> `districts`/`geo_objects` (миграция `0020_geo_objects.sql` + `0021_geo_objects_contract_uniq.sql`).
+> `server/internal/store/curation/geo_objects.go` (запись + кураторские методы). Пишет в канонические
+> таблицы `districts`/`geo_objects` (миграции `0020` + `0021` + `0022_geo_verification.sql`).
+> Ручная разметка/верификация — Directus (cold-профиль `directus`), см. секцию
+> «Ручная курация через Directus» ниже.
 
 ## Что это
 
@@ -102,15 +104,92 @@ lot-keyed результаты в `interim_geo_lots` (миграция `0004`) �
 - **Реальные `length_km`-значения для существующих дорожных контрактов** — появятся при живом объёме
   (Epic 2/токен); формула (`ST_Length(geom::geography)/1000` для `LINESTRING`) уже реализована в
   `UpsertGeoObject` и протестирована на синтетике (`cmd/geocode/idempotency_integration_test.go`).
-- **Directus-курация `manual`/verification** (`auto`/`verified`/`wrong_reported`, AR-28) — Story 3.2.
-  `geo_objects.geocode_status='manual'` уже честно защищён от перезаписи batch'ем (см. `UpsertGeoObject`
-  SQL: `WHERE geo_objects.geocode_status IS DISTINCT FROM 'manual'`) — Directus просто начнёт писать
-  эти строки, схема/гейт уже на месте.
+- ~~**Directus-курация `manual`/verification** (`auto`/`verified`/`wrong_reported`, AR-28) — Story 3.2.~~
+  **РЕАЛИЗОВАНО Story 3.2** (миграция `0022`, секция «Ручная курация через Directus» ниже). Гейт
+  batch-перезаписи расширен: `WHERE geo_objects.geocode_status IN ('auto','unmatched')` — курация
+  (`manual`/`verified`/`wrong_reported`) неприкосновенна для batch'а.
 - **Карта (маркеры/кластеры/линии/превью/список-фолбэк/a11y)** — Story 3.4/3.5/3.6/3.8. `cmd/geocode`
   только наполняет `geo_objects`; чтение для UI — отдельные истории.
 - **Реальные полигоны районов Астаны (OSM)** — сейчас в `districts` только синтетический bbox
   («Есиль», сид `fixtures/seed/geo_objects.sql`); остальные 4 района и подтверждённые КАТО-коды
   ждут Story 0.1 (`/search/getKato`, токен).
+
+## Ручная курация через Directus (Story 3.2)
+
+Полуручная разметка FR-5: оператор подтверждает/корректирует точку или полилинию в **Directus** —
+внутренней админке поверх той же Postgres. Directus видит ТОЛЬКО кураторские коллекции
+(`geo_objects`, `districts` — read-only справочник); проекционные таблицы в админку не заводятся
+(граница AR-4; страж `internal/store/projection/grants_integration_test.go`).
+
+### Поднять / погасить (только на время курирования — AR-21)
+
+```bash
+# db должен быть жив (docker-compose.yml). POSTGRES_PORT — как у вашего db (локально часто 55432).
+POSTGRES_PORT=55432 docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.cold.yml \
+  --profile directus up -d directus
+
+# Первый бут создаёт системные таблицы directus_* в той же БД (вне goose — НЕ дрейф миграций).
+# Затем один раз настроить коллекции/очередь (идемпотентно):
+deploy/directus/bootstrap.sh
+
+# Погасить после сессии курирования:
+docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.cold.yml --profile directus stop directus
+```
+
+Доступ: `http://127.0.0.1:8055` (порт ТОЛЬКО loopback, НЕ за Caddy — решение D4). На VPS —
+SSH-туннель: `ssh -L 8055:127.0.0.1:8055 <vps>`. Логин/пароль — `DIRECTUS_ADMIN_EMAIL`/
+`DIRECTUS_ADMIN_PASSWORD` (`deploy/.env`; дефолты dev-only).
+
+### Очередь и чек-лист оператора
+
+Очередь — закладка **«Очередь геопривязки»** коллекции `geo_objects` (пресет: `geocode_status` ∈
+`unmatched`, `wrong_reported`); закладка **«Верификация»** — `auto`-кандидаты, сомнительные первыми
+(confidence по возрастанию). Правила (зеркало enum 0022 и переходов `store/curation/geo_objects.go`):
+
+| Действие оператора | Переход | Как в Directus |
+|---|---|---|
+| Подтвердить верную авто-точку | `auto` → `verified` | сменить статус (геометрию НЕ трогать) |
+| Скорректировать/нарисовать точку или линию дороги | `auto`/`manual`/`unmatched`/`wrong_reported` → `manual` | править `geom` (POINT — объект; LINESTRING — дорога) + статус `manual` + `geocoded_by='directus'`. Перерисовать `verified` напрямую нельзя — сначала пометить `wrong_reported` (двухшаговый след SM-C2) |
+| Пометить «точка не там» | `auto`/`manual`/`verified` → `wrong_reported` | сменить статус; спорная геометрия ОСТАЁТСЯ (факт, не подмена) |
+| Снять неверную точку | `wrong_reported` → `unmatched` | очистить `geom` + статус `unmatched` — объект честно «без точки на карте» |
+
+**Запрет фабрикации (§7.4 PRD):** не ставить точку «примерно/на глаз» — честный `unmatched` лучше
+выдуманной координаты. БД сама отвергнет ложь: `unmatched` с геометрией и `auto/manual/verified/
+wrong_reported` без геометрии невозможны (CHECK `geo_objects_geom_null_chk`).
+
+**Провенанс:** при ручной правке ставить `geocoded_by='directus'` (свободный TEXT — БД не заставит,
+это дисциплина чек-листа; Go-методы курации проставляют сами). `geocoded_at` обновлять не нужно.
+
+**Не создавать новые строки** для контрактов, у которых гео-строка уже есть — частичный уникальный
+индекс `geo_objects_contract_uniq` (0021) отвергнет дубль `contract_id`. Работайте с существующими
+строками очереди.
+
+**`length_km` не заполнять руками:** для LINESTRING длина выводится триггером `0022`
+(`ST_Length(geom::geography)/1000`) при рисовании/перерисовке линии — ручные дороги автоматически
+попадают в цену/км (флаг 4.3) и медиану района (6.4). Только `POINT`/`LINESTRING`: другие типы
+(MULTILINESTRING/POLYGON) БД отвергнет (CHECK `geo_objects_geom_type_chk`) — дорогу из нескольких
+сегментов рисовать одной линией.
+
+**Не запускать batch-прогон `cmd/geocode` во время сессии курации:** batch легально перезаписывает
+`auto`-строки — между просмотром авто-точки и кликом «verified» геометрия могла смениться, и
+подтверждённой оказалась бы точка, которую человек не видел. Сначала прогон, потом курация (оба —
+холодные разовые процессы, AR-21/22, одновременно им работать незачем).
+
+### Что даёт верификация (AR-28 → SM-C2)
+
+`verified` терминален для batch: подтверждённые контракты перестают пере-геокодироваться каждым
+прогоном (и жечь rate-limit публичного Nominatim). `wrong_reported` делает SM-C2 («доля ошибочной
+геопривязки») вычислимым: `SELECT count(*) FILTER (WHERE geocode_status='wrong_reported') … FROM
+geo_objects`. Экспорт в `/metrics` — при появлении metrics-провода (NFR-4). Автопровод канала
+«точка не там» (`error_reports.kind='geo_wrong_point'`, Story 5.4) в `wrong_reported` — Epic 3,
+позже; до него пометку ставит куратор вручную по содержимому `error_reports`.
+
+### «Публикация» (решение D6)
+
+Публикация = смена статуса строки: публичные читатели (`store/geo.go` bbox для карты 3.4, медиана
+района 6.4) читают `geo_objects` напрямую — ручная правка видна сразу. Пересчёт `price_benchmarks`
+(флаг цена/км 4.3) происходит на следующем `RecalcBenchmarks` (конвейер AR-9), немедленный пересчёт
+кураторской правкой НЕ триггерится.
 
 ## Гейты / проверка готовности
 

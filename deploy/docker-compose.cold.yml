@@ -12,10 +12,36 @@ services:
       dockerfile: Dockerfile # держит GOSZAKUP_TOKEN; cmd/api токена НЕ видит (изоляция)
     command: ['/importer']
 
+  # Story 3.2 (Task 4): внутренняя админка поверх ТОЙ ЖЕ Postgres (очередь геопривязки FR-5; нормализация
+  # FR-2 — коллекции добавит Epic 2-live). Поднимать НА ВРЕМЯ курирования (AR-21, hot/cold split):
+  #   docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.cold.yml --profile directus up -d directus
+  # Решения 3.2: D4 — порт ТОЛЬКО loopback (доступ SSH-туннелем), НЕ за Caddy (внутренняя админка);
+  # D5 — подключение owner-DSN (как всё приложение, 0015), граница держится (а) только кураторскими
+  # коллекциями в Directus (bootstrap.sh), (б) grants-стражами; role-DSN-разводка — ops/Story 2.2.
+  # Первый старт создаёт системные таблицы directus_* в той же БД (вне goose — это НЕ дрейф миграций).
+  # Настройка коллекций/очереди: deploy/directus/bootstrap.sh (идемпотентен); чек-лист оператора:
+  # docs/ops/geocoding.md. Пин на минор (архитектура): актуальный минор Directus 11 на 2026-07.
   directus:
     profiles: ['directus']
-    image: directus/directus:11
-    # внутренняя админка поверх Postgres (очереди гео FR-5 / нормализации FR-2)
+    image: directus/directus:11.17
+    ports:
+      - '127.0.0.1:8055:8055'
+    environment:
+      SECRET: ${DIRECTUS_SECRET:-dev-only-secret-change-me}          # менять вне dev (deploy/.env)
+      ADMIN_EMAIL: ${DIRECTUS_ADMIN_EMAIL:-admin@example.com} # .local-домены не проходят email-валидацию Directus
+      ADMIN_PASSWORD: ${DIRECTUS_ADMIN_PASSWORD:-change-me}          # менять вне dev (deploy/.env)
+      PUBLIC_URL: http://127.0.0.1:8055
+      DB_CLIENT: pg
+      DB_HOST: db
+      DB_PORT: '5432'
+      DB_DATABASE: ${POSTGRES_DB:-ashyqqala}
+      DB_USER: ${POSTGRES_USER:-ashyqqala}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-ashyqqala}
+      WEBSOCKETS_ENABLED: 'false'
+      TELEMETRY: 'false'
+    depends_on:
+      db:
+        condition: service_healthy # db — из docker-compose.yml (merge через -f -f, как geocode ниже)
 
   bot:
     profiles: ['bot']

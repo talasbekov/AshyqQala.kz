@@ -20,6 +20,10 @@ type Querier interface {
 	// Авто-снятие: гасит АКТИВНЫЙ contractor-флаг (is_active=false + cleared_at). Идемпотентно (WHERE is_active —
 	// повтор на уже снятом = no-op). История строки сохраняется (не DELETE).
 	ClearContractorFlag(ctx context.Context, arg ClearContractorFlagParams) error
+	// Куратор СНИМАЕТ неверную точку (wrong_reported → unmatched): geom=NULL — объект честно «без точки на
+	// карте» (AC2), length_km обнулит триггер 0022 (geom NULL ⇒ длины нет). ТОЛЬКО из wrong_reported: снятие
+	// подтверждённых/ручных точек — через wrong_reported (двухшаговый след для SM-C2), не мимо него.
+	ClearGeoObjectToUnmatched(ctx context.Context, arg ClearGeoObjectToUnmatchedParams) (int64, error)
 	// Агрегаты подрядчика по supplier_org_id (FR-13): число контрактов, сумма ₸ (bigint), distinct регионы (КАТО).
 	// До наполнения связи (Story 2.2) вернёт нули/пусто → хендлер честно помечает «профиль неполный» (НЕ «0 контрактов»).
 	ContractorAggregates(ctx context.Context, supplierOrgID pgtype.Int8) (ContractorAggregatesRow, error)
@@ -139,10 +143,16 @@ type Querier interface {
 	// → карточка «профиль неполный». Публичный goszakup_contract_id (не суррогат); удалённые скрыты; порядок стабилен.
 	ListContractsBySupplierOrg(ctx context.Context, supplierOrgID pgtype.Int8) ([]ListContractsBySupplierOrgRow, error)
 	// Контракты — кандидаты batch-геокодинга: без geo_object ИЛИ с существующим auto (переген допустим).
-	// manual (курация 3.2) НИКОГДА не выбирается повторно (AR-4: курация не трогается батчем). Удалённые исключены.
+	// Курация 3.2 (manual/verified/wrong_reported) и unmatched НИКОГДА не выбираются повторно (AR-4: курация
+	// не трогается батчем; verified терминален — подтверждённые не жгут rate-limit Nominatim). Удалённые исключены.
 	// БЕЗ SQL LIMIT (зеркало ListLots/0.7): «-max» — срез на стороне Go (LIMIT 0 в Postgres = ноль строк, НЕ
 	// «без лимита» — этот footgun обходим на уровне вызывающего, не здесь).
 	ListContractsForGeocode(ctx context.Context) ([]ListContractsForGeocodeRow, error)
+	// Очередь куратора (Story 3.2, зеркало ListAliasesByStatus/2.3): unmatched/wrong_reported — требуют ручной
+	// работы; auto — кандидаты на верификацию (сомнительные первыми: confidence ASC NULLS FIRST). Go-потребители:
+	// тесты («имитация Directus») и будущий провод error_reports→wrong_reported; сам Directus читает таблицу
+	// напрямую (пресет-фильтр коллекции, решение D3).
+	ListGeoObjectsByStatus(ctx context.Context, geocodeStatus string) ([]ListGeoObjectsByStatusRow, error)
 	// Перечисление лотов для batch-обработки (геокодинг — Story 0.7); удалённые скрыты, порядок стабилен.
 	ListLots(ctx context.Context) ([]Lot, error)
 	// ⏳ ИНТЕРИМ (Story 0.8, трек «Парсер-мост»): лоты Астаны с интерим-гео для ранней карты.
@@ -171,6 +181,14 @@ type Querier interface {
 	// недоступен) → пометить dead_at=$2 (момент из clock.Clock) и dead_reason=$3 (последняя transient-ошибка).
 	// Строка выпадает из частичного индекса/поллинга (PollUnsent: dead_at IS NULL) — не ре-поллится вечно.
 	MarkDead(ctx context.Context, arg MarkDeadParams) error
+	// Куратор ПОДТВЕРЖДАЕТ авто-точку (AC3, AR-28): ТОЛЬКО auto→verified. Точка/провенанс/confidence НЕ
+	// меняются (геометрия та же, ставил её nominatim — verified фиксирует лишь факт проверки человеком).
+	// Запрещённые переходы (manual/unmatched/wrong_reported → verified) дают 0 строк, не тихую запись.
+	MarkGeoObjectVerified(ctx context.Context, id int64) (int64, error)
+	// Пометка «точка не там» (AC3, AR-28 — расширение FR-28; питает SM-C2): auto|manual|verified →
+	// wrong_reported. Спорная геометрия СОХРАНЯЕТСЯ (факт, не подмена) до решения куратора: перерисовать
+	// (ResolveGeoObjectManually) или снять (ClearGeoObjectToUnmatched). unmatched помечать нечем — 0 строк.
+	MarkGeoObjectWrongReported(ctx context.Context, id int64) (int64, error)
 	// Успешная доставка (O-2): проставить sent_at (момент из clock.Clock). Строка больше не поллится
 	// (выпадает из частичного индекса notifications_outbox_unsent_idx).
 	MarkSent(ctx context.Context, arg MarkSentParams) error
@@ -198,6 +216,13 @@ type Querier interface {
 	// НЕ перезатрёт правку при ре-импорте — даже если оператор поправил бывшую auto-строку. Имитация Directus;
 	// полная S-0-приёмка «правка переживает ре-импорт» — Story 2.6.
 	ResolveAliasManually(ctx context.Context, arg ResolveAliasManuallyParams) error
+	// Куратор СТАВИТ/КОРРЕКТИРУЕТ геометрию (POINT|LINESTRING) → строка становится manual (AC1). Допустимо из
+	// любого статуса, КРОМЕ verified (D1: перерисовка ПОДТВЕРЖДЁННОЙ точки — сначала пометка wrong_reported,
+	// двухшаговый след для SM-C2 — ревью 3.2 выровняло по списку переходов D1). length_km здесь НЕ задаётся —
+	// выводится триггером 0022 при изменении geom (LINESTRING → длина, POINT → NULL). confidence обнуляется
+	// честно: Nominatim importance не применим к человеческой разметке. :execrows — вызывающий видит «0 строк»
+	// (id не найден ИЛИ запрещённый verified→manual) без домысла.
+	ResolveGeoObjectManually(ctx context.Context, arg ResolveGeoObjectManuallyParams) (int64, error)
 	// Резолв фасета «подрядчик» (Story 6.1): канонический БИН → внутренний supplier org id (bigint). Нормализация
 	// БИН — в Go (normalize.CanonicalBIN) ДО вызова; сюда приходит уже-канонический bin. Не найдено → pgx.ErrNoRows
 	// (хендлер трактует как пустой список честно, не 500 — несуществующий подрядчик ≠ ошибка сервера).
@@ -232,9 +257,10 @@ type Querier interface {
 	// Идемпотентный канон-UPSERT геопривязки по contract_id (Story 3.1, AC1/Task 3). geom строится из WKT
 	// (geom_wkt=NULL ⇒ geom NULL — честный unmatched, НИКОГДА 0,0/центр). length_km ВСЕГДА ВЫВОДИТСЯ из geom
 	// (НЕ принимается параметром — целый класс багов «забыли пересчитать» структурно невозможен): LINESTRING →
-	// ST_Length(geom::geography)/1000; POINT/NULL → NULL (честно, не «длина=0»). geocode_status=manual
-	// (Directus 3.2) НИКОГДА не перезаписывается batch-геокодером — WHERE-гейт на DO UPDATE (AR-4: курация
-	// переживает ре-геокод).
+	// NULLIF(ST_Length(geom::geography)/1000, 0) — вырожденная линия (совпадающие вершины) БЕЗ длины = NULL,
+	// честно, не «длина=0» (ревью 3.2); POINT/NULL → NULL. Гейт на DO UPDATE (AR-4:
+	// курация переживает ре-геокод, Story 3.2): batch перезаписывает ТОЛЬКО auto|unmatched — manual (ручная
+	// разметка), verified (подтверждённая точка) и wrong_reported (спорная, ждёт куратора) неприкосновенны.
 	UpsertGeoObject(ctx context.Context, arg UpsertGeoObjectParams) error
 	// Идемпотентный UPSERT лота по natural goszakup_lot_id (импортёр перестраивает проекцию; повтор не плодит дубли).
 	UpsertLot(ctx context.Context, arg UpsertLotParams) error

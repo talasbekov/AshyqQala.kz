@@ -257,7 +257,7 @@ func run(ctx context.Context, contracts contractSource, gc geocoder, store geoSt
 		return 1
 	}
 	if len(all) == 0 {
-		fmt.Fprintln(stderr, "нет контрактов, ожидающих геокодинга (все auto/manual уже проставлены, либо contracts пуста).")
+		fmt.Fprintln(stderr, "нет контрактов, ожидающих геокодинга (auto пере-выбираются; курация 3.2 — manual/verified/wrong_reported — и unmatched не пере-выбираются; либо contracts пуста).")
 		return 0
 	}
 	if max > 0 && len(all) > max {

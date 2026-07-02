@@ -27,7 +27,8 @@ ON CONFLICT (goszakup_contract_id) DO UPDATE SET
 
 -- 3) Канонические geo_objects (LINESTRING дороги + length_km) для этих контрактов. geocode_status=auto →
 --    geom ОБЯЗАН быть не-NULL (CHECK 0020). district_id — район Есиль. length_km подобран так, что
---    ₸/км = amount/length_km образует выборку с медианой ~42 млн ₸/км.
+--    ₸/км = amount/length_km образует выборку с медианой ~42 млн ₸/км. Явный length_km при INSERT
+--    уважается триггером 0022 (вывод — только когда NULL/geom изменился).
 INSERT INTO geo_objects (contract_id, district_id, geom, address_text, length_km, geocode_status, confidence, geocoded_by)
 SELECT c.id, d.id,
        ST_GeomFromText('LINESTRING(71.40 51.10, 71.45 51.14)', 4326),
@@ -39,3 +40,19 @@ FROM (VALUES
 JOIN contracts c ON c.goszakup_contract_id = v.gid
 LEFT JOIN districts d ON d.name_ru = 'Есиль'
 WHERE NOT EXISTS (SELECT 1 FROM geo_objects g WHERE g.contract_id = c.id);
+
+-- 4) Story 3.2 (AC2/Task 5): непустая ОЧЕРЕДЬ куратора на синтетике — контракт с мусорным адресом,
+--    честно unmatched (geom NULL, CHECK 0020/0022 доволен). Район по КАТО-префиксу проставлен (механика
+--    3.1 «район даже без точки»). Оператор в Directus ставит точку → строка становится manual.
+INSERT INTO contracts (goszakup_contract_id, subject_ru, subject_kk, amount_tng, sign_date, status, direction, kato_code, source_url)
+VALUES
+ ('DEMO-GEO-07','Синтетика 3.2: нераспознанный адрес (очередь курации)','Синтетика 3.2: танылмаған мекенжай (курация кезегі)',90000000,'2026-05-07','active','road','710000000','https://goszakup.gov.kz/ru/contract/DEMO-GEO-07')
+ON CONFLICT (goszakup_contract_id) DO UPDATE SET
+  amount_tng = EXCLUDED.amount_tng, sign_date = EXCLUDED.sign_date, direction = EXCLUDED.direction, kato_code = EXCLUDED.kato_code;
+
+INSERT INTO geo_objects (contract_id, district_id, geom, address_text, length_km, geocode_status, confidence, geocoded_by)
+SELECT c.id, d.id, NULL, 'ул. Несуществующая 0, корпус ???', NULL, 'unmatched', NULL, 'synthetic-seed'
+FROM contracts c
+LEFT JOIN districts d ON d.name_ru = 'Есиль'
+WHERE c.goszakup_contract_id = 'DEMO-GEO-07'
+  AND NOT EXISTS (SELECT 1 FROM geo_objects g WHERE g.contract_id = c.id);

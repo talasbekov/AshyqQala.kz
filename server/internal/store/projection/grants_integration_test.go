@@ -73,3 +73,33 @@ func TestRoleGrants_ProjectionCurationBoundary(t *testing.T) {
 		t.Fatalf("app_curator НЕ смог писать кураторскую org_name_aliases: %v", err)
 	}
 }
+
+// TestRoleGrants_GeoCurationBoundary — Story 3.2: гео-сторона границы AR-4 (0020). geo_objects/districts —
+// КУРАТОРСКИЕ: curator (Directus/геокодер) пишет; importer ТОЛЬКО читает (запрет 42501 на запись). Гранты
+// сейчас инертны в рантайме (app коннектится owner-ролью, 0015) — граница ДОКАЗЫВАЕТСЯ этим стражем;
+// реальная role-DSN разводка (LOGIN/membership) — ops/Story 2.2.
+func TestRoleGrants_GeoCurationBoundary(t *testing.T) {
+	pool := benchmarkPool(t)
+	defer pool.Close()
+
+	// importer НЕ пишет кураторскую geo_objects (unmatched без geom — CHECK доволен, падать должен ГРАНТ).
+	if err := underRole(t, pool, "app_importer",
+		"INSERT INTO geo_objects (geocode_status) VALUES ('unmatched')"); !isPermissionDenied(err) {
+		t.Fatalf("app_importer записал в кураторскую geo_objects (ожидался 42501): err=%v", err)
+	}
+	// curator ПИШЕТ geo_objects — путь Directus 3.2 (и batch-геокодера).
+	if err := underRole(t, pool, "app_curator",
+		"INSERT INTO geo_objects (geocode_status) VALUES ('unmatched')"); err != nil {
+		t.Fatalf("app_curator НЕ смог писать кураторскую geo_objects (Directus 3.2): %v", err)
+	}
+	// importer НЕ пишет кураторскую districts.
+	if err := underRole(t, pool, "app_importer",
+		"INSERT INTO districts (name_ru, name_kk) VALUES ('страж-importer', 'страж-importer')"); !isPermissionDenied(err) {
+		t.Fatalf("app_importer записал в кураторскую districts (ожидался 42501): err=%v", err)
+	}
+	// curator ПИШЕТ districts (справочник районов курируем).
+	if err := underRole(t, pool, "app_curator",
+		"INSERT INTO districts (name_ru, name_kk) VALUES ('страж-curator', 'страж-curator')"); err != nil {
+		t.Fatalf("app_curator НЕ смог писать кураторскую districts: %v", err)
+	}
+}
