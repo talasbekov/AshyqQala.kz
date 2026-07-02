@@ -60,6 +60,15 @@ type Querier interface {
 	// нет ни бизнес-строки, ни события). Дедуп (O-3): event_id UNIQUE + ON CONFLICT DO NOTHING — повторная
 	// вставка того же события no-op (не двоит у получателя). attempts/available_at — дефолты схемы (0 / now()).
 	EnqueueEvent(ctx context.Context, arg EnqueueEventParams) error
+	// КАТО-членство БЕЗ точки (AC2, «префикс-КАТО как в 6.3», зеркало district.Catalog.NameByKATO): район,
+	// чей код — префикс КАТО-кода контракта. Самое длинное совпадение первым (иерархическая вложенность).
+	// kato_code ЭКРАНИРУЕТСЯ явно (ESCAPE '\'): в отличие от district.go/district.ValidKATO (регэксп
+	// цифры-онли на JSON-реестре), СТОЛБЕЦ districts.kato_code (эта таблица, 0020) НЕ имеет CHECK-ограничения
+	// на формат — код-ревью нашло, что % или _ в сохранённом значении иначе действовали бы как LIKE-wildcard.
+	FindDistrictIDByKATOPrefix(ctx context.Context, contractKato string) (int64, error)
+	// Геометрическое членство (AC2, «при наличии точки»): район, чей полигон СОДЕРЖИТ геокодированную точку.
+	// pgx.ErrNoRows у вызывающего = честное «нет геометрически совпавшего района» (НЕ ошибка).
+	FindDistrictIDByPoint(ctx context.Context, geomWkt string) (int64, error)
 	// Запись псевдонима по (raw_name, source) — для проверки статуса резолва / «профиль уточняется».
 	GetAlias(ctx context.Context, arg GetAliasParams) (OrgNameAlias, error)
 	// Читает контракт по публичному natural id (goszakup_contract_id); удалённые скрыты.
@@ -74,6 +83,9 @@ type Querier interface {
 	GetFlagDispute(ctx context.Context, riskFlagID int64) (FlagDispute, error)
 	// Гео-результат по natural goszakup_lot_id (для тестов/проверки).
 	GetGeoLotByLotID(ctx context.Context, goszakupLotID string) (InterimGeoLot, error)
+	// Гео-результат по contract_id (для тестов/проверки, аналог GetGeoLotByLotID). geom → GeoJSON явным
+	// ::jsonb-алиасом (AR-19: наружу всегда GeoJSON [lon,lat]; sqlc НЕ трогает raw geometry напрямую).
+	GetGeoObjectByContractID(ctx context.Context, contractID pgtype.Int8) (GetGeoObjectByContractIDRow, error)
 	// Последний акт по контракту (internal contract_id) для карточки (Story 5.1, FR-11). Детерминированный
 	// порядок: наибольшая act_date (NULL — в конец), затем id. Не найдено → pgx.ErrNoRows (честное «нет акта»,
 	// карточка показывает блок акта в состоянии no_data, НЕ выдумывает дату/подписанта).
@@ -126,6 +138,11 @@ type Querier interface {
 	// Список контрактов подрядчика (FR-13, AC-1) по supplier_org_id. До наполнения связи (Story 2.2) — пусто
 	// → карточка «профиль неполный». Публичный goszakup_contract_id (не суррогат); удалённые скрыты; порядок стабилен.
 	ListContractsBySupplierOrg(ctx context.Context, supplierOrgID pgtype.Int8) ([]ListContractsBySupplierOrgRow, error)
+	// Контракты — кандидаты batch-геокодинга: без geo_object ИЛИ с существующим auto (переген допустим).
+	// manual (курация 3.2) НИКОГДА не выбирается повторно (AR-4: курация не трогается батчем). Удалённые исключены.
+	// БЕЗ SQL LIMIT (зеркало ListLots/0.7): «-max» — срез на стороне Go (LIMIT 0 в Postgres = ноль строк, НЕ
+	// «без лимита» — этот footgun обходим на уровне вызывающего, не здесь).
+	ListContractsForGeocode(ctx context.Context) ([]ListContractsForGeocodeRow, error)
 	// Перечисление лотов для batch-обработки (геокодинг — Story 0.7); удалённые скрыты, порядок стабилен.
 	ListLots(ctx context.Context) ([]Lot, error)
 	// ⏳ ИНТЕРИМ (Story 0.8, трек «Парсер-мост»): лоты Астаны с интерим-гео для ранней карты.
@@ -212,6 +229,13 @@ type Querier interface {
 	// Идемпотентный UPSERT гео-результата лота по goszakup_lot_id (повтор batch-Nominatim не плодит дубли).
 	// unmatched → lat/lon NULL (честность: «без точки на карте», НЕ 0,0). ⏳ интерим (Story 0.7).
 	UpsertGeoLot(ctx context.Context, arg UpsertGeoLotParams) error
+	// Идемпотентный канон-UPSERT геопривязки по contract_id (Story 3.1, AC1/Task 3). geom строится из WKT
+	// (geom_wkt=NULL ⇒ geom NULL — честный unmatched, НИКОГДА 0,0/центр). length_km ВСЕГДА ВЫВОДИТСЯ из geom
+	// (НЕ принимается параметром — целый класс багов «забыли пересчитать» структурно невозможен): LINESTRING →
+	// ST_Length(geom::geography)/1000; POINT/NULL → NULL (честно, не «длина=0»). geocode_status=manual
+	// (Directus 3.2) НИКОГДА не перезаписывается batch-геокодером — WHERE-гейт на DO UPDATE (AR-4: курация
+	// переживает ре-геокод).
+	UpsertGeoObject(ctx context.Context, arg UpsertGeoObjectParams) error
 	// Идемпотентный UPSERT лота по natural goszakup_lot_id (импортёр перестраивает проекцию; повтор не плодит дубли).
 	UpsertLot(ctx context.Context, arg UpsertLotParams) error
 	// Идемпотентный UPSERT организации по natural bin (импортёр перестраивает проекцию; повтор не плодит дубли).

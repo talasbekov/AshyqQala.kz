@@ -1,6 +1,9 @@
 # ХОЛОДНЫЕ службы (по требованию, через profiles). Каркас S-0 — НЕ запускаются по умолчанию.
 # Наполняются: importer — Epic 2 (живой импорт); directus — Epic 3 (очереди гео/нормализации);
-# bot — Epic 7 (polling); nominatim — Epic 3 (batch-геокодинг, эфемерно).
+# bot — Epic 7 (polling); nominatim + geocode — Epic 3 Story 3.1 (batch-геокодинг, эфемерно).
+#
+# Запуск geocode-профиля вместе с горячим стеком (db — из docker-compose.yml, geocode/nominatim — отсюда):
+#   docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.cold.yml --profile geocode up
 services:
   importer:
     profiles: ['importer']
@@ -25,3 +28,23 @@ services:
     profiles: ['geocode']
     image: mediagis/nominatim:4.4
     # локальный Nominatim для batch-геокодинга (политика ≤1 req/sec снимается на своём инстансе)
+
+  # Story 3.1 (Task 4, AC3): эфемерный batch — geocodeит контракты и ВЫХОДИТ (AR-22, не 24/7). NOMINATIM_URL
+  # пуст ⇒ публичный Nominatim (managed-fallback, AC3 — практический путь на MVP-объёме, см.
+  # docs/ops/geocoding.md); указан на sibling-сервис nominatim ⇒ self-host (без публичной паузы).
+  # context/dockerfile — ТЕ ЖЕ, что у api (server/Dockerfile теперь собирает оба бинаря, Task 4); entrypoint
+  # (не command!) — образ ENTRYPOINT ["/api"], голый command склеился бы в аргумент («/api /geocode»).
+  geocode:
+    profiles: ['geocode']
+    build:
+      context: .. # корень репо — как api (server/Dockerfile:COPY server/go.mod ожидает repo-root контекст)
+      dockerfile: server/Dockerfile
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-ashyqqala}:${POSTGRES_PASSWORD:-ashyqqala}@db:5432/${POSTGRES_DB:-ashyqqala}?sslmode=disable
+      NOMINATIM_URL: http://nominatim:8080
+    entrypoint: ['/geocode']
+    depends_on:
+      db:
+        condition: service_healthy # db объявлен в docker-compose.yml (без profile — стартует всегда); merge через -f -f
+      nominatim:
+        condition: service_started
