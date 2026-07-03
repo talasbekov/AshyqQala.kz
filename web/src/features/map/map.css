@@ -105,6 +105,117 @@
   pointer-events: none;
 }
 
+/* --- Story 3.4: глиф-статусы маркеров (форма/глиф первичны, цвет вторичен — WCAG 1.4.1). ---
+   z-priority выбранный(3) > флаг(2) > обычный(1) — EXPERIENCE.md:235. Амбер {signal-attention} —
+   НЕ «громче» голубого: та же геометрия пина, равная весомость (UX-DR39). */
+.aq-map-marker {
+  position: relative;
+  z-index: 1;
+}
+
+.aq-map-marker--flagged {
+  z-index: 2;
+}
+
+.aq-map-marker--selected {
+  z-index: 3;
+}
+
+.aq-map-marker--flagged .aq-map-marker__pin {
+  background: var(--color-signal-attention);
+}
+
+.aq-map-marker--confirmed .aq-map-marker__pin {
+  background: var(--color-confirmed);
+}
+
+/* Выбранный: ×1.25 + двойное кольцо (surface-зазор + accent) — форма, не только цвет. Глиф статуса сохраняется. */
+.aq-map-marker--selected .aq-map-marker__pin {
+  transform: rotate(45deg) scale(1.25);
+  box-shadow:
+    0 0 0 2px var(--color-surface),
+    0 0 0 4px var(--color-accent);
+}
+
+/* Глиф статуса («!» флаг / «✓» подтверждён) — поверх пина, без поворота. */
+.aq-map-marker__glyph {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding-bottom: 6px; /* оптический центр капли (anchor: bottom) */
+  font-size: var(--type-caption-size, 11px);
+  font-weight: var(--type-body-strong-weight);
+  line-height: 1;
+  color: var(--color-surface);
+  pointer-events: none;
+}
+
+/* Кластер {map-cluster}: голубой круг с бейджем-счётчиком; при флаг-объектах — амбер-кольцо + «!»-точка
+   (флаг не теряется при свёртке, AC2). Хитбокс ≥ tap-target. */
+.aq-map-cluster {
+  position: relative;
+  z-index: 2;
+  min-width: var(--space-tap-target);
+  height: var(--space-tap-target);
+  padding: 0;
+  border: none;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.aq-map-cluster:focus-visible {
+  outline: var(--space-focus-ring-width) solid var(--color-focus-ring);
+  outline-offset: var(--space-focus-ring-offset);
+  border-radius: var(--radius-full);
+}
+
+.aq-map-cluster__count {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 var(--space-2);
+  display: grid;
+  place-items: center;
+  background: var(--color-primary);
+  color: var(--color-surface);
+  border: 2px solid var(--color-surface);
+  border-radius: var(--radius-full);
+  font-size: var(--type-body-size);
+  font-weight: var(--type-body-strong-weight);
+  pointer-events: none;
+}
+
+.aq-map-cluster--flag .aq-map-cluster__count {
+  box-shadow: 0 0 0 3px var(--color-signal-attention);
+}
+
+.aq-map-cluster__dot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  background: var(--color-signal-attention);
+  color: var(--color-surface);
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: var(--type-body-strong-weight);
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* Аффорданса-счётчик «Ещё N без точки» (AC3) — видимая строка под картой. */
+.aq-map-ungeocoded-more {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--space-tap-target);
+}
+
 /* Список «без точки на карте» (AC3): честное состояние, не дефект. */
 .aq-ungeocoded__heading {
   margin: 0 0 var(--space-2);

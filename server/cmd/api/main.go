@@ -175,6 +175,11 @@ func main() {
 	mapH := httpapi.MapLotsHandler{Store: gen.New(pool), Log: log}
 	r.Get("/api/lots", mapH.List)
 
+	// Story 3.4 (FR-7): каноническая карта — geo_objects (канон 3.1/3.2) в bbox: маркеры/линии +
+	// has_active_flag (амбер-кольцо кластера) + счётчик «без точки» (AC3). НЕ interim_geo_lots.
+	moH := httpapi.MapObjectsHandler{Store: httpapi.NewMapObjectsStore(pool), Log: log}
+	r.Get("/api/map/objects", moH.List)
+
 	// Story 5.4 (FR-28): публичный безаккаунтный канал «сообщить об ошибке» — ПЕРВЫЙ write-эндпоинт.
 	// Защита: honeypot + лимит тела + in-memory rate-limit (без новых зависимостей). Токен не нужен.
 	erH := httpapi.NewErrorReportsHandler(gen.New(pool), log)

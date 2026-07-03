@@ -537,6 +537,67 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/map/objects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Объекты канонической карты в bbox (FR-7, Story 3.4)
+         * @description Геокодированные geo_objects (канон 3.1/3.2) внутри окна карты: маркеры (Point) и линии дорог (LineString) + признак активного риск-флага (глиф «!», амбер-кольцо кластера) + статус геопривязки (глиф «✓» = verified). Геометрия — GeoJSON RFC7946, порядок [lon,lat] (AR-19). unmatched структурно НЕ в выдаче (geom NULL) — их видимость несёт ungeocoded_count («Ещё N объектов без точки на карте», вся Астана). truncated=true — в окне больше объектов, чем cap выдачи (честная детекция, фронт показывает плашку, не молчит). Контент превью (предмет/сумма/подрядчик) — Story 3.5 (FR-8), здесь его нет.
+         *
+         */
+        get: {
+            parameters: {
+                query: {
+                    /** @description Окно карты «minLon,minLat,maxLon,maxLat» (WGS84). Невалидный bbox (не 4 числа, NaN/Inf, вне диапазона, min>=max) → 400. */
+                    bbox: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description объекты окна (возможно пустые — честный []) + счётчик «без точки» */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MapObjectsResponse"];
+                    };
+                };
+                /** @description невалидный bbox */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description внутренняя ошибка */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/districts/{kato}": {
         parameters: {
             query?: never;
@@ -762,6 +823,23 @@ export interface components {
             source_url: components["schemas"]["StringField"];
             imported_at: components["schemas"]["StringField"];
             updated_at: components["schemas"]["StringField"];
+        };
+        MapObject: {
+            public_id: string;
+            goszakup_contract_id: string | null;
+            /** @enum {string} */
+            geocode_status: "auto" | "manual" | "unmatched" | "verified" | "wrong_reported";
+            has_active_flag: boolean;
+            length_km: number | null;
+            /** @description GeoJSON RFC7946 (Point|LineString), координаты [lon,lat] */
+            geom: Record<string, never>;
+        };
+        MapObjectsResponse: {
+            items: components["schemas"]["MapObject"][];
+            /** @description true — в окне больше объектов, чем cap выдачи (фронт показывает честную плашку) */
+            truncated: boolean;
+            /** @description контракты «без точки на карте» (unmatched или без гео-строки), вся Астана (AC3) */
+            ungeocoded_count: number;
         };
         /** @description Инвариант координат (OpenAPI 3.0 не выражает условную required-зависимость декларативно, поэтому он задан здесь как контракт): geocode_state = ok ГАРАНТИРУЕТ, что lon и lat не null (точка на карте есть); при ЛЮБОМ другом состоянии (geocode_pending, geocode_failed) lon и lat равны null. Координаты НИКОГДА не равны 0,0. */
         MapLot: {

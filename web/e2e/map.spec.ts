@@ -1,64 +1,178 @@
 import { test, expect } from '@playwright/test';
 
-// Smoke ранней карты лотов (Story 0.8): /map → реальные лоты из /api/lots (замокан) → маркер
-// геокодированного лота → превью ЛОТА с честной плашкой «ожидает официального источника»;
-// негеокодированный лот честно в списке вне карты. Ответ /api замокан (route.fulfill) — CI без docker.
-const LOTS = [
-  {
-    goszakup_lot_id: 'scrape-0001',
-    subject_ru: { value: 'Реконструкция автодороги по ул. Абая', state: 'ok' },
-    subject_kk: { value: 'Абай к. бойынша автожол реконструкциясы', state: 'ok' },
-    amount_tng: { value: '240000000', state: 'ok' },
-    lon: 71.4306,
-    lat: 51.1281,
-    geocode_state: 'ok',
-  },
-  {
-    goszakup_lot_id: 'scrape-0002',
-    subject_ru: { value: 'Ремонт сетей водоснабжения', state: 'ok' },
-    subject_kk: { value: 'Сумен жабдықтау желілерін жөндеу', state: 'ok' },
-    amount_tng: { value: '5000000', state: 'ok' },
-    lon: null,
-    lat: null,
-    geocode_state: 'geocode_failed',
-  },
-];
+// Каноническая карта (Story 3.4, FR-7): /map → geo_objects из /api/map/objects (замокан) →
+// кластер с амбер-кольцом (флаг не теряется, AC2) → тап → раскрытие; глиф-статусы маркеров (AC1);
+// счётчик «Ещё N без точки» (AC3); честные состояния (пусто/усечение/ошибка). CI без docker.
+// Фикстуры строго по schema.gen.ts (урок AI-1b: дрейф фикстур ↔ схемы = красный e2e).
 
-test('ранняя карта лотов: /api/lots → маркер → превью лота + честная плашка', async ({ page }) => {
-  await page.route('**/api/lots', (route) => route.fulfill({ json: LOTS }));
+// Тройка точек в ~800 м друг от друга (кластер на стартовом зуме 11; раскрытие одним тапом),
+// одна из них с активным флагом → кластер несёт амбер-кольцо. Отдельно: verified-точка («✓»)
+// поодаль и LINESTRING дороги (canvas-слой, DOM-маркера не имеет).
+const OBJECTS = {
+  items: [
+    {
+      // РАВНОСТОРОННЯЯ тройка (~800 м попарно): на z11 (50px ≈ 2.4 км ground) — один кластер;
+      // на expansion-зуме ВСЕ ТРИ пары превышают радиус одновременно → полный распад ОДНИМ тапом.
+      // Неравные расстояния дают ступенчатое раскрытие (кластер 2 + точка) и недетерминированный тест.
+      public_id: '0198a3b0-0000-7000-8000-00000000c001',
+      goszakup_contract_id: 'DEMO-GEO-01',
+      geocode_status: 'auto',
+      has_active_flag: true,
+      length_km: null,
+      geom: { type: 'Point', coordinates: [71.43, 51.128] },
+    },
+    {
+      public_id: '0198a3b0-0000-7000-8000-00000000c002',
+      goszakup_contract_id: 'DEMO-GEO-02',
+      geocode_status: 'manual',
+      has_active_flag: false,
+      length_km: null,
+      geom: { type: 'Point', coordinates: [71.4415, 51.128] },
+    },
+    {
+      public_id: '0198a3b0-0000-7000-8000-00000000c003',
+      goszakup_contract_id: 'DEMO-GEO-03',
+      geocode_status: 'auto',
+      has_active_flag: false,
+      length_km: null,
+      geom: { type: 'Point', coordinates: [71.43575, 51.13426] },
+    },
+    {
+      // ~4 км от кластера (≈87px на z11 > clusterRadius 50) — гарантированно одиночный маркер,
+      // и близко к центру: фактическое окно канваса уже layout-контейнера (60vh × ширина колонки).
+      public_id: '0198a3b0-0000-7000-8000-00000000c004',
+      goszakup_contract_id: 'DEMO-GEO-04',
+      geocode_status: 'verified',
+      has_active_flag: false,
+      length_km: null,
+      geom: { type: 'Point', coordinates: [71.49, 51.14] },
+    },
+    {
+      public_id: '0198a3b0-0000-7000-8000-00000000c005',
+      goszakup_contract_id: 'DEMO-GEO-05',
+      geocode_status: 'manual',
+      has_active_flag: false,
+      length_km: 5.0,
+      geom: {
+        type: 'LineString',
+        coordinates: [
+          [71.44, 51.1],
+          [71.48, 51.12],
+        ],
+      },
+    },
+  ],
+  truncated: false,
+  ungeocoded_count: 4,
+};
+
+test('каноническая карта: кластер с амбер-кольцом → раскрытие; глифы; счётчик «без точки»', async ({
+  page,
+}) => {
+  await page.route('**/api/map/objects*', (route) => route.fulfill({ json: OBJECTS }));
 
   await page.goto('/map');
-
-  // Карта-контейнер присутствует (role=application, AC1).
   await expect(page.getByRole('application')).toBeVisible();
 
-  // Честная плашка состояния контейнера видна (AC1): временные/частичные данные (kk-дефолт или ru).
-  await expect(page.getByText(/Временные|Уақытша/i)).toBeVisible();
-  // AC1: направления помечены «предв.» (keyword-bias) — вторая строка плашки.
-  await expect(page.getByText(/предв\.|алдын ала/i)).toBeVisible();
+  // Кластер трёх близких точек: бейдж-счётчик «3» + амбер-кольцо с «!»-точкой (внутри есть флаг, AC2).
+  const cluster = page.locator('.aq-map-cluster');
+  await expect(cluster).toHaveCount(1, { timeout: 30_000 });
+  await expect(cluster).toHaveClass(/aq-map-cluster--flag/);
+  await expect(cluster.locator('.aq-map-cluster__count')).toHaveText('3');
+  await expect(cluster.locator('.aq-map-cluster__dot')).toHaveText('!');
 
-  // Негеокодированный лот честно в списке вне карты (AC3): отдельный пункт-кнопка (имя = голый id).
-  await expect(page.getByRole('button', { name: 'scrape-0002' })).toBeVisible();
+  // Verified-точка поодаль — одиночный маркер с глифом «✓» (статус несёт форма/глиф, AC1).
+  const confirmed = page.locator('.aq-map-marker--confirmed');
+  await expect(confirmed).toHaveCount(1);
+  await expect(confirmed.locator('.aq-map-marker__glyph')).toHaveText('✓');
 
-  // Маркер геокодированного лота появляется после загрузки карты (DOM-кнопка с aria-label, AC1).
-  const marker = page.getByRole('button', { name: /scrape-0001/ });
-  await expect(marker).toBeVisible({ timeout: 30_000 });
+  // AC3: аффорданса-счётчик «объектов без точки» — ссылка на список (/search).
+  const more = page.locator('.aq-map-ungeocoded-more a');
+  await expect(more).toBeVisible();
+  await expect(more).toHaveAttribute('href', '/search');
+  await expect(more).toContainText('4');
 
-  // P9 НЕГАТИВ (защита гардрейла честности): негеокодированный scrape-0002 НЕ получает маркер на
-  // карте — он только в списке вне карты. Маркер опознаём по подписи map.marker_label
-  // («Объект на карте {{id}}» / «Картадағы нысан {{id}}»), а не по голому id (так пункт списка не
-  // спутать с маркером). Регрессия, выдумавшая точку/маркер для негеокода, упала бы здесь.
+  // Линия отрисована (Task 6, AC1): canvas-слой недоступен DOM-локаторам — через тест-шов
+  // __aqMapTest (MapView) спрашиваем сам MapLibre: слой существует и рендерит фичи LINESTRING.
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const m = (
+            window as unknown as {
+              __aqMapTest?: {
+                getLayer(id: string): unknown;
+                queryRenderedFeatures(opts: { layers: string[] }): unknown[];
+              };
+            }
+          ).__aqMapTest;
+          if (!m || !m.getLayer('aq-geo-line')) return -1;
+          return m.queryRenderedFeatures({ layers: ['aq-geo-line'] }).length;
+        }),
+      { timeout: 30_000 },
+    )
+    .toBeGreaterThan(0);
+
+  // Тап по кластеру → плавный зум к раскрытию (AC2): кластер исчезает, тройка распадается на
+  // отдельные маркеры (+ verified-точка остаётся в окне на expansion-зуме ~13), среди них
+  // флаг-пин с глифом «!» (сигнал не потерялся).
+  await cluster.click();
+  await expect(page.locator('.aq-map-cluster')).toHaveCount(0, { timeout: 30_000 });
+  await expect(page.locator('.aq-map-marker')).toHaveCount(4, { timeout: 30_000 });
+  const flagged = page.locator('.aq-map-marker--flagged');
+  await expect(flagged).toHaveCount(1);
+  await expect(flagged.locator('.aq-map-marker__glyph')).toHaveText('!');
+
+  // Выбор маркера (D7): тап → двойное кольцо (--selected), глиф сохраняется; z-priority через класс.
+  await flagged.click();
+  await expect(flagged).toHaveClass(/aq-map-marker--selected/);
+});
+
+// Два сценария РАЗДЕЛЬНО (код-ревью 3.4): сервер не может выдать {items:[], truncated:true}
+// (truncated ⇒ выдача = полный cap) — прежний единый мок закреплял взаимоисключающие плашки.
+test('честное пустое окно: строка «нет объектов», плашки усечения НЕТ', async ({ page }) => {
+  await page.route('**/api/map/objects*', (route) =>
+    route.fulfill({ json: { items: [], truncated: false, ungeocoded_count: 0 } }),
+  );
+
+  await page.goto('/map');
+  // Пустая выдача — честная строка (kk-дефолт или ru), НЕ пустой экран.
   await expect(
-    page.getByRole('button', { name: /(Объект на карте|Картадағы нысан) scrape-0002/i }),
+    page.getByRole('status').filter({ hasText: /нысандар жоқ|нет объектов/i }),
+  ).toBeVisible({ timeout: 30_000 });
+  // Усечения нет — и плашки нет (не «всё сразу»).
+  await expect(
+    page.getByRole('status').filter({ hasText: /көрсетілмеген|не все объекты/i }),
   ).toHaveCount(0);
-  // И всего ровно один маркер на карте (только геокодированный scrape-0001).
-  await expect(page.locator('.aq-map-marker')).toHaveCount(1);
+  // Счётчика «без точки» нет при N=0.
+  await expect(page.locator('.aq-map-ungeocoded-more')).toHaveCount(0);
+});
 
-  // Тап по маркеру → нижний лист превью ЛОТА (AC2).
-  await marker.click();
-  const dialog = page.getByRole('dialog');
-  await expect(dialog).toBeVisible();
+test('честное усечение: truncated=true при непустой выдаче — видимая плашка, не тихое обрезание', async ({
+  page,
+}) => {
+  await page.route('**/api/map/objects*', (route) =>
+    route.fulfill({ json: { ...OBJECTS, truncated: true } }),
+  );
 
-  // AC2: блок контракта/сигналов — честная плашка «ожидает официального источника» (не пустота/ошибка).
-  await expect(dialog.getByText(/ожидает официального|ресми дереккөзді/i)).toBeVisible();
+  await page.goto('/map');
+  await expect(
+    page.getByRole('status').filter({ hasText: /көрсетілмеген|не все объекты/i }),
+  ).toBeVisible({ timeout: 30_000 });
+  // Объекты при этом отрисованы (усечение — не пустота): кластер тройки виден.
+  await expect(page.locator('.aq-map-cluster')).toHaveCount(1, { timeout: 30_000 });
+});
+
+test('ошибка загрузки объектов — role=alert, карта не притворяется пустой-чистой', async ({
+  page,
+}) => {
+  await page.route('**/api/map/objects*', (route) =>
+    route.fulfill({
+      status: 500,
+      json: { error: { code: 'INTERNAL', message: 'internal error' } },
+    }),
+  );
+
+  await page.goto('/map');
+  await expect(page.getByRole('alert')).toBeVisible({ timeout: 30_000 });
 });

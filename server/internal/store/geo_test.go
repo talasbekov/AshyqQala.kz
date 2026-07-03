@@ -30,9 +30,9 @@ func TestValidateBBox(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			err := validateBBox(c.minLon, c.minLat, c.maxLon, c.maxLat)
+			err := ValidateBBox(c.minLon, c.minLat, c.maxLon, c.maxLat)
 			if (err != nil) != c.wantErr {
-				t.Errorf("validateBBox(%v,%v,%v,%v) err=%v, wantErr=%v", c.minLon, c.minLat, c.maxLon, c.maxLat, err, c.wantErr)
+				t.Errorf("ValidateBBox(%v,%v,%v,%v) err=%v, wantErr=%v", c.minLon, c.minLat, c.maxLon, c.maxLat, err, c.wantErr)
 			}
 		})
 	}

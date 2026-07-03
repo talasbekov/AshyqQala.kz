@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-06-19T18:38:34+0500
-last_updated: 2026-07-02T18:40:00+0500
+last_updated: 2026-07-02T20:15:00+0500
 project: AshyqQala.kz
 project_key: NOKEY
 tracking_system: file-system
@@ -88,7 +88,7 @@ development_status:
   3-1-автоматическая-геопривязка-batch-nominatim: done
   3-2-полуручная-разметка-через-directus-fr-5: done
   3-3-серверный-гейт-автопокрытия-geo_coverage-и-фолбэк-режим: backlog
-  3-4-карта-с-маркерами-кластерами-и-линиями-fr-7: backlog
+  3-4-карта-с-маркерами-кластерами-и-линиями-fr-7: done
   3-5-превью-объекта-и-переход-в-карточку-fr-8: backlog
   3-6-фолбэк-список-района: backlog
   3-7-ранний-telegram-срез-подписаться-на-район-разбег-sm-3-sm-4: backlog
