@@ -5,7 +5,13 @@ import {
   markerKind,
   boundsToBBox,
   debounce,
+  coordKey,
+  coincidentPoints,
+  allCoincident,
+  pricePerKm,
+  contractPath,
   type MapObject,
+  type PointObject,
 } from './objects';
 
 const obj = (over: Omit<Partial<MapObject>, 'geom'> & { geom: unknown }): MapObject =>
@@ -182,6 +188,111 @@ describe('boundsToBBox', () => {
 
   it('вырожденное после зажима окно → null (запрос не уходит)', () => {
     expect(boundsToBBox(bounds(200, 51.0, 250, 51.3))).toBeNull();
+  });
+});
+
+// --- Story 3.5 (AC3): множественное попадание — двойники координат ---
+
+const pt = (id: string, lon: number, lat: number): PointObject => ({
+  obj: obj({ public_id: id, geom: { type: 'Point', coordinates: [lon, lat] } }),
+  lon,
+  lat,
+});
+
+describe('coordKey / coincidentPoints (AC3, D5)', () => {
+  it('одна координата → один ключ; расхождение за ε (6 знаков) → разные ключи', () => {
+    expect(coordKey(71.43, 51.13)).toBe(coordKey(71.43, 51.13));
+    // 1e-7 схлопывается округлением до 6 знаков (двойники «в одном адресе»)
+    expect(coordKey(71.43, 51.13)).toBe(coordKey(71.43 + 1e-7, 51.13));
+    // 1e-5 — уже разные точки (≈1 м): не сливаем
+    expect(coordKey(71.43, 51.13)).not.toBe(coordKey(71.43 + 1e-5, 51.13));
+  });
+
+  it('группа двойников: все точки той же координаты, включая саму цель', () => {
+    const a = pt('a', 71.43, 51.13);
+    const b = pt('b', 71.43, 51.13);
+    const c = pt('c', 71.44, 51.13);
+    expect(coincidentPoints([a, b, c], a).map((p) => p.obj.public_id)).toEqual(['a', 'b']);
+  });
+
+  it('negative-control: без двойников группа = только сама точка (лист-список НЕ открывается)', () => {
+    const a = pt('a', 71.43, 51.13);
+    const c = pt('c', 71.44, 51.13);
+    expect(coincidentPoints([a, c], a)).toHaveLength(1);
+  });
+});
+
+describe('allCoincident (кластер «не разваливается зумом»)', () => {
+  it('все позиции совпадают (ε) → true', () => {
+    expect(
+      allCoincident([
+        [71.43, 51.13],
+        [71.43 + 1e-7, 51.13],
+        [71.43, 51.13],
+      ]),
+    ).toBe(true);
+  });
+
+  it('negative-control: хоть одна позиция врозь → false (обычный зум, не превью-список)', () => {
+    expect(
+      allCoincident([
+        [71.43, 51.13],
+        [71.4315, 51.13],
+      ]),
+    ).toBe(false);
+  });
+
+  it('пустой/одиночный набор → true (вырожденно совпадают)', () => {
+    expect(allCoincident([])).toBe(true);
+    expect(allCoincident([[71.43, 51.13]])).toBe(true);
+  });
+});
+
+// --- Story 3.5 (AC1, D6): цена/км линии — деривация из двух ВИДИМЫХ фактов, не выдумка ---
+
+describe('pricePerKm (D6)', () => {
+  it('каноничная сумма и длина > 0 → целые ₸/км (усечение)', () => {
+    expect(pricePerKm('90000000', 5)).toBe('18000000');
+    expect(pricePerKm('90000000', 3.06)).toBe('29411764'); // 90e6/3.06 = 29411764.7…
+  });
+
+  it('точность > 2^53 не теряется (BigInt-путь): 2^54 ₸ / 2 км', () => {
+    expect(pricePerKm('18014398509481984', 2)).toBe('9007199254740992');
+  });
+
+  it('честные null: нет суммы / неканоничная / отрицательная — не выдумываем', () => {
+    expect(pricePerKm(null, 5)).toBeNull();
+    expect(pricePerKm(undefined, 5)).toBeNull();
+    expect(pricePerKm('', 5)).toBeNull();
+    expect(pricePerKm('12 000', 5)).toBeNull();
+    expect(pricePerKm('-90000000', 5)).toBeNull();
+  });
+
+  it('честные null: длина отсутствует / 0 / отрицательная / нефинитная', () => {
+    expect(pricePerKm('90000000', null)).toBeNull();
+    expect(pricePerKm('90000000', undefined)).toBeNull();
+    expect(pricePerKm('90000000', 0)).toBeNull();
+    expect(pricePerKm('90000000', -5)).toBeNull();
+    expect(pricePerKm('90000000', Number.NaN)).toBeNull();
+    // вырожденно малая длина: scale=round(0.0000004*1000)=0 → null, не деление на ноль
+    expect(pricePerKm('90000000', 0.0000004)).toBeNull();
+  });
+
+  it('монструозная длина: lengthKm*1000 → Infinity — null, не RangeError из BigInt (код-ревью 3.5)', () => {
+    expect(pricePerKm('90000000', 9e305)).toBeNull();
+  });
+});
+
+// contractPath — единственная точка сборки пути карточки (код-ревью 3.5: энкодинг внешнего id).
+describe('contractPath', () => {
+  it('безопасный id — как есть', () => {
+    expect(contractPath('DEMO-GEO-04')).toBe('/contracts/DEMO-GEO-04');
+  });
+
+  it('спецсимволы natural-id энкодятся (слэш/пробел/кириллица/юникод не ломают роут)', () => {
+    expect(contractPath('A/B 01')).toBe('/contracts/A%2FB%2001');
+    expect(contractPath('№44-2026')).toBe(`/contracts/${encodeURIComponent('№44-2026')}`);
+    expect(contractPath('a?b#c')).toBe('/contracts/a%3Fb%23c');
   });
 });
 

@@ -65,3 +65,44 @@ test('сквозной путь: маршрут карточки → фетч �
   // Заголовок-subject виден (honest state ok).
   await expect(page.getByRole('heading', { level: 2 })).toBeVisible();
 });
+
+// Код-ревью 3.5 (P10): арбитраж стека диалогов useDialogFocus на карточке — методика и форма
+// сосуществуют (пред-существующий паттерн 5.3/5.4, решение владельца: отложено в deferred-work);
+// Escape обязан закрывать ТОЛЬКО верхний слой, фокус возвращается по цепочке триггеров.
+test('стек слоёв на карточке: Escape закрывает только верхний (форма поверх методики)', async ({
+  page,
+}) => {
+  await page.route('**/api/contracts/DEMO-0001', (route) => route.fulfill({ json: DEMO }));
+  await page.route('**/api/methodology*', (route) =>
+    route.fulfill({
+      json: {
+        thresholds: {
+          price_per_km_deviation_factor: 1.5,
+          min_sample: 5,
+          comparability_window_months: 24,
+        },
+      },
+    }),
+  );
+
+  await page.goto('/contracts/DEMO-0001');
+  // Бейдж raised-флага → методика.
+  await page.locator('.aq-flag__badge').click();
+  const meth = page.locator('.aq-meth:not(.aq-report)');
+  await expect(meth).toBeVisible();
+
+  // Из методики — «Сообщить об ошибке»: форма ПОВЕРХ (стек, не замена — паттерн карточки).
+  await meth.locator('button.aq-meth__link').click();
+  const form = page.locator('.aq-report');
+  await expect(form).toBeVisible();
+
+  // Escape №1: закрылась ТОЛЬКО форма (верхний слой), методика жива.
+  await page.keyboard.press('Escape');
+  await expect(form).toHaveCount(0);
+  await expect(meth).toBeVisible();
+
+  // Escape №2: закрылась методика; фокус вернулся по цепочке на триггер-бейдж.
+  await page.keyboard.press('Escape');
+  await expect(meth).toHaveCount(0);
+  await expect(page.locator('.aq-flag__badge')).toBeFocused();
+});

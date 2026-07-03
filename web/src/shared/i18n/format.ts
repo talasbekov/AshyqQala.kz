@@ -24,6 +24,13 @@ export function formatPricePerKm(amountTng: string, lang: Lang): string {
   return `${formatMoney(amountTng, lang)}/км`;
 }
 
+// formatKm — длина в километрах: double из БД несёт float-шум (3.0600000000000005) и точку вместо
+// локального разделителя. Intl с ≤2 знаками — единственный санкционированный путь (запрет сырого
+// toLocaleString). Юнит «км» добавляет вызывающий через i18n-строку ({{km}} км).
+export function formatKm(km: number, lang: Lang): string {
+  return new Intl.NumberFormat(LOCALE[lang], { maximumFractionDigits: 2 }).format(km);
+}
+
 // formatDate — ISO8601 → локализованная дата (язык chrome) через Intl. Требуем ПОЛНУЮ дату
 // (YYYY-MM-DD…): частичный ISO ('2026' → 1 янв) фабрикует день/месяц. timeZone:UTC убирает
 // off-by-one (дата-без-времени парсится как UTC-полночь, а Intl иначе рендерит в локальной TZ).

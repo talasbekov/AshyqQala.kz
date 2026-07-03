@@ -8,6 +8,7 @@ import { DataState, dataStateFromValueState } from '../../shared/state/DataState
 import {
   FlagBadge,
   MethodologyDialog,
+  MethodologyFallback,
   apiToViewFlag,
   apiToMethodologyTarget,
   type MethodologyTarget,
@@ -274,25 +275,8 @@ export function ContractCard({
         // иначе застрявший error-fallback показался бы для следующего, исправного флага (review-фикс 5.3).
         <ErrorBoundary
           key={methTarget.flagId}
-          fallback={
-            <div
-              className="aq-meth-backdrop"
-              role="alertdialog"
-              aria-label={t('error.title')}
-              onClick={() => setMethTarget(null)}
-            >
-              <div className="aq-meth" onClick={(e) => e.stopPropagation()}>
-                <p>{t('error.body')}</p>
-                <button
-                  type="button"
-                  className="aq-meth__close"
-                  onClick={() => setMethTarget(null)}
-                >
-                  {t('methodology.close')}
-                </button>
-              </div>
-            </div>
-          }
+          // Fallback с честной focus-механикой (Story 3.5, deferred:77): Escape + возврат фокуса.
+          fallback={<MethodologyFallback onClose={() => setMethTarget(null)} />}
         >
           <MethodologyDialog
             target={methTarget}

@@ -246,7 +246,8 @@
   text-underline-offset: 2px;
 }
 
-/* Нижний лист превью {preview-sheet} — минимальный (детенты/focus-trap — Epic 3, Story 3.5). */
+/* Нижний лист превью {preview-sheet} (Story 3.5, UX-DR15): детенты peek→half, focus-trap в
+   useDialogFocus. Модальный бэкдроп: тап вне закрывает (кооперативные жесты карта↔лист — D4-полировка). */
 .aq-sheet-backdrop {
   position: fixed;
   inset: 0;
@@ -265,6 +266,25 @@
   color: var(--color-text-primary);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   box-shadow: 0 -4px 16px rgba(12, 26, 34, 0.25);
+  overflow-y: auto;
+  transition: max-height 200ms ease;
+}
+
+/* Детенты (UX-DR15): peek — мини-карточка; half — + флаги; list — превью-список (AC3). */
+.aq-sheet--peek {
+  max-height: 45vh;
+}
+
+.aq-sheet--half,
+.aq-sheet--list {
+  max-height: 70vh;
+}
+
+/* reduced-motion: переход детентов мгновенный (EXPERIENCE.md:365-366). */
+@media (prefers-reduced-motion: reduce) {
+  .aq-sheet {
+    transition: none;
+  }
 }
 
 .aq-sheet__handle {
@@ -273,6 +293,129 @@
   margin: 0 auto var(--space-3);
   background: var(--color-border);
   border-radius: var(--radius-full);
+}
+
+/* Ручка-кнопка — не-жестовый путь к детентам (UX-DR31): цель ≥44px во всю ширину листа.
+   Она же — свайп-зона: touch-action: none, иначе браузер уводит вертикальный жест в скролл
+   (pointercancel) и свайп мёртв на таче (код-ревью 3.5). Контент листа скроллится как обычно. */
+.aq-sheet__handle-btn {
+  display: block;
+  width: 100%;
+  min-height: var(--space-tap-target);
+  padding: var(--space-3) 0 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  touch-action: none;
+}
+
+/* Свайп-зона превью-списка (декоративная ручка, жест «вниз — закрыть»). */
+.aq-sheet__handle-zone {
+  display: block;
+  width: 100%;
+  min-height: var(--space-tap-target);
+  padding: var(--space-3) 0 0;
+  touch-action: none;
+}
+
+.aq-sheet__handle-btn:focus-visible {
+  outline: var(--space-focus-ring-width) solid var(--color-focus-ring);
+  outline-offset: var(--space-focus-ring-offset);
+  border-radius: var(--radius-sm);
+}
+
+/* Мета-строки мини-карточки (подрядчик / длина / цена за км). */
+.aq-sheet__meta {
+  margin: 0 0 var(--space-4);
+  display: grid;
+  gap: var(--space-2);
+}
+
+.aq-sheet__meta-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--type-body-size);
+}
+
+.aq-sheet__meta-row dt {
+  color: var(--color-text-secondary);
+}
+
+.aq-sheet__meta-row dd {
+  margin: 0;
+  text-align: right;
+}
+
+/* Блок сигналов half-детента (D3: только raised; UX-DR28 — методика + канал ошибки у бейджа). */
+.aq-sheet__signals {
+  margin: 0 0 var(--space-4);
+  display: grid;
+  gap: var(--space-3);
+}
+
+/* Ссылка-первоисточник в листе (UX-DR18). */
+.aq-sheet__source {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--space-tap-target);
+  margin-bottom: var(--space-2);
+  color: var(--color-link-on-sunken);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.aq-sheet__source:focus-visible {
+  outline: var(--space-focus-ring-width) solid var(--color-focus-ring);
+  outline-offset: var(--space-focus-ring-offset);
+}
+
+/* Превью-список множественного попадания (AC3): ряд = предмет + сумма, тап → карточка (D5). */
+.aq-sheet__list {
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.aq-sheet__row {
+  min-height: var(--space-tap-target);
+  display: flex;
+  align-items: center;
+  font-size: var(--type-body-size);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.aq-sheet__row-link {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--space-tap-target);
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+
+.aq-sheet__row-link:focus-visible {
+  outline: var(--space-focus-ring-width) solid var(--color-focus-ring);
+  outline-offset: var(--space-focus-ring-offset);
+}
+
+.aq-sheet__row-subject {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  color: var(--color-link-on-sunken);
+}
+
+.aq-sheet__row-amount {
+  font-weight: var(--type-body-strong-weight);
+  white-space: nowrap;
+}
+
+.aq-sheet__row-muted {
+  color: var(--color-text-secondary);
 }
 
 .aq-sheet__title {

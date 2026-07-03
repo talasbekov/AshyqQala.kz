@@ -1,13 +1,15 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Lang } from '../../shared/i18n';
 import { formatMoney, formatDateSafe } from '../../shared/i18n/format';
 import { Icon } from '../../shared/ui/Icon';
+import { useDialogFocus } from '../../shared/ui/useDialogFocus';
 import type { MethodologyTarget } from './apiFlag';
 import { useMethodology } from './useMethodology';
 
-// Экран методики флага (Story 5.3, FR-23/NFR-5). role=dialog, базовый фокус + Escape (полный focus-trap —
-// Epic 3 Story 3.5). Формула (×factor) и ПОРОГИ показываются ВСЕГДА из ЕДИНОГО источника /api/methodology
+// Экран методики флага (Story 5.3, FR-23/NFR-5). role=dialog + полный focus-trap/возврат фокуса на
+// триггер (Story 3.5, useDialogFocus — закрыт долг deferred:158). Формула (×factor) и ПОРОГИ
+// показываются ВСЕГДА из ЕДИНОГО источника /api/methodology
 // (не литералы, не только evidence raised-флагов) — работает и для не-raised меток (AC-2). При raised — числа
 // из evidence (воркшит, AC-3); при не-raised — «сигнал не выставлен» + какого порога не хватило, без выдумки.
 export function MethodologyDialog({
@@ -27,9 +29,9 @@ export function MethodologyDialog({
 }) {
   const { t } = useTranslation('chrome');
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    ref.current?.focus();
-  }, []);
+  // Focus-trap + Escape + возврат фокуса на триггер (Story 3.5). Escape обрабатывает верхний слой
+  // стека (форма ошибки поверх методики закрывается первой — существующий паттерн карточки).
+  useDialogFocus(ref, onClose);
 
   const { data: meth, isError: methError } = useMethodology();
   const th = meth?.thresholds;
@@ -49,13 +51,10 @@ export function MethodologyDialog({
         ref={ref}
         className="aq-meth"
         role="dialog"
-        aria-modal="false"
+        aria-modal="true"
         aria-labelledby="aq-meth-title"
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') onClose();
-        }}
       >
         <p className="aq-meth__overlabel">{t('methodology.overlabel')}</p>
         <h2 id="aq-meth-title" className="aq-meth__title">

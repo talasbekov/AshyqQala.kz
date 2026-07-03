@@ -1,5 +1,24 @@
 import { describe, it, expect } from 'vitest';
-import { formatMoney, formatDate } from './format';
+import { formatMoney, formatDate, formatKm } from './format';
+
+// formatKm (код-ревью 3.5): double из БД с float-шумом → локализованное число ≤2 знаков.
+describe('formatKm', () => {
+  it('срезает float-шум double до ≤2 знаков', () => {
+    expect(formatKm(3.0600000000000005, 'ru')).toBe('3,06');
+    expect(formatKm(5.000000000000001, 'ru')).toBe('5');
+  });
+
+  it('локальный десятичный разделитель (ru/kk — запятая), не точка', () => {
+    expect(formatKm(3.06, 'ru')).toContain(',');
+    expect(formatKm(3.06, 'kk')).toContain(',');
+    expect(formatKm(3.06, 'ru')).not.toContain('.');
+  });
+
+  it('целое — без дробной части', () => {
+    expect(formatKm(5, 'ru')).toBe('5');
+    expect(formatKm(5, 'kk')).toBe('5');
+  });
+});
 
 describe('formatMoney', () => {
   it('группирует разряды и добавляет ₸ (ru)', () => {

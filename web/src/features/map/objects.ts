@@ -107,6 +107,55 @@ export function markerKind(obj: Pick<MapObject, 'geocode_status' | 'has_active_f
   return 'plain';
 }
 
+// --- Story 3.5 (AC3, D5): множественное попадание — двойники координат ---
+
+// coordKey — ключ совпадения координат (ε = 6 знаков ≈ 0.11 м): «один адрес» с плавающей точкой.
+export function coordKey(lon: number, lat: number): string {
+  return `${lon.toFixed(6)},${lat.toFixed(6)}`;
+}
+
+// coincidentPoints — точки-двойники цели (та же координата с точностью ε), ВКЛЮЧАЯ саму цель.
+// Группа > 1 ⇒ тап по маркеру открывает превью-список, а не одиночное превью (AC3).
+export function coincidentPoints(points: PointObject[], target: PointObject): PointObject[] {
+  const key = coordKey(target.lon, target.lat);
+  return points.filter((p) => coordKey(p.lon, p.lat) === key);
+}
+
+// allCoincident — совпадают ли ВСЕ позиции (ε). Детектор «кластер не разваливается зумом»:
+// одного лишь expansionZoom > maxZoom мало (кластер, распадающийся ровно на maxZoom+1, выглядит так же) —
+// сверяем координаты leaves. Пустой/одиночный набор — вырожденно true.
+export function allCoincident(coords: [number, number][]): boolean {
+  if (coords.length <= 1) return true;
+  const key = coordKey(coords[0][0], coords[0][1]);
+  return coords.every((c) => coordKey(c[0], c[1]) === key);
+}
+
+// --- Story 3.5 (AC1, D6): цена/км линии ---
+
+// pricePerKm — целые ₸/км из суммы (каноничная строка целых ₸) и длины (км). Деривация из двух
+// ВИДИМЫХ в том же листе фактов (UX-DR13), НЕ методика 4.3 (каноническая бэк-цена появится с живыми
+// evidence — тогда приоритет бэку). Любой не-ok вход → null (честно скрываем, не выдумываем):
+// отрицательная/неканоничная сумма, отсутствующая/нулевая/нефинитная длина. BigInt — точность > 2^53.
+export function pricePerKm(
+  amountTng: string | null | undefined,
+  lengthKm: number | null | undefined,
+): string | null {
+  if (!amountTng || !/^\d+$/.test(amountTng)) return null;
+  if (lengthKm == null || !Number.isFinite(lengthKm) || lengthKm <= 0) return null;
+  // длина — double из БД; масштаб 1000 (точность до метра) держит деление целочисленным.
+  // isFinite: lengthKm*1000 может переполниться в Infinity (монструозная длина из БД) —
+  // BigInt(Infinity) бросил бы RangeError в рендере (код-ревью 3.5).
+  const scaled = Math.round(lengthKm * 1000);
+  if (!Number.isFinite(scaled) || scaled <= 0) return null;
+  return ((BigInt(amountTng) * 1000n) / BigInt(scaled)).toString();
+}
+
+// contractPath — единственная точка сборки пути карточки из внешнего goszakup_contract_id
+// (энкодинг спецсимволов id — natural key приходит из источника и не гарантирован URL-safe).
+export function contractPath(goszakupContractId: string): string {
+  return `/contracts/${encodeURIComponent(goszakupContractId)}`;
+}
+
 // --- bbox окна карты ---
 
 // boundsToBBox — строка «minLon,minLat,maxLon,maxLat» из границ карты с ЗАЖИМОМ в WGS84:

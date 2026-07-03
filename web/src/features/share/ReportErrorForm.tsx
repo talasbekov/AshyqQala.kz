@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
+import { useDialogFocus } from '../../shared/ui/useDialogFocus';
 import {
   buildErrorReportRequest,
   postErrorReport,
@@ -13,8 +14,9 @@ import './report-error.css';
 
 // ReportErrorForm — полная форма канала «Сообщить об ошибке» (Story 5.4, FR-28). Честный автомат состояний:
 // idle/filling → submitting (кнопка заблокирована — защита от двойной) → success | error (текст НЕ теряется).
-// Привязка к объекту — из контекста (target), не вводится руками. role=dialog, базовый фокус + Escape
-// (полный focus-trap — Epic 3 Story 3.5). Mailto — no-JS фолбэк в действиях.
+// Привязка к объекту — из контекста (target), не вводится руками. role=dialog + полный focus-trap/возврат
+// фокуса (Story 3.5, useDialogFocus — закрыт долг deferred:63); закрытие на лету POST'а блокируется
+// (запись на сервере уже возможна — не оставляем юзера без подтверждения). Mailto — no-JS фолбэк.
 export function ReportErrorForm({
   target,
   onClose,
@@ -30,14 +32,22 @@ export function ReportErrorForm({
   const messageRef = useRef<HTMLTextAreaElement>(null);
   const inFlight = useRef(false); // synchronous-guard от двойной отправки до коммита isPending
 
-  useEffect(() => {
-    messageRef.current?.focus();
-  }, []);
-
   const mutation = useMutation({
     mutationFn: () =>
       postErrorReport(buildErrorReportRequest(target, { message, contact, leaveBlank })),
   });
+
+  // Гард закрытия (deferred:63): на лету POST'а Escape/бэкдроп/кнопка НЕ закрывают — запись могла
+  // уйти на сервер, юзер обязан увидеть исход (success/error), иначе риск повторной отправки.
+  const isPendingRef = useRef(false);
+  isPendingRef.current = mutation.isPending;
+  const guardedClose = () => {
+    if (isPendingRef.current) return;
+    onClose();
+  };
+
+  // Focus-trap + Escape + возврат фокуса на триггер (Story 3.5); начальный фокус — textarea.
+  useDialogFocus(dialogRef, guardedClose, { initialFocus: messageRef });
 
   const trimmed = message.trim();
   const canSubmit = !mutation.isPending && trimmed !== '';
@@ -60,21 +70,15 @@ export function ReportErrorForm({
       : t('report_error.form.error');
 
   return (
-    <div className="aq-meth-backdrop" onClick={onClose}>
+    <div className="aq-meth-backdrop" onClick={guardedClose}>
       <div
         ref={dialogRef}
         className="aq-meth aq-report"
         role="dialog"
-        aria-modal="false"
+        aria-modal="true"
         aria-labelledby="aq-report-title"
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') {
-            e.stopPropagation(); // закрыть ТОЛЬКО форму, не родителя (напр. лист лота на карте)
-            onClose();
-          }
-        }}
       >
         <h2 id="aq-report-title" className="aq-meth__title">
           {t('report_error.form.title')}
@@ -151,7 +155,12 @@ export function ReportErrorForm({
               >
                 {t('report_error.form.mailto_fallback')}
               </a>
-              <button type="button" className="aq-meth__close" onClick={onClose}>
+              <button
+                type="button"
+                className="aq-meth__close"
+                disabled={mutation.isPending}
+                onClick={guardedClose}
+              >
                 {t('methodology.close')}
               </button>
             </div>

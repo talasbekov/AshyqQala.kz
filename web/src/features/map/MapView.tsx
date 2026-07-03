@@ -9,6 +9,7 @@ import { Icon } from '../../shared/ui/Icon';
 import { registerPmtilesProtocol } from '../../shared/map/pmtilesProtocol';
 import { buildMapStyle } from '../../shared/map/mapStyle';
 import { mapToken } from '../../shared/map/tokenBridge';
+import type { Lang } from '../../shared/i18n';
 import { ASTANA_CENTER, ASTANA_ZOOM } from './mapConfig';
 import {
   useMapObjects,
@@ -16,8 +17,13 @@ import {
   markerKind,
   boundsToBBox,
   debounce,
+  coincidentPoints,
+  allCoincident,
   type MarkerKind,
+  type MapObject,
+  type LineObject,
 } from './objects';
+import { PreviewSheet } from './PreviewSheet';
 import './map.css';
 
 // prefers-reduced-motion (UX): мгновенный зум/recenter/раскрытие кластера без анимации.
@@ -73,15 +79,21 @@ interface MarkerRef {
 }
 
 export function MapView() {
-  const { t } = useTranslation('chrome');
+  const { t, i18n: i18nActive } = useTranslation('chrome');
+  // Язык интерфейса для превью (паттерн ContractRoute): kk-дефолт, ru — альтернатива.
+  const lang: Lang = i18nActive.language.startsWith('ru') ? 'ru' : 'kk';
 
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markerRefs = useRef<MarkerRef[]>([]);
   const prevSelectedLine = useRef<string | null>(null);
+  // Линии для обработчика клика карты (init-эффект живёт дольше замыкания render-данных).
+  const linesRef = useRef<LineObject[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   const [selected, setSelected] = useState<string | null>(null); // public_id объекта (маркер или линия)
+  // Превью-список множественного попадания (Story 3.5, AC3): снапшот объектов одной координаты.
+  const [multi, setMulti] = useState<MapObject[] | null>(null);
   const [bbox, setBbox] = useState<string | null>(null); // окно для API (debounced)
   const [view, setView] = useState<ViewState | null>(null); // окно для рекластеризации (мгновенно)
 
@@ -91,6 +103,9 @@ export function MapView() {
     () => splitObjects(objectsQuery.data?.items ?? []),
     [objectsQuery.data],
   );
+  useEffect(() => {
+    linesRef.current = lines;
+  }, [lines]);
 
   // Supercluster-индекс пересобирается на каждый ответ API (D6). map/reduce протаскивают
   // «есть флаг» в свёрнутый кластер — амбер-кольцо не теряет сигнал (AC2).
@@ -172,6 +187,8 @@ export function MapView() {
     });
     // Тап по линии (canvas): queryRenderedFeatures с падом ≈ tap-target/2. Тап по пустому месту —
     // снятие выбора. Маркеры (DOM) сами останавливают всплытие — сюда не долетают.
+    // Story 3.5 (AC3): hit-test вернул НЕСКОЛЬКО линий (идентичные геометрии — живой кейс seed:
+    // 6 DEMO-GEO-линий с одной осью) → превью-список, не молчаливый feats[0].
     map.on('click', (e) => {
       if (!map.getLayer('aq-geo-line')) {
         setSelected(null);
@@ -184,7 +201,25 @@ export function MapView() {
         ],
         { layers: ['aq-geo-line'] },
       );
-      setSelected(feats.length > 0 && feats[0].id != null ? String(feats[0].id) : null);
+      const ids = [
+        ...new Set(
+          feats
+            .map((f) => f.id)
+            .filter((id) => id != null)
+            .map((id) => String(id)),
+        ),
+      ];
+      if (ids.length > 1) {
+        const objs = ids
+          .map((id) => linesRef.current.find((l) => l.obj.public_id === id)?.obj)
+          .filter((o): o is MapObject => o !== undefined);
+        if (objs.length > 1) {
+          setMulti(objs);
+          setSelected(null);
+          return;
+        }
+      }
+      setSelected(ids.length > 0 ? ids[0] : null);
     });
     // Карта упала до 'load' (нет WebGL и т.п.) → честное состояние вместо вечной «загрузки».
     map.on('error', (ev) => {
@@ -278,9 +313,35 @@ export function MapView() {
         }
         el.addEventListener('click', (ev) => {
           ev.stopPropagation();
+          const exp = clusterIndex.getClusterExpansionZoom(clusterId);
+          // Story 3.5 (AC3): кластер-без-разворота — expansion за пределом кластеризации И leaves
+          // СОВПАДАЮТ координатами (одного expansionZoom мало: распад ровно на maxZoom+1 выглядит
+          // так же) → авто-зум до предела + превью-список. Иначе — прежний плавный зум (3.4, AC2).
+          if (exp > CLUSTER_MAX_ZOOM) {
+            const leaves = clusterIndex.getLeaves(clusterId, Infinity);
+            if (allCoincident(leaves.map((l) => l.geometry.coordinates as [number, number]))) {
+              // Фокус ТОЛЬКО здесь (открывается лист — кнопка нужна как триггер возврата;
+              // MapLibre preventDefault'ит mousedown). На пути обычного зума фокус не трогаем:
+              // teardown маркеров выбросил бы его на body (код-ревью 3.5).
+              el.focus();
+              const objs = leaves
+                .map((l) => points[(l.properties as PointProps).idx]?.obj)
+                .filter((o): o is MapObject => o !== undefined);
+              const target = {
+                center: [lon, lat] as [number, number],
+                zoom: Math.min(CLUSTER_MAX_ZOOM + 1, 20),
+              };
+              if (PREFERS_REDUCED_MOTION) map.jumpTo(target);
+              else map.easeTo(target);
+              if (objs.length > 1) {
+                setMulti(objs);
+                setSelected(null);
+              }
+              return;
+            }
+          }
           // Плавный зум к раскрытию (AC2); мгновенно при prefers-reduced-motion.
-          const zoom = Math.min(clusterIndex.getClusterExpansionZoom(clusterId), 20);
-          const target = { center: [lon, lat] as [number, number], zoom };
+          const target = { center: [lon, lat] as [number, number], zoom: Math.min(exp, 20) };
           if (PREFERS_REDUCED_MOTION) map.jumpTo(target);
           else map.easeTo(target);
         });
@@ -316,7 +377,17 @@ export function MapView() {
         }
         el.addEventListener('click', (ev) => {
           ev.stopPropagation(); // не долетает до map click (снятие выбора)
-          setSelected(p.obj.public_id);
+          // Явный фокус: MapLibre preventDefault'ит mousedown (DragPan) — браузерный фокус кнопки
+          // не срабатывает, а лист должен захватить маркер как триггер возврата (Story 3.5, AC2).
+          el.focus();
+          // Story 3.5 (AC3): точки-двойники (один адрес, зум не разводит) → превью-список.
+          const group = coincidentPoints(points, p);
+          if (group.length > 1) {
+            setMulti(group.map((g) => g.obj));
+            setSelected(null);
+          } else {
+            setSelected(p.obj.public_id);
+          }
         });
         markers.push(
           new maplibregl.Marker({ element: el, anchor: 'bottom' })
@@ -393,6 +464,19 @@ export function MapView() {
 
   const data = objectsQuery.data;
 
+  // Превью (Story 3.5, AC1): выбранный объект → одиночный лист; multi → лист-список (AC3).
+  // Закрытие листа снимает выбор маркера (EXPERIENCE.md:222 — лист↔selected синхронны).
+  const selectedObj =
+    selected === null
+      ? undefined
+      : (points.find((p) => p.obj.public_id === selected)?.obj ??
+        lines.find((l) => l.obj.public_id === selected)?.obj);
+  const previewObjects = multi ?? (selectedObj !== undefined ? [selectedObj] : null);
+  const closePreview = () => {
+    setSelected(null);
+    setMulti(null);
+  };
+
   return (
     <section className="aq-map-route">
       <h1 className="aq-map-route__title">{t('map.title')}</h1>
@@ -403,6 +487,9 @@ export function MapView() {
           className="aq-map"
           role="application"
           aria-label={t('map.aria_label')}
+          // tabIndex: честный фокус-фолбэк листа (Story 3.5) — триггер-маркер мог быть снесён
+          // рекластеризацией; фокус возвращается на контейнер карты, НЕ теряется на <body>.
+          tabIndex={-1}
         />
         {failed ? (
           <div className="aq-map__unavailable" role="status">
@@ -477,6 +564,18 @@ export function MapView() {
             {t('map.ungeocoded_more', { n: data.ungeocoded_count })}
           </Link>
         </p>
+      )}
+
+      {/* Превью-лист (Story 3.5, FR-8). key: смена объекта/режима ремонтирует лист — сброс
+          детента/оверлея; unmount возвращает фокус на триггер (useDialogFocus). */}
+      {previewObjects !== null && (
+        <PreviewSheet
+          key={multi !== null ? 'multi' : selected}
+          objects={previewObjects}
+          lang={lang}
+          onClose={closePreview}
+          returnFallback={() => containerRef.current}
+        />
       )}
     </section>
   );

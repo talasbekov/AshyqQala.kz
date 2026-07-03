@@ -68,7 +68,7 @@ describe('map строки (Story 3.4)', () => {
     expect(kk).toEqual(ru);
   });
 
-  it('несущие ключи 3.4 присутствуют в обеих локалях (маркеры/кластер/счётчик/честные состояния)', () => {
+  it('несущие ключи 3.4/3.5 присутствуют в обеих локалях (маркеры/кластер/счётчик/превью)', () => {
     for (const lang of LANGS) {
       const m = (resources[lang].chrome as Record<string, unknown>).map as Record<string, string>;
       for (const k of [
@@ -81,6 +81,17 @@ describe('map строки (Story 3.4)', () => {
         'objects_empty',
         'truncated_notice',
         'ungeocoded_more',
+        // Story 3.5: превью-лист (одиночный/список/детенты/линие-специфичные поля).
+        'preview_title',
+        'preview_loading',
+        'preview_more',
+        'preview_close',
+        'preview_no_contract',
+        'preview_length',
+        'preview_length_value',
+        'preview_price_per_km',
+        'preview_multi_title',
+        'preview_detent',
       ]) {
         expect(typeof m[k], `${lang}.map.${k}`).toBe('string');
         expect(m[k].trim().length, `${lang}.map.${k} пуст`).toBeGreaterThan(0);
@@ -100,7 +111,12 @@ describe('map строки (Story 3.4)', () => {
   it('интерполяция числа — {{n}}, не reserved {{count}}', () => {
     for (const lang of LANGS) {
       const m = (resources[lang].chrome as Record<string, unknown>).map as Record<string, string>;
-      for (const k of ['cluster_label', 'cluster_label_flag', 'ungeocoded_more']) {
+      for (const k of [
+        'cluster_label',
+        'cluster_label_flag',
+        'ungeocoded_more',
+        'preview_multi_title',
+      ]) {
         expect(m[k].includes('{{count}}'), `${lang}.map.${k} использует reserved count`).toBe(
           false,
         );
